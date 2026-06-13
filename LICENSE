@@ -1,21 +1,65 @@
-MIT License
+================================================================================
+PROPRIETARY, CONFIDENTIAL, AND COPYRIGHT NOTICE
+================================================================================
+Copyright (c) Ibby Auto Works™ 2026. All Rights Reserved.
 
-Copyright (c) 2026 IbbyAutoWorks
+This software, including but not limited to all source code, object code, script files, 
+system architecture, directory structures, interface designs, documentation, assets, 
+and configuration files (collectively referred to as the "Software"), is the exclusive, 
+sole proprietary property of the Copyright Holder.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This Software is protected under international copyright treaties, trade secret laws, 
+and all applicable intellectual property statutes.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+--------------------------------------------------------------------------------
+1. ABSOLUTE PROHIBITION OF USE
+--------------------------------------------------------------------------------
+No license, right, or title to the Software is granted, implied, or transferred 
+hereby to the public or any unauthorized user. 
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Strictly and absolutely prohibited actions include, but are not limited to:
+   A. COPYING: Mirroring, cloning, duplicating, or downloading the Software to 
+      any local machine, external drive, cloud storage, or server not explicitly 
+      authorized in writing by the Copyright Holder.
+   B. MODIFICATION: Editing, altering, tampering with, hacking, translating, or 
+      creating derivative works based upon the Software.
+   C. DISTRIBUTION: Transferring, sharing, publishing, transmitting, sublicensing, 
+      renting, or exposing the Software to any third party via any medium, 
+      including other public or private repositories.
+   D. REVERSE ENGINEERING: Decompiling, disassembling, or attempting to derive 
+      the source code, algorithms, or logic of any compiled or minified elements.
+
+--------------------------------------------------------------------------------
+2. CONFIDENTIALITY AND TRADE SECRETS
+--------------------------------------------------------------------------------
+The structures, sequence, and organization of the Software are valuable trade 
+secrets of the Copyright Holder. Any person granted authorized access to view this 
+private repository agrees to maintain absolute confidentiality. 
+
+You may not disclose, discuss, or share any internal logic, architecture, or 
+operational details of this Software with anyone without express, written permission.
+
+--------------------------------------------------------------------------------
+3. TERMINATION OF ACCESS
+--------------------------------------------------------------------------------
+The Copyright Holder reserves the right to revoke repository access, viewing 
+privileges, or collaboration permissions at any moment, for any reason, without 
+prior notice. Upon revocation, any authorized copies or memory cached environments 
+must be immediately destroyed.
+
+--------------------------------------------------------------------------------
+4. ENFORCEMENT AND LEGAL CONSEQUENCES
+--------------------------------------------------------------------------------
+Any unauthorized possession, access, touching, alteration, or distribution of this 
+Software constitutes willful copyright infringement and theft of trade secrets. 
+
+The Copyright Holder will aggressively pursue all available legal remedies, 
+including but not limited to:
+   - Seeking immediate federal injunctions to halt unauthorized use.
+   - Demanding statutory damages for willful infringement (which can include hefty 
+     financial penalties per violation, plus all attorney and court fees).
+   - Criminal prosecution where applicable under trade secret and digital protection acts.
+
+BY ACCESSING OR VIEWING THIS REPOSITORY, YOU ACKNOWLEDGE THAT YOU HAVE READ THIS 
+NOTICE, UNDERSTAND ITS TERMS, AND AGREE TO BE BOUND BY THEM.
+================================================================================
