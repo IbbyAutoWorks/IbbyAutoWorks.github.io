@@ -1,0 +1,34 @@
+{
+  "name": "ibbys-auto-next-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 4200",
+    "build": "next build",
+    "start": "next start --port 4200",
+    "typecheck": "tsc --noEmit",
+    "verify:admin-tools": "node scripts/verify-admin-tools.mjs",
+    "verify:mirror": "node scripts/verify-customer-admin-mirror.mjs",
+    "verify:routes": "node scripts/verify-route-console.mjs",
+    "verify:request-loaders": "node scripts/verify-request-loaders.mjs",
+    "verify:service": "node scripts/verify-service-portal.mjs",
+    "verify:status": "node scripts/verify-status-account-download.mjs",
+    "verify:vehicle-specs": "node scripts/verify-vehicle-specs.mjs",
+    "verify:transition": "node scripts/verify-route-transition.mjs",
+    "verify:theme": "node scripts/verify-theme-application.mjs",
+    "verify:brand-service": "node scripts/verify-brand-service-wizard.mjs"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "next": "^15.5.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "typescript": "^5.7.2"
+  }
+}
