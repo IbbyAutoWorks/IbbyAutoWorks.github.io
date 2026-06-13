@@ -31,15 +31,15 @@ jobs:
         id: mode
         run: |
           # Convert UTC to Eastern Time (EST/EDT)
-          # UTC offset: EST = -5, EDT = -4
-          HOUR=$(date -d '5 hours ago' -u +%H)
-          MIN=$(date -d '5 hours ago' -u +%M)
+          # Use TZ environment variable to handle daylight saving automatically
+          HOUR=$(TZ='America/New_York' date +'%H')
+          MIN=$(TZ='America/New_York' date +'%M')
     
           echo "Eastern Time: $HOUR:$MIN"
     
           # 02:20 EST (morning startup)
           if [[ "$HOUR" == "02" && "$MIN" == "20" ]]; then
-            echo "mode=evening" >> $GITHUB_OUTPUT
+            echo "mode=morning" >> $GITHUB_OUTPUT
             exit 0
           fi
     
