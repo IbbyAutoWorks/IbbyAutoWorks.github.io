@@ -21,7 +21,7 @@ The Customer agrees that during the course of normal disassembly, inspection, an
 repair, pre-existing weak components (including but not limited to: rusted bolts, 
 brittle plastic clips, seized suspension components, degraded wiring, or corroded 
 brake lines) may break or fail entirely. 
-   - IbbyAuto™ shall NOT be liable for the failure or breakage of pre-existing 
+   - Ibby Auto Works™ shall NOT be liable for the failure or breakage of pre-existing 
      degraded, rusted, or brittle components during the standard repair process.
    - If secondary part failures occur, the Technician will pause work and notify 
      the Customer of the additional parts and labor required to safely proceed.
@@ -29,13 +29,13 @@ brake lines) may break or fail entirely.
 --------------------------------------------------------------------------------
 2. LIMITATION OF LIABILITY & THE RIGHT TO DISCONTINUE SERVICE
 --------------------------------------------------------------------------------
-The sole responsibility of IbbyAuto™ is to attempt to diagnose and repair the specific 
+The sole responsibility of Ibby Auto Works™ is to attempt to diagnose and repair the specific 
 issues authorized by the Customer. 
    - If a vehicle reveals catastrophic hidden damage, unsafe structural rust, or 
      unforeseen complications that make a repair unsafe or impossible to complete under 
-     the original scope, IbbyAuto™ reserves the right to HALT ALL WORK and 
+     the original scope, Ibby Auto Works™ reserves the right to HALT ALL WORK and 
      DISCONTINUE SERVICE ("Walk Away").
-   - If work is discontinued for safety or mechanical feasibility, IbbyAuto™ 
+   - If work is discontinued for safety or mechanical feasibility, Ibby Auto Works™ 
      cannot be held liable for leaving the vehicle in an un-driveable state. The 
      Customer will only be billed for labor time accrued and parts installed up 
      to the point of work stoppage.
@@ -46,7 +46,7 @@ issues authorized by the Customer.
 All sales on parts and labor are final. Mechanical repairs carry inherent variables 
 based on vehicle age and history. 
    - NO REFUNDS will be issued for completed labor or installed parts unless the 
-     IbbyAuto™, at their sole discretion, deems a refund or partial credit necessary. 
+     Ibby Auto Works™, at their sole discretion, deems a refund or partial credit necessary. 
    - A diagnosis is an educated assessment based on current symptoms. If a separate, 
      underlying mechanical failure causes symptoms to return, it does not invalidate 
      the validity or cost of the initial completed repair.
@@ -55,25 +55,25 @@ based on vehicle age and history.
 4. NATURE OF ESTIMATES AND QUOTES
 --------------------------------------------------------------------------------
 Any cost estimate, quote, or diagnostic assessment provided to the Customer is based 
-solely on the personal professional opinion of IbbyAuto™, historical mechanical 
+solely on the personal professional opinion of Ibby Auto Works™, historical mechanical 
 experience, standard industry labor guides, and self-imposed high standards of quality.
    - Initial quotes are estimates only. Unforeseen complications, seized parts, 
      or additional required hardware may alter the final cost.
    - Pursuant to Maine state trade practices, if the final cost is projected to 
-     exceed the initial written estimate by more than 10%, IbbyAuto™ will 
+     exceed the initial written estimate by more than 10%, Ibby Auto Works™ will 
      obtain verbal or written authorization from the Customer before proceeding.
 
 --------------------------------------------------------------------------------
 5. MAINE STATE STANDARDS & INSPECTION COMPLIANCE
 --------------------------------------------------------------------------------
 All work performed under this agreement meets or exceeds Maine State Standards. 
-Because IbbyAuto™ is a licensed behind a Maine State Inspection, 
+Because Ibby Auto Works™ is a licensed behind a Maine State Inspection, 
 the shop will NOT perform any repair that knowingly violates Maine Motor Vehicle 
 Inspection Rules or compromises the core safety of the vehicle (such as bypassing 
 critical braking components, deleting mandatory emissions equipment, or rigging 
 un-inspectable structural elements). 
    - If a Customer requests a "shortcut" repair that violates Maine State safety 
-     standards, IbbyAuto™ will refuse the service immediately.
+     standards, Ibby Auto Works™ will refuse the service immediately.
 
 --------------------------------------------------------------------------------
 6. TOWING, STORAGE, AND MECHANIC'S LIEN
@@ -82,7 +82,7 @@ Once repairs are completed and the Customer is notified, the vehicle must be pic
 and paid for in full within forty-eight (48) hours.
    - Failure to pick up the vehicle within 48 hours may result in a storage fee 
      of $__________ per day.
-   - Pursuant to Maine Revised Statutes, IbbyAuto™ retains a Mechanic’s Lien 
+   - Pursuant to Maine Revised Statutes, Ibby Auto Works™ retains a Mechanic’s Lien 
      on the vehicle to secure payment for all authorized labor performed and parts 
      furnished. The vehicle will NOT be released until the invoice is paid in full 
      via cash, verified digital payment, or approved credit.
@@ -90,7 +90,7 @@ and paid for in full within forty-eight (48) hours.
 --------------------------------------------------------------------------------
 7. VEHICLE TESTING AND PROPERTY DISCLAIMER
 --------------------------------------------------------------------------------
-The Customer grants IbbyAuto™ express permission to operate the vehicle on 
+The Customer grants Ibby Auto Works™ express permission to operate the vehicle on 
 public roads for the purpose of testing, diagnosing, and verifying completed repairs. 
 The shop is not responsible for loss or damage to the vehicle or articles left 
 inside the vehicle in case of fire, theft, accident, or vandalism beyond the shop's 
@@ -105,5 +105,5 @@ to all the terms, liability limits, and disclosures in this multi-page document.
 
 Customer Signature: _____________________________________  Date: _______________
 
-IbbyAuto™ Signature: ____________________________________  Date: _______________
+Ibby Auto Works™ Signature: ____________________________________  Date: _______________
 ================================================================================
