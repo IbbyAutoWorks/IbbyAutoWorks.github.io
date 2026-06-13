@@ -67,6 +67,18 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
           </BurnoutNavLink>
         </header>
         {children}
+        <footer className="site-footer" aria-label="Ibby Auto Works legal and support links">
+          <div>
+            <strong>Ibby Auto Works™</strong>
+            <span>© 2026 Ibby Auto Works™. All rights reserved.</span>
+          </div>
+          <nav aria-label="Footer links">
+            <a href="https://github.com/IbbyAutoWorks/IbbyAutoWorks/blob/main/docs/privacy-policy.md" target="_blank" rel="noreferrer">Privacy Policy</a>
+            <a href="https://github.com/IbbyAutoWorks/IbbyAutoWorks/blob/main/docs/terms-of-service.md" target="_blank" rel="noreferrer">Terms of Service</a>
+            <a href="https://github.com/IbbyAutoWorks/IbbyAutoWorks/issues" target="_blank" rel="noreferrer">Issues</a>
+            <a href="https://github.com/IbbyAutoWorks/IbbyAutoWorks/issues" target="_blank" rel="noreferrer">Request Feature</a>
+          </nav>
+        </footer>
       </main>
     </div>
   );

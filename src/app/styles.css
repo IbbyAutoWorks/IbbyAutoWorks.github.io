@@ -1081,6 +1081,43 @@ h2 {
   padding: 12px 0;
 }
 
+
+.site-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  margin: 36px clamp(20px, 4vw, 42px) 24px;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.site-footer > div,
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+}
+
+.site-footer strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.site-footer a {
+  color: var(--red-dark);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--red);
+  text-decoration: underline;
+}
+
 .customer-tier-picker {
   max-width: 560px;
 }
@@ -4004,6 +4041,9 @@ h2 {
   .catalog-head,
   .customer-estimate-strip,
   .public-footer,
+  .site-footer,
+  .site-footer > div,
+  .site-footer nav,
   .vin-decode-row {
     align-items: stretch;
     flex-direction: column;
