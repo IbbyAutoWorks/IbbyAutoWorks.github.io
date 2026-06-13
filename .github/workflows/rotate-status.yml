@@ -5,43 +5,52 @@ on:
   # Default rotation every 30 minutes
   - cron: "*/30 * * * *"
   
-  # Morning rotation
-  - cron: "*/15 9-11 * * *"
+  # Morning rotation (2:24 AM - 6:30 AM EST)
+  - cron: "*/15 6-11 * * *"
   
-  # Morning startup message
-  - cron: "20 9 * * *"
+  # Morning startup message (2:20 AM EST)
+  - cron: "20 6 * * *"
   
-  # Evening wrap-up message
+  # Evening wrap-up message (4:20 PM EST)
   - cron: "20 21 * * *"
   
-  # Night mode
-  - cron: "*/30 4-6 * * *"
+  # Night mode (11:30 PM - 1:00 AM EST)
+  - cron: "*/30 23,0,1 * * *"
 
 jobs:
   update-status:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug - Show current time
+        run: |
+          echo "UTC time: $(date -u '+%Y-%m-%d %H:%M:%S')"
+          echo "Local time: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+
       - name: Determine current mode (evening / morning / night / default)
         id: mode
         run: |
-          HOUR=$(date -u +%H)
-          MIN=$(date -u +%M)
+          # Convert UTC to Eastern Time (EST/EDT)
+          # UTC offset: EST = -5, EDT = -4
+          HOUR=$(date -d '5 hours ago' -u +%H)
+          MIN=$(date -d '5 hours ago' -u +%M)
     
-          # 09:20 UTC and 21:20 UTC
-          if [[ "$HOUR" == "09" && "$MIN" == "20" ]] || [[ "$HOUR" == "21" && "$MIN" == "20" ]]; then
+          echo "Eastern Time: $HOUR:$MIN"
+    
+          # 02:20 EST (morning startup)
+          if [[ "$HOUR" == "02" && "$MIN" == "20" ]]; then
             echo "mode=evening" >> $GITHUB_OUTPUT
             exit 0
           fi
     
-          # Morning mode
-          if (( (HOUR==9 && MIN>=24) || (HOUR==10) || (HOUR==11 && MIN<=30) )); then
+          # Morning mode: 2:24 AM - 6:30 AM EST
+          if (( (HOUR==2 && MIN>=24) || (HOUR==3) || (HOUR==4) || (HOUR==5) || (HOUR==6 && MIN<=30) )); then
             echo "mode=morning" >> $GITHUB_OUTPUT
             exit 0
           fi
     
-          # Night mode
-          if (( (HOUR==4 && MIN>=30) || (HOUR==5) || (HOUR==6 && MIN<=0) )); then
+          # Night mode: 11:30 PM - 1:00 AM EST
+          if (( (HOUR==23 && MIN>=30) || (HOUR==0) )); then
             echo "mode=night" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -52,6 +61,7 @@ jobs:
         id: status
         run: |
           MODE="${{ steps.mode.outputs.mode }}"
+          echo "Selected mode: $MODE"
     
           if [[ "$MODE" == "evening" ]]; then
             OPTIONS=(
@@ -110,6 +120,7 @@ jobs:
     
           RAND=$((RANDOM % ${#OPTIONS[@]}))
           SELECTED="${OPTIONS[$RAND]}"
+          echo "Selected status: $SELECTED"
     
           echo "selected=$SELECTED" >> $GITHUB_OUTPUT
     
@@ -118,8 +129,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.STATUS_TOKEN }}
           RAW: ${{ steps.status.outputs.selected }}
         run: |
+          if [[ -z "$GITHUB_TOKEN" ]]; then
+            echo "ERROR: STATUS_TOKEN is not set in secrets"
+            exit 1
+          fi
+          
           EMOJI=$(echo "$RAW" | awk '{print $1}')
-          MESSAGE=$(echo "$RAW" | awk '{$1=""; print $0}')
+          MESSAGE=$(echo "$RAW" | awk '{$1=""; print $0}' | xargs)
+          
+          echo "Updating status:"
+          echo "  Emoji: $EMOJI"
+          echo "  Message: $MESSAGE"
     
           gh api graphql -f query='
             mutation ($emoji: String, $message: String) {
