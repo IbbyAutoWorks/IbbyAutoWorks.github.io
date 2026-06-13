@@ -1,0 +1,136 @@
+name: Rotate GitHub Status
+
+on:
+  schedule:
+  # Default rotation every 30 minutes
+  - cron: "*/30 * * * *"
+  
+  # Morning rotation
+  - cron: "*/15 9-11 * * *"
+  
+  # Morning startup message
+  - cron: "20 9 * * *"
+  
+  # Evening wrap-up message
+  - cron: "20 21 * * *"
+  
+  # Night mode
+  - cron: "*/30 4-6 * * *"
+
+jobs:
+  update-status:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine current mode (evening / morning / night / default)
+        id: mode
+        run: |
+          HOUR=$(date -u +%H)
+          MIN=$(date -u +%M)
+    
+          # 09:20 UTC and 21:20 UTC
+          if [[ "$HOUR" == "09" && "$MIN" == "20" ]] || [[ "$HOUR" == "21" && "$MIN" == "20" ]]; then
+            echo "mode=evening" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+    
+          # Morning mode
+          if (( (HOUR==9 && MIN>=24) || (HOUR==10) || (HOUR==11 && MIN<=30) )); then
+            echo "mode=morning" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+    
+          # Night mode
+          if (( (HOUR==4 && MIN>=30) || (HOUR==5) || (HOUR==6 && MIN<=0) )); then
+            echo "mode=night" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+    
+          echo "mode=default" >> $GITHUB_OUTPUT
+    
+      - name: Select status
+        id: status
+        run: |
+          MODE="${{ steps.mode.outputs.mode }}"
+    
+          if [[ "$MODE" == "evening" ]]; then
+            OPTIONS=(
+              "🌇 Wrapping Up the Last Job"
+              "🧾 Finishing Today's Work Orders"
+              "🚐 Heading Back from Service Calls"
+              "🔧 One More Repair Before Home"
+              "⚙️ Shop Closed, Phone Still On"
+            )
+    
+          elif [[ "$MODE" == "morning" ]]; then
+            OPTIONS=(
+              "☕ First Coffee, First Call"
+              "🔧 Opening the Toolbox"
+              "🚐 Rolling Out for Service Calls"
+              "🌅 Early Bird Gets the Repair"
+              "📅 Booking Jobs for the Day"
+              "🔋 Batteries, Brakes & Breakfast"
+              "🛠️ Mobile Mechanic Mode Activated"
+              "🚗 Starting the Day Under the Hood"
+            )
+    
+          elif [[ "$MODE" == "night" ]]; then
+            OPTIONS=(
+              "🌙 Off Duty Until Morning"
+              "😴 Recharging Like a Car Battery"
+              "🔋 Technician Offline"
+              "🚗 Parked for the Night"
+              "🛌 Toolbox Closed"
+              "💤 Available Again at Sunrise"
+              "🌌 Emergency Calls Tomorrow"
+            )
+    
+          else
+            OPTIONS=(
+              "🔧 Mobile Auto Repair On-Site"
+              "🚐 Traveling to the Next Customer"
+              "🛠️ Diagnosing Vehicle Issues"
+              "🔋 Battery Testing in Progress"
+              "🚗 Keeping Maine Drivers Moving"
+              "⚙️ Turning Wrenches and Solving Problems"
+              "📱 Scheduling Service Calls"
+              "🔍 Hunting Down Electrical Gremlins"
+              "🧰 Toolbox Open, Let's Fix It"
+              "⛽ Roadside Assistance Available"
+              "🚘 Customer Vehicle Inspection"
+              "📦 Waiting on Parts Delivery"
+              "🔧 Ibby Auto Works at your Service"
+              "🚐 On The Road"
+              "🛠️ Diagnosing A Vehicle"
+              "📱 Contacting Customers"
+              "⚙️ Keeping Cars Reliable"
+              "🚗 Helping Drivers Get Back On The Road"
+            )
+          fi
+    
+          RAND=$((RANDOM % ${#OPTIONS[@]}))
+          SELECTED="${OPTIONS[$RAND]}"
+    
+          echo "selected=$SELECTED" >> $GITHUB_OUTPUT
+    
+      - name: Update GitHub Status
+        env:
+          GITHUB_TOKEN: ${{ secrets.STATUS_TOKEN }}
+          RAW: ${{ steps.status.outputs.selected }}
+        run: |
+          EMOJI=$(echo "$RAW" | awk '{print $1}')
+          MESSAGE=$(echo "$RAW" | awk '{$1=""; print $0}')
+    
+          gh api graphql -f query='
+            mutation ($emoji: String, $message: String) {
+              changeUserStatus(input: {
+                emoji: $emoji,
+                message: $message
+              }) {
+                status {
+                  emoji
+                  message
+                }
+              }
+            }
+          ' -F emoji="$EMOJI" -F message="$MESSAGE"
