@@ -1,6 +1,7 @@
 import { defaultAgreementAcceptance, type AgreementAcceptance } from "@/lib/agreements";
 import { buildPartSupplierCandidates, type PartSupplierCandidate } from "@/lib/parts";
 import { fallbackVehicleSpec, findVehicleSpec, type VehicleSpec } from "@/lib/vehicles";
+import { syncCustomerRecordToCloud, syncWorkOrderToCloud } from "@/lib/cloud-sync";
 
 export type PrototypePartQuote = {
   part: string;
@@ -161,6 +162,9 @@ export function savePrototypeWorkOrder(order: PrototypeWorkOrder) {
   window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
   upsertCustomerFromWorkOrder(order);
   window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT, { detail: order }));
+  void syncWorkOrderToCloud(order).then((result) => {
+    if (!result.ok && !result.skipped) console.warn("Ibby cloud work-order sync failed", result.reason);
+  });
 }
 
 export function customerRecordIdFromContact(email: string, phone: string, name: string) {

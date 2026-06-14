@@ -6,6 +6,7 @@ import { CalendarClock, Car, Download, FileText, Plus, ShieldCheck } from "lucid
 
 import { agreementSummaries, partsReturnOptions } from "@/lib/agreements";
 import { timeline } from "@/lib/data";
+import { AuthPanel } from "@/components/auth-panel";
 import { CUSTOMER_RECORDS_EVENT, customerRecordIdFromContact, getServiceReminders, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, readPrototypeWorkOrders, WORK_ORDERS_EVENT } from "@/lib/local-store";
 
 export function CustomerAccount() {
@@ -121,6 +122,8 @@ export function CustomerAccount() {
 
   return (
     <div className="account-page">
+      <AuthPanel />
+
       <section className="account-header">
         {selectedCustomer?.profileImage ? <img className="profile-image-preview account-profile-image" src={selectedCustomer.profileImage} alt={`${selectedCustomer.name} profile`} /> : null}
         <div>
