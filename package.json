@@ -19,6 +19,7 @@
     "verify:brand-service": "node scripts/verify-brand-service-wizard.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.468.0",
     "next": "^15.5.6",
