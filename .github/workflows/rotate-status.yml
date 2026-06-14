@@ -2,68 +2,60 @@ name: Rotate GitHub Status
 
 on:
   schedule:
-  # Default rotation every 30 minutes
-  - cron: "*/30 * * * *"
-  
-  # Morning rotation (2:24 AM - 6:30 AM EST)
-  - cron: "*/15 6-11 * * *"
-  
-  # Morning startup message (2:20 AM EST)
-  - cron: "20 6 * * *"
-  
-  # Evening wrap-up message (4:20 PM EST)
-  - cron: "20 21 * * *"
-  
-  # Night mode (11:30 PM - 1:00 AM EST)
-  - cron: "*/30 23,0,1 * * *"
+    # Default rotation every 30 minutes
+    - cron: "*/30 * * * *"
+
+    # Morning rotation (4:24–6:30am local → 09:24–11:30 UTC)
+    - cron: "*/15 9-11 * * *"
+
+    # Morning startup message (local → 09:20 UTC)
+    - cron: "20 9 * * *"
+
+    # Evening wrap-up message (local → 21:20 UTC)
+    - cron: "20 21 * * *"
+
+    # Night mode every 30 min after 11:30 PM (local → 04:30–06:00 UTC)
+    - cron: "*/30 4-6 * * *"
 
 jobs:
   update-status:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Debug - Show current time
-        run: |
-          echo "UTC time: $(date -u '+%Y-%m-%d %H:%M:%S')"
-          echo "Local time: $(date '+%Y-%m-%d %H:%M:%S %Z')"
-
       - name: Determine current mode (evening / morning / night / default)
         id: mode
         run: |
-          # Convert UTC to Eastern Time (EST/EDT)
-          # Use TZ environment variable to handle daylight saving automatically
-          HOUR=$(TZ='America/New_York' date +'%H')
-          MIN=$(TZ='America/New_York' date +'%M')
-    
-          echo "Eastern Time: $HOUR:$MIN"
-    
-          # 02:20 EST (morning startup)
-          if [[ "$HOUR" == "02" && "$MIN" == "20" ]]; then
+          HOUR=$(date -u +%H)
+          MIN=$(date -u +%M)
+          SEC=$(date -u +%S)
+
+          # End mode triggers EXACTLY 09:20 or 21:20 UTC
+          if [[ "$HOUR" == "21" && "$MIN" == "20" ]]; then
+            echo "mode=end" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Morning mode: 09:24–11:30 UTC
+          if (( (HOUR==9 && MIN>=24) || (HOUR==10) || (HOUR==11 && MIN<=30) )); then
             echo "mode=morning" >> $GITHUB_OUTPUT
             exit 0
           fi
-    
-          # Morning mode: 2:24 AM - 6:30 AM EST
-          if (( (HOUR==2 && MIN>=24) || (HOUR==3) || (HOUR==4) || (HOUR==5) || (HOUR==6 && MIN<=30) )); then
-            echo "mode=morning" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-    
-          # Night mode: 11:30 PM - 1:00 AM EST
-          if (( (HOUR==23 && MIN>=30) || (HOUR==0) )); then
+
+          # Night mode: After 11:30 PM local → 04:30–06:00 UTC
+          if (( (HOUR==4 && MIN>=30) || (HOUR==5) || (HOUR==6 && MIN<=0) )); then
             echo "mode=night" >> $GITHUB_OUTPUT
             exit 0
           fi
-    
+
+          # Default mode otherwise
           echo "mode=default" >> $GITHUB_OUTPUT
-    
+
       - name: Select status
         id: status
         run: |
           MODE="${{ steps.mode.outputs.mode }}"
-          echo "Selected mode: $MODE"
-    
-          if [[ "$MODE" == "evening" ]]; then
+
+          if [[ "$MODE" == "end" ]]; then
             OPTIONS=(
               "🌇 Wrapping Up the Last Job"
               "🧾 Finishing Today's Work Orders"
@@ -71,7 +63,7 @@ jobs:
               "🔧 One More Repair Before Home"
               "⚙️ Shop Closed, Phone Still On"
             )
-    
+
           elif [[ "$MODE" == "morning" ]]; then
             OPTIONS=(
               "☕ First Coffee, First Call"
@@ -83,7 +75,7 @@ jobs:
               "🛠️ Mobile Mechanic Mode Activated"
               "🚗 Starting the Day Under the Hood"
             )
-    
+
           elif [[ "$MODE" == "night" ]]; then
             OPTIONS=(
               "🌙 Off Duty Until Morning"
@@ -94,7 +86,7 @@ jobs:
               "💤 Available Again at Sunrise"
               "🌌 Emergency Calls Tomorrow"
             )
-    
+
           else
             OPTIONS=(
               "🔧 Mobile Auto Repair On-Site"
@@ -117,32 +109,22 @@ jobs:
               "🚗 Helping Drivers Get Back On The Road"
             )
           fi
-    
+
           RAND=$((RANDOM % ${#OPTIONS[@]}))
           SELECTED="${OPTIONS[$RAND]}"
-          echo "Selected status: $SELECTED"
-    
+
           echo "selected=$SELECTED" >> $GITHUB_OUTPUT
-    
+
       - name: Update GitHub Status
         env:
           GITHUB_TOKEN: ${{ secrets.STATUS_TOKEN }}
           RAW: ${{ steps.status.outputs.selected }}
         run: |
-          if [[ -z "$GITHUB_TOKEN" ]]; then
-            echo "ERROR: STATUS_TOKEN is not set in secrets"
-            exit 1
-          fi
-          
-          EMOJI=$(echo "$RAW" | cut -d' ' -f1)
-          MESSAGE=$(echo "$RAW" | cut -d' ' -f2- | xargs)
-          
-          echo "Updating status:"
-          echo "  Emoji: $EMOJI"
-          echo "  Message: $MESSAGE"
-    
+          EMOJI=$(echo "$RAW" | awk '{print $1}')
+          MESSAGE=$(echo "$RAW" | awk '{$1=""; print $0}')
+
           gh api graphql -f query='
-            mutation ($emoji: String!, $message: String!) {
+            mutation ($emoji: String, $message: String) {
               changeUserStatus(input: {
                 emoji: $emoji,
                 message: $message
