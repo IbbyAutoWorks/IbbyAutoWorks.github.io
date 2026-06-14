@@ -134,15 +134,15 @@ jobs:
             exit 1
           fi
           
-          EMOJI=$(echo "$RAW" | awk '{print $1}')
-          MESSAGE=$(echo "$RAW" | awk '{$1=""; print $0}' | xargs)
+          EMOJI=$(echo "$RAW" | cut -d' ' -f1)
+          MESSAGE=$(echo "$RAW" | cut -d' ' -f2- | xargs)
           
           echo "Updating status:"
           echo "  Emoji: $EMOJI"
           echo "  Message: $MESSAGE"
     
           gh api graphql -f query='
-            mutation ($emoji: String, $message: String) {
+            mutation ($emoji: String!, $message: String!) {
               changeUserStatus(input: {
                 emoji: $emoji,
                 message: $message
