@@ -4131,3 +4131,85 @@ h2 {
     text-align: left;
   }
 }
+
+
+/* Payment settings and checkout option cards. */
+.payment-method-grid .payment-toggle-row span {
+  display: grid;
+  gap: 3px;
+}
+
+.payment-toggle-row strong {
+  color: var(--ink);
+}
+
+.payment-toggle-row small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.payment-plan-preview-grid,
+.payment-method-pill-grid {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.payment-plan-preview-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.payment-plan-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbfc;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.payment-plan-card span {
+  color: var(--red-dark);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.payment-plan-card p,
+.payment-plan-card small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.payment-method-pill-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.payment-method-pill-grid span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 900;
+  padding: 9px 12px;
+  text-align: center;
+}
+
+.payment-boundary-note {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: #fffaf0;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.request-review-panel .payment-options-panel {
+  margin-bottom: 14px;
+}

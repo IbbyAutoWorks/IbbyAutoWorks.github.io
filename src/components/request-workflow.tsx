@@ -10,6 +10,7 @@ import { buildPrototypeInspection, buildPrototypeParts, CUSTOMER_RECORDS_EVENT, 
 import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/lib/schedule";
 import { decodeVinWithNhtsa, fallbackVehicleSpec, findVehicleSpec, formatVehicle, vehicleCatalog, type VehicleSpec } from "@/lib/vehicles";
 import { ServiceSelector } from "@/components/service-selector";
+import { CustomerPaymentOptions } from "@/components/customer-payment-options";
 
 type Tier = "low" | "mid" | "high";
 
@@ -744,6 +745,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <FileReviewIcon />
           </div>
           <p className="legal-note">Review each section before submitting. The admin dashboard will receive this as a new work order and link it to matching customer history when the contact and vehicle details match.</p>
+          {!isAdminMode ? <CustomerPaymentOptions estimate={selectedServices.length ? `$${estimate}+` : "pending service selection"} /> : null}
           <div className="request-review-grid">
             {reviewGroups.map((group) => (
               <div className="request-review-card" key={group.title}>
