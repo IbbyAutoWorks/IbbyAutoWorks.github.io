@@ -6,14 +6,16 @@ import { Menu, Search, Settings, X } from "lucide-react";
 import { BRANDING_EVENT, logoSrcForBranding, readSavedBranding } from "@/lib/branding";
 import { nav } from "@/lib/data";
 import { BurnoutNavLink } from "@/components/route-burnout-loader";
+import { SiteFooter } from "@/components/site-footer";
 
-export function AppShell({ children, active }: { children: React.ReactNode; active: "home" | "request" | "account" | "customer-settings" | "admin" | "service" | "settings" }) {
+export function AppShell({ children, active }: { children: React.ReactNode; active: "home" | "request" | "account" | "customer-settings" | "admin" | "service" | "service-settings" | "settings" }) {
   // Shell state: controls the mobile sidebar and decides which settings route is active.
   const [menuOpen, setMenuOpen] = useState(false);
   const [brandLogoSrc, setBrandLogoSrc] = useState("/images/ibby-auto-emblem.png");
   const customerSettingsActive = active === "account" || active === "customer-settings";
-  const settingsHref = customerSettingsActive ? "/account/settings" : "/admin/settings";
-  const settingsLabel = customerSettingsActive ? "Customer settings" : "Admin settings";
+  const serviceSettingsActive = active === "service" || active === "service-settings";
+  const settingsHref = customerSettingsActive ? "/account/settings" : serviceSettingsActive ? "/service/settings" : "/admin/settings";
+  const settingsLabel = customerSettingsActive ? "Customer settings" : serviceSettingsActive ? "Service settings" : "Admin settings";
 
   useEffect(() => {
     function syncBranding() {
@@ -67,18 +69,7 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
           </BurnoutNavLink>
         </header>
         {children}
-        <footer className="site-footer" aria-label="Ibby Auto Works legal and support links">
-          <div>
-            <strong>Ibby Auto Works™</strong>
-            <span>© 2026 Ibby Auto Works™. All rights reserved.</span>
-          </div>
-          <nav aria-label="Footer links">
-            <a href="https://github.com/IbbyAutoWorks/IbbyAutoWorks/blob/main/docs/privacy-policy.md" target="_blank" rel="noreferrer">Privacy Policy</a>
-            <a href="https://github.com/IbbyAutoWorks/IbbyAutoWorks/blob/main/docs/terms-of-service.md" target="_blank" rel="noreferrer">Terms of Service</a>
-            <a href="https://github.com/IbbyAutoWorks/IbbyAutoWorks/issues" target="_blank" rel="noreferrer">Issues</a>
-            <a href="https://github.com/IbbyAutoWorks/IbbyAutoWorks/issues" target="_blank" rel="noreferrer">Request Feature</a>
-          </nav>
-        </footer>
+        <SiteFooter context={active === "settings" ? "admin-settings" : active} />
       </main>
     </div>
   );

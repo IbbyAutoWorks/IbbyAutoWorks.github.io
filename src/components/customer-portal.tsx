@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Camera, LogIn, ShieldCheck, Star, UserPlus } from "lucide-react";
 
 import { CUSTOMER_RECORDS_EVENT, readPrototypeCustomerRecords, type PrototypeCustomerRecord } from "@/lib/local-store";
+import { SiteFooter } from "@/components/site-footer";
 
 const fallbackReviews = [
   { name: "Local driver", review: "Clear updates, clean records, and the work order was easy to follow.", reviewRating: 5 },
@@ -90,11 +91,7 @@ export function CustomerPortal() {
         </div>
       </section>
 
-      {/* Public footer: lightweight brand/legal text for the prototype. */}
-      <footer className="public-footer">
-        <strong>Ibby Auto Works™</strong>
-        <span>Mobile repair and service. Prototype app preview. (c) 2026 Ibby Auto Works™.</span>
-      </footer>
+<SiteFooter context="home" />
     </main>
   );
 }
