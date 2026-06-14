@@ -65,3 +65,49 @@ Planned payment products/packages:
 - Tire Flex Plan: tire hold/order deposit and staged tire payment.
 - Roadside Assist Plan: future local roadside service package.
 - Multi-job bundle: package multiple approved jobs with staged payments.
+
+
+## Admin integration hub and plan manager
+
+The admin settings page includes an Integration Hub with quick links to Stripe, Supabase, Google Drive, Google Cloud, PayPal, and Square dashboards. It also includes a Stripe/Supabase payment-plan manager.
+
+Plan-manager security model for the static app:
+
+- Browser reads active plans from Supabase through the `ibby-payments` Edge Function.
+- Admin writes require the private `IBBY_ADMIN_API_TOKEN`, pasted into the admin portal and stored only in browser session storage.
+- The Edge Function uses server-only Stripe and Supabase keys to create/update Stripe products, prices, and payment links.
+- “Delete” in the UI archives/deactivates plans instead of hard-deleting Stripe objects.
+
+Production upgrade path:
+
+- Replace the temporary admin token with Supabase Auth role checks.
+- Add Stripe webhook signing secret and verify `checkout.session.completed`, `payment_intent.succeeded`, `invoice.paid`, and subscription lifecycle events.
+- Link paid/deposit status back to work orders and customer records.
+
+
+## Coupons, Maine tax defaults, and year-end records
+
+The admin settings page now includes a coupon/tax manager seeded with:
+
+- Free pre-inspection (`PRECHECK`)
+- Free diagnostic with approved repair (`DIAGFREE`)
+- Discounted oil change (`OIL15`)
+- Free tire rotation with full tire set purchase (`ROTATEFREE`)
+- First-time customer credit (`WELCOME10`)
+- Roadside member priority check (`ROADREADY`)
+- Multi-job bundle saver (`BUNDLE10`)
+
+Maine operating tax defaults:
+
+- State sales tax: 5.5%
+- Local sales tax: 0%
+- Parts, repair/install labor, diagnostics, and shop supplies default to taxable for quoting/tracking.
+- Tire/disposal/environmental fees should be tracked separately when charged.
+
+Year-end tracking model:
+
+- `payment_events` records Stripe/payment income events.
+- `business_expense_records` stores expenses by date, vendor, category, amount, method, receipt URL, and notes.
+- The Edge Function can return a simple year-end income/expense/net summary grouped by expense category.
+
+This is an operating default and bookkeeping aid, not tax/legal advice. Confirm final filing treatment with Maine Revenue Services or an accountant before production/live filings.

@@ -167,7 +167,7 @@ export function AdminDashboard() {
           <h1>Admin dashboard for jobs, inspections, parts, messages, routing, and editable shop settings.</h1>
         </div>
         <div className="admin-actions">
-          <button className="secondary-button"><Settings2 size={16} /> Edit app settings</button>
+          <Link className="secondary-button" href="/admin/settings"><Settings2 size={16} /> Edit app settings</Link>
           <Link className="primary-button" href="/admin/new"><Plus size={16} /> New work order</Link>
         </div>
       </section>

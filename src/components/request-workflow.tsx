@@ -11,6 +11,7 @@ import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/l
 import { decodeVinWithNhtsa, fallbackVehicleSpec, findVehicleSpec, formatVehicle, vehicleCatalog, type VehicleSpec } from "@/lib/vehicles";
 import { ServiceSelector } from "@/components/service-selector";
 import { CustomerPaymentOptions } from "@/components/customer-payment-options";
+import { CustomerPromoOffers } from "@/components/customer-promo-offers";
 
 type Tier = "low" | "mid" | "high";
 

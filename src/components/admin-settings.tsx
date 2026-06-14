@@ -15,6 +15,9 @@ import { inspectionTemplates } from "@/lib/data";
 import { appointmentWindows, businessSchedule } from "@/lib/schedule";
 import { readSavedTheme, saveTheme, ThemeRoleColors } from "@/lib/theme";
 import { PaymentSettingsPanel } from "@/components/payment-settings";
+import { IntegrationHub } from "@/components/integration-hub";
+import { PaymentPlanManager } from "@/components/payment-plan-manager";
+import { CouponTaxManager } from "@/components/coupon-tax-manager";
 
 const brandPalettes = [
   { name: "Ibby Red", colors: ["#b7192a", "#111418", "#ffffff", "#d6a11f"], note: "Default red, white, black, gold" },
@@ -145,7 +148,10 @@ export function AdminSettings() {
       </section>
 
       <section className="settings-stack">
-        <PaymentSettingsPanel />
+        <IntegrationHub />
+      <PaymentPlanManager />
+      <CouponTaxManager />
+      <PaymentSettingsPanel />
 
         <details className="panel settings-accordion" open>
           <summary><span><Crown size={16} /> Logo and browser icon</span><ChevronDown size={16} /></summary>
