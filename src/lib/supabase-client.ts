@@ -1,7 +1,11 @@
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+function cleanPublicEnv(value?: string) {
+  return value?.trim().replace(/^['"]+|['"]+$/g, "");
+}
+
+const supabaseUrl = cleanPublicEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const supabasePublishableKey = cleanPublicEnv(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 
 let browserClient: SupabaseClient | null = null;
 

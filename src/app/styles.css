@@ -4403,3 +4403,26 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+
+
+.auth-required-card {
+  border: 1px solid rgba(183, 25, 42, 0.35);
+  background: #fff8f8;
+}
+
+.admin-locked-page {
+  display: grid;
+  gap: 14px;
+}
+
+.expense-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.expense-list {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+}

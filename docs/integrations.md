@@ -111,3 +111,24 @@ Year-end tracking model:
 - The Edge Function can return a simple year-end income/expense/net summary grouped by expense category.
 
 This is an operating default and bookkeeping aid, not tax/legal advice. Confirm final filing treatment with Maine Revenue Services or an accountant before production/live filings.
+
+
+## Admin credential and secret locations
+
+Current admin sign-in is a Supabase Auth user:
+
+- Username accepted by the app: `IbbyAdmin`
+- Auth email stored in Supabase: `ibbyadmin@ibbyautoworks.local`
+- Password is stored only in Supabase Auth's password system, not plaintext in the repository.
+
+Local/private operational secrets remain outside git:
+
+- Garden profile env: `/home/ubuntu/.hermes/profiles/ibby/.env`
+- NukeBox app local env: `C:\Users\CAK3D\IbbyAuto-next-web-run\.env.local`
+- Supabase Edge Function secrets: Supabase dashboard project `cqdlqdzmnylywctlsklp` → Edge Functions/Secrets
+
+Customers can create/sign into normal Supabase accounts. The app hides Admin, Service, and Settings navigation from non-admin sessions, and admin/service pages require the IbbyAdmin session client-side.
+
+## Stripe coupon sync
+
+Promotion offers are stored/editable in Supabase and can be synced into Stripe as Coupons + Promotion Codes. Checkout sessions/payment links allow promotion codes so Stripe-hosted checkout can apply the codes (`PRECHECK`, `DIAGFREE`, `OIL15`, `ROTATEFREE`, etc.).

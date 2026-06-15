@@ -42,9 +42,33 @@ function requireEnv(name: string) {
 const supabase = createClient(requireEnv("SUPABASE_URL"), Deno.env.get("IB_SUPABASE_SECRET_KEY") || Deno.env.get("SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
 const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_TEST") || "";
 const adminToken = Deno.env.get("IBBY_ADMIN_API_TOKEN") || "";
+const adminUsername = (Deno.env.get("IBBY_ADMIN_USERNAME") || "IbbyAdmin").toLowerCase();
+const adminEmail = (Deno.env.get("IBBY_ADMIN_EMAIL") || "ibbyadmin@ibbyautoworks.local").toLowerCase();
 
-function isAdmin(req: Request) {
-  return Boolean(adminToken && req.headers.get("x-ibby-admin-token") === adminToken);
+function bearerToken(req: Request) {
+  const value = req.headers.get("authorization") || "";
+  return value.toLowerCase().startsWith("bearer ") ? value.slice(7).trim() : "";
+}
+
+async function getSessionUser(req: Request) {
+  const token = bearerToken(req);
+  if (!token) return null;
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error) return null;
+  return data.user ?? null;
+}
+
+async function isAdmin(req: Request) {
+  if (adminToken && req.headers.get("x-ibby-admin-token") === adminToken) return true;
+  const user = await getSessionUser(req);
+  const email = (user?.email || "").toLowerCase();
+  const username = String(user?.user_metadata?.username || user?.user_metadata?.display_name || "").toLowerCase();
+  if (email === adminEmail || username === adminUsername || user?.user_metadata?.role === "admin") return true;
+  if (user?.id) {
+    const { data } = await supabase.from("admin_profiles").select("active,role").eq("user_id", user.id).maybeSingle();
+    if (data?.active && data?.role === "admin") return true;
+  }
+  return false;
 }
 
 function slugify(input: string) {
@@ -114,6 +138,7 @@ async function syncStripeObjects(plan: PaymentPlan) {
     "after_completion[type]": "hosted_confirmation",
     "after_completion[hosted_confirmation][custom_message]": "Payment received in the Ibby Auto Works checkout. Your work order will update after payment review."
   };
+  linkParams["allow_promotion_codes"] = true;
   if (plan.mode === "subscription") {
     linkParams["subscription_data[metadata][app]"] = "ibby-auto-works";
     linkParams["subscription_data[metadata][slug]"] = plan.slug;
@@ -179,13 +204,65 @@ async function getYearEndSummary(year: number) {
   return { year, income_cents, expense_cents, net_cents: income_cents - expense_cents, payment_count: payments?.length ?? 0, expense_count: expenses?.length ?? 0, expenses_by_category };
 }
 
+
+async function syncStripePromotion(promotion: Record<string, unknown>) {
+  const code = String(promotion.code || promotion.stripe_promotion_code || promotion.slug || "").toUpperCase();
+  const title = String(promotion.title || promotion.slug || code);
+  const duration = "once";
+  let couponId = String(promotion.stripe_coupon_id || "");
+  if (!couponId) {
+    const params: Record<string, string | number | boolean> = {
+      name: title,
+      duration,
+      "metadata[app]": "ibby-auto-works",
+      "metadata[slug]": String(promotion.slug || ""),
+      "metadata[offer_type]": String(promotion.offer_type || "")
+    };
+    const amount = Number(promotion.discount_cents || 0);
+    const percent = Number(promotion.discount_percent || 0);
+    if (amount > 0) {
+      params.amount_off = Math.round(amount);
+      params.currency = "usd";
+    } else {
+      params.percent_off = Math.max(1, Math.min(100, percent || 100));
+    }
+    const coupon = await stripePost("/coupons", params);
+    couponId = coupon.id;
+  }
+  let promoCodeId = String(promotion.stripe_promotion_code_id || "");
+  if (!promoCodeId && code) {
+    const promoCode = await stripePost("/promotion_codes", {
+      "promotion[type]": "coupon",
+      "promotion[coupon]": couponId,
+      code,
+      active: promotion.active !== false,
+      "metadata[app]": "ibby-auto-works",
+      "metadata[slug]": String(promotion.slug || "")
+    });
+    promoCodeId = promoCode.id;
+  } else if (promoCodeId) {
+    await stripePost(`/promotion_codes/${promoCodeId}`, { active: promotion.active !== false });
+  }
+  return { ...promotion, stripe_coupon_id: couponId, stripe_promotion_code_id: promoCodeId, stripe_promotion_code: code };
+}
+
+async function listExpenses(year?: number) {
+  let query = supabase.from("business_expense_records").select("*").order("expense_date", { ascending: false }).limit(500);
+  if (year) {
+    query = query.gte("expense_date", `${year}-01-01`).lt("expense_date", `${year + 1}-01-01`);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return data ?? [];
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const url = new URL(req.url);
     if (req.method === "GET") {
-      const admin = isAdmin(req);
+      const admin = await isAdmin(req);
       return json({ ok: true, admin, plans: await listPlans(admin) });
     }
 
@@ -193,7 +270,7 @@ serve(async (req) => {
     const action = body.action || "list";
 
     if (action === "list") {
-      const admin = isAdmin(req);
+      const admin = await isAdmin(req);
       return json({ ok: true, admin, plans: await listPlans(admin) });
     }
 
@@ -214,14 +291,15 @@ serve(async (req) => {
         "line_items[0][quantity]": 1,
         "metadata[app]": "ibby-auto-works",
         "metadata[slug]": plan.slug,
-        "metadata[work_order_id]": body.work_order_id || "manual"
+        "metadata[work_order_id]": body.work_order_id || "manual",
+        allow_promotion_codes: true
       };
       if (body.customer_email) params.customer_email = body.customer_email;
       const session = await stripePost("/checkout/sessions", params);
       return json({ ok: true, checkout_url: session.url, session_id: session.id, plan });
     }
 
-    if (!isAdmin(req)) return json({ ok: false, error: "Admin token required" }, { status: 401 });
+    if (!(await isAdmin(req))) return json({ ok: false, error: "Admin credentials required" }, { status: 401 });
 
     if (action === "upsert_plan") {
       const incoming = body.plan ?? {};
@@ -261,7 +339,7 @@ serve(async (req) => {
     }
 
     if (action === "list_promotions") {
-      const admin = isAdmin(req);
+      const admin = await isAdmin(req);
       return json({ ok: true, admin, promotions: await listPromotions(admin), tax_settings: await getTaxSettings() });
     }
 
@@ -282,13 +360,16 @@ serve(async (req) => {
         taxable_note: String(incoming.taxable_note || "Discount should reduce taxable receipt when applied before payment; verify treatment with accountant/Maine Revenue Services."),
         metadata: incoming.metadata ?? {}
       };
-      const { data, error } = await supabase.from("promotion_offers").upsert(promotion, { onConflict: "slug" }).select("*").single();
+      const synced = await syncStripePromotion(promotion);
+      const { data, error } = await supabase.from("promotion_offers").upsert(synced, { onConflict: "slug" }).select("*").single();
       if (error) throw error;
       return json({ ok: true, promotion: data });
     }
 
     if (action === "archive_promotion") {
       const slug = slugify(body.slug || "");
+      const { data: existing } = await supabase.from("promotion_offers").select("*").eq("slug", slug).single();
+      if (existing?.stripe_promotion_code_id) await stripePost(`/promotion_codes/${existing.stripe_promotion_code_id}`, { active: false });
       const { data, error } = await supabase.from("promotion_offers").update({ active: false }).eq("slug", slug).select("*").single();
       if (error) throw error;
       return json({ ok: true, archived: true, promotion: data });
@@ -317,6 +398,46 @@ serve(async (req) => {
     if (action === "year_end_summary") {
       const year = Number.parseInt(String(body.year || new Date().getUTCFullYear()), 10);
       return json({ ok: true, summary: await getYearEndSummary(year), tax_settings: await getTaxSettings() });
+    }
+
+    if (action === "sync_all_promotions") {
+      const promotions = await listPromotions(true);
+      const synced = [];
+      for (const promotion of promotions) {
+        const next = await syncStripePromotion(promotion);
+        const { data, error } = await supabase.from("promotion_offers").upsert(next, { onConflict: "slug" }).select("*").single();
+        if (error) throw error;
+        synced.push(data);
+      }
+      return json({ ok: true, promotions: synced });
+    }
+
+    if (action === "list_expenses") {
+      return json({ ok: true, expenses: await listExpenses(Number.parseInt(String(body.year || "0"), 10) || undefined) });
+    }
+
+    if (action === "upsert_expense") {
+      const incoming = body.expense ?? {};
+      const expense = {
+        id: incoming.id || undefined,
+        expense_date: String(incoming.expense_date || new Date().toISOString().slice(0, 10)),
+        vendor: String(incoming.vendor || ""),
+        category: String(incoming.category || "supplies"),
+        description: String(incoming.description || ""),
+        amount_cents: Math.max(0, Number.parseInt(String(incoming.amount_cents ?? 0), 10)),
+        payment_method: String(incoming.payment_method || ""),
+        receipt_url: incoming.receipt_url ? String(incoming.receipt_url) : null,
+        notes: String(incoming.notes || "")
+      };
+      const { data, error } = await supabase.from("business_expense_records").upsert(expense).select("*").single();
+      if (error) throw error;
+      return json({ ok: true, expense: data });
+    }
+
+    if (action === "delete_expense") {
+      const { error } = await supabase.from("business_expense_records").delete().eq("id", String(body.id || ""));
+      if (error) throw error;
+      return json({ ok: true, deleted: true });
     }
 
     return json({ ok: false, error: "Unknown action" }, { status: 400 });

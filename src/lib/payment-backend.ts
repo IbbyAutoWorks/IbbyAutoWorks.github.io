@@ -76,6 +76,9 @@ export type ManagedPromotionOffer = {
   code?: string | null;
   active: boolean;
   taxable_note: string;
+  stripe_coupon_id?: string | null;
+  stripe_promotion_code_id?: string | null;
+  stripe_promotion_code?: string | null;
 };
 
 export type MaineTaxSettings = {
@@ -115,4 +118,36 @@ export async function saveMaineTaxSettings(tax_settings: MaineTaxSettings, admin
 export async function getYearEndSummary(year: number, adminToken: string) {
   const data = await paymentRequest({ action: "year_end_summary", year }, adminToken);
   return data.summary;
+}
+
+
+export async function syncAllPromotions(adminToken: string): Promise<ManagedPromotionOffer[]> {
+  const data = await paymentRequest({ action: "sync_all_promotions" }, adminToken);
+  return data.promotions ?? [];
+}
+
+export type BusinessExpenseRecord = {
+  id?: string;
+  expense_date: string;
+  vendor: string;
+  category: string;
+  description: string;
+  amount_cents: number;
+  payment_method: string;
+  receipt_url?: string | null;
+  notes: string;
+};
+
+export async function listExpenses(year: number, adminToken: string): Promise<BusinessExpenseRecord[]> {
+  const data = await paymentRequest({ action: "list_expenses", year }, adminToken);
+  return data.expenses ?? [];
+}
+
+export async function saveExpense(expense: BusinessExpenseRecord, adminToken: string): Promise<BusinessExpenseRecord> {
+  const data = await paymentRequest({ action: "upsert_expense", expense }, adminToken);
+  return data.expense;
+}
+
+export async function deleteExpense(id: string, adminToken: string) {
+  await paymentRequest({ action: "delete_expense", id }, adminToken);
 }

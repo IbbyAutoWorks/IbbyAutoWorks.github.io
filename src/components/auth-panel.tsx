@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { KeyRound, LogOut, UserPlus } from "lucide-react";
 
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase-client";
+import { loginIdentifierToEmail } from "@/lib/auth-roles";
 
 export function AuthPanel() {
   const [email, setEmail] = useState("");
@@ -35,7 +36,8 @@ export function AuthPanel() {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
     setStatus("Creating account...");
-    const { error } = await supabase.auth.signUp({ email, password, options: { data: { display_name: email.split("@")[0] } } });
+    const authEmail = loginIdentifierToEmail(email);
+    const { error } = await supabase.auth.signUp({ email: authEmail, password, options: { data: { display_name: authEmail.split("@")[0] } } });
     setStatus(error ? error.message : "Signup started. Check email if confirmation is required, then sign in.");
   }
 
@@ -43,7 +45,7 @@ export function AuthPanel() {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
     setStatus("Signing in...");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: loginIdentifierToEmail(email), password });
     setStatus(error ? error.message : "Signed in. Future requests can sync to Supabase.");
   }
 
@@ -67,7 +69,7 @@ export function AuthPanel() {
         <button className="secondary-button" onClick={signOut}><LogOut size={16} /> Sign out</button>
       ) : (
         <div className="customer-edit-grid auth-grid">
-          <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
+          <label><span>Email or admin username</span><input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com or IbbyAdmin" /></label>
           <label><span>Password</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="8+ characters" /></label>
           <div className="hero-actions">
             <button className="primary-button" onClick={signIn}><KeyRound size={16} /> Sign in</button>
