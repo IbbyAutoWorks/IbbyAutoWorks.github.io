@@ -1,5 +1,5 @@
 import { defaultAgreementAcceptance, type AgreementAcceptance } from "@/lib/agreements";
-import { buildPartSupplierCandidates, type PartSupplierCandidate } from "@/lib/parts";
+import { buildPartSupplierCandidates, estimateServiceParts, type PartSupplierCandidate, type PriceRange } from "@/lib/parts";
 import { fallbackVehicleSpec, findVehicleSpec, type VehicleSpec } from "@/lib/vehicles";
 import { syncCustomerRecordToCloud, syncWorkOrderToCloud } from "@/lib/cloud-sync";
 
@@ -12,6 +12,10 @@ export type PrototypePartQuote = {
   supplierCandidates: PartSupplierCandidate[];
   selectedSupplier: string;
   pickupStatus: "Not needed" | "Verify price" | "Order required" | "Ready for pickup" | "Picked up" | "Delivered";
+  qty?: number;
+  priceRange?: PriceRange;
+  lookupQuery?: string;
+  laborHours?: number;
 };
 
 export type PrototypeInspectionItem = {
@@ -286,71 +290,26 @@ export function getServiceReminders(order: PrototypeWorkOrder) {
   return reminders;
 }
 
-export function buildPrototypeParts(serviceInput: string | string[], tier: PrototypeWorkOrder["tier"]): PrototypePartQuote[] {
+export function buildPrototypeParts(serviceInput: string | string[], tier: PrototypeWorkOrder["tier"] = "mid"): PrototypePartQuote[] {
   const services = Array.isArray(serviceInput) ? serviceInput : [serviceInput];
-  const supplierByTier: Record<PrototypeWorkOrder["tier"], string> = {
-    low: "RockAuto / local value line",
-    mid: "NAPA / O'Reilly availability",
-    high: "OEM / premium supplier check"
-  };
 
-  const priceBands: Record<PrototypeWorkOrder["tier"], Record<string, string>> = {
-    low: {
-      "Oil service": "$42+",
-      "Engine oil and filter change": "$42+",
-      "Front brake pads and rotors": "$165+",
-      "Rear brake pads and rotors": "$165+",
-      "Tire replacement": "$360+",
-      "Tire rotation": "$25+"
-    },
-    mid: {
-      "Oil service": "$68+",
-      "Engine oil and filter change": "$68+",
-      "Front brake pads and rotors": "$285+",
-      "Rear brake pads and rotors": "$285+",
-      "Tire replacement": "$590+",
-      "Tire rotation": "$45+"
-    },
-    high: {
-      "Oil service": "$96+",
-      "Engine oil and filter change": "$96+",
-      "Front brake pads and rotors": "$430+",
-      "Rear brake pads and rotors": "$430+",
-      "Tire replacement": "$840+",
-      "Tire rotation": "$65+"
-    }
-  };
-
-  const partsByService: Record<string, string[]> = {
-    "Oil service": ["Engine oil", "Oil filter", "Drain plug washer"],
-    "Engine oil and filter change": ["Engine oil", "Oil filter", "Drain plug washer"],
-    "Front brake pads and rotors": ["Front brake pads", "Front brake rotors", "Front brake hardware kit"],
-    "Rear brake pads and rotors": ["Rear brake pads", "Rear brake rotors", "Rear brake hardware kit"],
-    "Tire replacement": ["Tires", "Valve stems", "Balance and disposal"],
-    "Tire rotation": ["Lug torque check", "Tire pressure set"],
-    "Single tire repair": ["Tire puncture inspection", "Patch/plug eligibility", "Tire pressure set"],
-    "Battery test and replacement": ["Battery", "Terminal protectant"],
-    "Engine air filter": ["Engine air filter"],
-    "Cabin air filter": ["Cabin air filter"],
-    "Check engine light diagnostic": ["Diagnostic scan", "Manual parts lookup if repair approved"],
-    "Coolant flush": ["Coolant", "Flush chemical"],
-    "Transmission service": ["Transmission fluid", "Filter/pan gasket if applicable"],
-    "Maine inspection pre-check": ["Inspection checklist"],
-    "Suspension noise inspection": ["Manual suspension parts lookup"]
-  };
-
-  return services.flatMap((service) => (
-    (partsByService[service] ?? ["Manual parts lookup"]).map((part, index) => ({
-      part: services.length > 1 ? `${service}: ${part}` : part,
-      supplier: supplierByTier[tier],
+  return services.flatMap((service) => {
+    const estimate = estimateServiceParts(service);
+    return estimate.parts.map((part, index) => ({
+      part: services.length > 1 ? `${service}: ${part.name}` : part.name,
+      supplier: "IAW estimate + live supplier lookup",
       band: tier,
-      status: index === 0 ? "Ready to confirm" : "Needs supplier check",
-      price: index === 0 ? priceBands[tier][service] ?? "Manual" : "Manual",
-      supplierCandidates: buildPartSupplierCandidates(part, tier),
-      selectedSupplier: supplierByTier[tier],
-      pickupStatus: index === 0 ? "Verify price" : "Not needed"
-    }))
-  ));
+      status: part.status === "selected" ? "Ready to confirm" : "Possible add-on",
+      price: part.totalPrice.min === part.totalPrice.max ? `$${part.totalPrice.min}` : `$${part.totalPrice.min} - $${part.totalPrice.max}`,
+      supplierCandidates: buildPartSupplierCandidates(part.name, tier),
+      selectedSupplier: "Verify live supplier",
+      pickupStatus: index === 0 ? "Verify price" : "Not needed",
+      qty: part.qty,
+      priceRange: part.totalPrice,
+      lookupQuery: part.lookupQuery,
+      laborHours: estimate.laborHours
+    }));
+  });
 }
 
 export function buildPrototypeInspection() {

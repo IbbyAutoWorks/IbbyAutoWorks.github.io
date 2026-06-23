@@ -14,7 +14,7 @@ const loaderCopy: Record<LoaderVariant, string> = {
   burnout: "Loading the next bay...",
   clipboard: "Writing up the request...",
   lift: "Raising the vehicle...",
-  parts: "Checking parts grades...",
+  parts: "Calculating parts and labor...",
   calendar: "Finding the appointment window...",
   preferences: "Setting service preferences...",
   signature: "Preparing agreements...",

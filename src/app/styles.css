@@ -4426,3 +4426,233 @@ h2 {
   gap: 5px;
   color: var(--muted);
 }
+
+
+/* IAW estimate builder */
+.estimate-builder-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+}
+
+.estimate-builder-title {
+  align-items: flex-start;
+}
+
+.part-search-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #f8fafb;
+  padding: 8px;
+}
+
+.part-search-row svg {
+  color: var(--muted);
+}
+
+.part-search-row input {
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  color: var(--graphite);
+  outline: none;
+  font-weight: 800;
+}
+
+.quick-part-chips,
+.estimate-part-button-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.quick-part-chips button,
+.estimate-part-button-grid button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--graphite);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.quick-part-chips button:disabled,
+.estimate-part-button-grid button.selected {
+  border-color: var(--red);
+  background: #fff1f3;
+  color: var(--red-dark);
+}
+
+.estimate-category-browser {
+  display: grid;
+  gap: 8px;
+}
+
+.estimate-parts-category {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #f8fafb;
+  padding: 9px;
+}
+
+.estimate-part-group {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.estimate-part-group > strong {
+  color: var(--graphite);
+  font-size: 13px;
+}
+
+.estimate-part-button-grid button {
+  border-radius: 7px;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.estimate-part-button-grid button small {
+  color: var(--muted);
+}
+
+.estimate-live-summary {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.85fr) minmax(0, 1.15fr);
+  gap: 10px;
+}
+
+.estimate-total-card {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  background: #161a20;
+  color: #fff;
+  padding: 16px;
+}
+
+.estimate-total-card span,
+.estimate-total-card small {
+  color: #c6ced7;
+}
+
+.estimate-total-card strong {
+  font-size: clamp(30px, 5vw, 46px);
+  line-height: 1;
+}
+
+.estimate-total-breakdown,
+.estimate-job-totals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.estimate-total-breakdown div,
+.estimate-job-totals div {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #f8fafb;
+  padding: 10px;
+  display: grid;
+  gap: 3px;
+}
+
+.estimate-total-breakdown span,
+.estimate-job-totals span,
+.estimate-job-head span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.estimate-job-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.estimate-job-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafb;
+  padding: 10px;
+}
+
+.estimate-job-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.estimate-job-head strong,
+.estimate-part-lines strong {
+  color: var(--graphite);
+}
+
+.estimate-part-lines {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.estimate-part-lines div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  padding: 8px;
+}
+
+.estimate-part-lines div.possible {
+  border-style: dashed;
+  background: #fffaf0;
+}
+
+.estimate-part-lines span {
+  color: var(--graphite);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.estimate-part-lines em {
+  margin-left: 7px;
+  color: var(--red-dark);
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .estimate-live-summary,
+  .estimate-total-breakdown,
+  .estimate-job-totals {
+    grid-template-columns: 1fr;
+  }
+
+  .part-search-row {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .part-search-row button {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}

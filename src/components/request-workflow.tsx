@@ -6,20 +6,13 @@ import { Bell, CalendarClock, Camera, Car, CheckCircle2, KeyRound, LocateFixed, 
 
 import { agreementSummaries, defaultAgreementAcceptance, hasRequiredAgreementAcceptance, partsReturnOptions, type AgreementId, type PartsReturnPreference } from "@/lib/agreements";
 import { serviceOptions, timeline } from "@/lib/data";
+import { estimateServices, formatPriceRange } from "@/lib/parts";
 import { buildPrototypeInspection, buildPrototypeParts, CUSTOMER_RECORDS_EVENT, defaultCustomerPreferences, defaultServiceMeasurements, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, savePrototypeWorkOrder } from "@/lib/local-store";
 import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/lib/schedule";
 import { decodeVinWithNhtsa, fallbackVehicleSpec, findVehicleSpec, formatVehicle, vehicleCatalog, type VehicleSpec } from "@/lib/vehicles";
 import { ServiceSelector } from "@/components/service-selector";
 import { CustomerPaymentOptions } from "@/components/customer-payment-options";
 import { CustomerPromoOffers } from "@/components/customer-promo-offers";
-
-type Tier = "low" | "mid" | "high";
-
-const tierCopy: Record<Tier, string> = {
-  low: "Budget-friendly option, verified before final approval.",
-  mid: "Balanced recommendation for most customers.",
-  high: "Premium parts and more complete service scope."
-};
 
 const tirePositions = ["Left front", "Right front", "Left rear", "Right rear", "Not sure"] as const;
 const includedServiceTowns = ["auburn", "lewiston", "minot", "poland", "turner", "mechanic falls", "sabattus", "lisbon", "new gloucester"];
@@ -46,20 +39,18 @@ const requestSteps = [
   "Contact",
   "Vehicle",
   "Services",
-  "Parts grade",
   "Appointment",
   "Preferences",
   "Agreements",
   "Review"
 ];
-const requestStepLoaders = ["clipboard", "burnout", "lift", "parts", "calendar", "preferences", "signature", "review"] as const;
+const requestStepLoaders = ["clipboard", "burnout", "parts", "calendar", "preferences", "signature", "review"] as const;
 
 export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "admin" }) {
   // Request mode: customer-facing intake keeps authorization prompts; admin intake skips them.
   const isAdminMode = mode === "admin";
   const [activeStep, setActiveStep] = useState(0);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [selectedTier, setSelectedTier] = useState<Tier>("mid");
   const [submittedOrder, setSubmittedOrder] = useState<PrototypeWorkOrder | null>(null);
   const [savedCustomers, setSavedCustomers] = useState<PrototypeCustomerRecord[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
@@ -175,13 +166,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     };
   }, [isAdminMode]);
 
-  const estimate = useMemo(() => {
-    return selectedServices.reduce((sum, serviceName) => {
-      const service = serviceOptions.find((item) => item.name === serviceName);
-      const raw = service?.[selectedTier].replace(/[$+]/g, "") ?? "0";
-      return sum + Number.parseInt(raw, 10);
-    }, 0);
-  }, [selectedServices, selectedTier]);
+  const estimateDetails = useMemo(() => estimateServices(selectedServices), [selectedServices]);
   const reviewGroups = [
     {
       title: "Customer",
@@ -209,8 +194,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       rows: [
         ["Services", selectedServices.length ? selectedServices.join(", ") : "None selected"],
         ["Tire position", needsTirePosition ? tireConcern : "Not needed"],
-        ["Parts grade", selectedTier.toUpperCase()],
-        ["Draft estimate", selectedServices.length ? `$${estimate}+` : "Pending service selection"],
+        ["Draft estimate", selectedServices.length ? formatPriceRange(estimateDetails.total) : "Pending service selection"],
         ["Symptoms / notes", form.symptoms || "No symptoms entered"]
       ]
     },
@@ -384,8 +368,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       location: `${form.address}${form.town ? `, ${form.town}` : ""}${form.serviceState ? `, ${form.serviceState}` : ""}`.trim() || "Address pending",
       service: selectedServices.length ? (needsTirePosition ? `${selectedServices.join(", ")} (${tireConcern} tire)` : selectedServices.join(", ")) : "Service pending",
       services: selectedServices,
-      tier: selectedTier,
-      estimate: `$${estimate}+`,
+      tier: "mid",
+      estimate: selectedServices.length ? formatPriceRange(estimateDetails.total) : "Pending",
       preferredWindow,
       symptoms: `${form.symptoms || "No symptoms entered"}${needsTirePosition ? ` Tire needing attention: ${tireConcern}.` : ""}`,
       status: isAdminMode ? "Scheduled" : "Requested",
@@ -395,7 +379,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       inspectionExpires: `${form.inspectionMonth} ${form.inspectionYear}`.trim(),
       registrationExpires: `${form.registrationMonth} ${form.registrationYear}`.trim(),
       serviceLocationConfirmed: Boolean(form.address && form.town && form.serviceState),
-      estimateNotes: "Initial estimate only. Final estimate requires technician acceptance and parts verification.",
+      estimateNotes: `IAW draft estimate includes ${estimateDetails.parts.length} part line(s), ${estimateDetails.laborHours.toFixed(1)} labor hour(s), and estimated labor savings of $${estimateDetails.savings.amount} vs market rate. Final estimate requires technician acceptance and live supplier verification.`,
       customerContactLog: [
         `${new Date().toLocaleString()}: ${isAdminMode ? "Admin created work order from intake page" : "Customer submitted service request"}`,
         `${new Date().toLocaleString()}: Preferences - notifications ${customerPreferences.notifications ? "allowed" : "not allowed"}, location ${customerPreferences.location ? "allowed" : "not allowed"}, remember login ${customerPreferences.rememberLogin ? "requested" : "not requested"}`
@@ -403,7 +387,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       techNotes: [],
       partRequests: [],
       measurements: defaultServiceMeasurements(),
-      parts: buildPrototypeParts(selectedServices, selectedTier),
+      parts: buildPrototypeParts(selectedServices, "mid"),
       inspection: buildPrototypeInspection(),
       vehicleSpec: selectedVehicleSpec ?? findVehicleSpec(form.vehicle) ?? fallbackVehicleSpec,
       agreementAcceptance: isAdminMode ? adminAgreementAcceptance : {
@@ -432,9 +416,9 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
           </p>
         </div>
         <div className="estimate-summary">
-          <span>Draft estimate starts at</span>
-          <strong>{selectedServices.length ? `$${estimate}` : "Pending"}</strong>
-          <small>{selectedServices.length ? tierCopy[selectedTier] : "Select requested services to calculate a draft estimate."}</small>
+          <span>Draft estimate range</span>
+          <strong>{selectedServices.length ? formatPriceRange(estimateDetails.total) : "Pending"}</strong>
+          <small>{selectedServices.length ? `${estimateDetails.parts.length} part lines - ${estimateDetails.laborHours.toFixed(1)} labor hr - saves about $${estimateDetails.savings.amount} labor vs market` : "Select requested services to calculate parts, labor, and draft price range."}</small>
         </div>
       </section>
 
@@ -545,7 +529,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
         </div>
 
         {/* Customer account preferences: one-time request versus saved customer account setup. */}
-        <div className={stepClass(5)}>
+        <div className={stepClass(4)}>
           <div className="panel">
           {!isAdminMode ? <div className="permission-panel">
             <div className="panel-title">
@@ -588,7 +572,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <h2>Requested services</h2>
             <Car />
           </div>
-          <ServiceSelector selectedServices={selectedServices} selectedTier={selectedTier} onToggleService={toggleService} />
+          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} />
           {needsTirePosition ? (
             <label className="inline-input tire-position-picker"><Car /><span>Tire needing attention</span>
               <select value={tireConcern} onChange={(event) => setTireConcern(event.target.value as (typeof tirePositions)[number])}>
@@ -599,30 +583,10 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
         </div>
         </div>
 
-        {/* Service tier: pricing grade and included labor/inspection level. */}
-        <div className={stepClass(3)}>
-        <div className="panel parts-grade-panel">
-          <div className="panel-title">
-            <div>
-              <p className="section-label">Parts Price Range</p>
-              <h2>Low, mid, or high range</h2>
-            </div>
-            <PackageCheck />
-          </div>
-          <p className="legal-note">This sets the customer preference for estimate sourcing. Final parts are still verified by admin before acceptance.</p>
-          <div className="tier-picker">
-            {(["low", "mid", "high"] as const).map((tier) => (
-              <button className={selectedTier === tier ? "selected" : ""} key={tier} onClick={() => setSelectedTier(tier)}>
-                <strong>{tier.toUpperCase()}</strong>
-                <span>{tierCopy[tier]}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-        </div>
+
 
         {/* Appointment details: date/time window, service location, and optional photos. */}
-        <div className={stepClass(4)}>
+        <div className={stepClass(3)}>
         <div className="panel">
           <div className="panel-title">
             <h2>Appointment and photos</h2>
@@ -666,7 +630,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
         </div>
 
         {/* Authorization and estimate review: customer agreement before final submit. */}
-        <div className={stepClass(6)}>
+        <div className={stepClass(5)}>
         {!isAdminMode ? <div className="panel request-final-panel">
           <div className="panel-title">
             <div>
@@ -725,7 +689,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
         </div>
 
         {/* Confirmation: submitted order summary and next-step actions. */}
-        <div className={stepClass(7)}>
+        <div className={stepClass(6)}>
           {submittedOrder ? (
             <div className="success-card">
               <CheckCircle2 size={18} />
@@ -748,7 +712,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
           <p className="legal-note">Review each section before submitting. The admin dashboard will receive this as a new work order and link it to matching customer history when the contact and vehicle details match.</p>
           {!isAdminMode ? (
             <>
-              <CustomerPaymentOptions estimate={selectedServices.length ? `$${estimate}+` : "pending service selection"} />
+              <CustomerPaymentOptions estimate={selectedServices.length ? formatPriceRange(estimateDetails.total) : "pending service selection"} />
               <CustomerPromoOffers />
             </>
           ) : null}
