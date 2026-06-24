@@ -4834,10 +4834,6 @@ h2 {
   color: var(--accent);
 }
 
-.plate-lookup-row a.secondary-button {
-  text-decoration: none;
-}
-
 .prayer-settings-fields {
   align-items: end;
 }

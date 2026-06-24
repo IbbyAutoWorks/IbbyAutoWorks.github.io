@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell, CalendarClock, Camera, Car, CheckCircle2, ExternalLink, KeyRound, LocateFixed, MapPin, PackageCheck, Scale, Send, UserRound, X } from "lucide-react";
+import { Bell, CalendarClock, Camera, Car, CheckCircle2, KeyRound, LocateFixed, MapPin, PackageCheck, Scale, Send, UserRound, X } from "lucide-react";
 
 import { agreementSummaries, defaultAgreementAcceptance, hasRequiredAgreementAcceptance, partsReturnOptions, type AgreementId, type PartsReturnPreference } from "@/lib/agreements";
 import { serviceOptions, timeline } from "@/lib/data";
@@ -71,7 +71,6 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [selectedVehicleSpec, setSelectedVehicleSpec] = useState<VehicleSpec | null>(null);
   const [vinStatus, setVinStatus] = useState("");
   const [vinDecoded, setVinDecoded] = useState(false);
-  const [plateLookupStatus, setPlateLookupStatus] = useState("Plate lookup needs a connected provider; free public VIN decode stays available.");
   const [agreementError, setAgreementError] = useState("");
   const [agreementAcceptance, setAgreementAcceptance] = useState(defaultAgreementAcceptance);
   const [customerPreferences, setCustomerPreferences] = useState(defaultCustomerPreferences);
@@ -357,19 +356,6 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     setSelectedSupplierChoices((current) => ({ ...current, [choiceKey]: supplierName }));
   }
 
-  function lookupPlate() {
-    const cleanPlate = form.plate.trim().toUpperCase();
-    if (!cleanPlate) {
-      setPlateLookupStatus("Enter a plate number first.");
-      return;
-    }
-    setPlateLookupStatus(`Saved ${cleanPlate} ${form.plateState}. Free public plate-to-VIN decoding is not available in this static app; connect a plate-data provider or verify manually, then use VIN/manual vehicle fields.`);
-  }
-
-  function plateSearchUrl() {
-    const query = encodeURIComponent(`${form.plate} ${form.plateState} vehicle plate lookup`.trim());
-    return `https://www.google.com/search?q=${query}`;
-  }
 
   async function decodeVin() {
     if (!vinLengthReady) {
@@ -564,11 +550,6 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
           <div className="vin-decode-row">
             <button className={vinDecoded ? "vin-decode-button valid" : vinLengthReady ? "vin-decode-button ready" : "vin-decode-button invalid"} disabled={!vinLengthReady} onClick={decodeVin}><Car size={15} /> Decode VIN</button>
             <span>{vinStatus || "VIN decode uses the free NHTSA vPIC API when online."}</span>
-          </div>
-          <div className="vin-decode-row plate-lookup-row">
-            <button className="secondary-button" disabled={!form.plate.trim()} onClick={lookupPlate} type="button"><Car size={15} /> Save / check plate</button>
-            <a className="secondary-button" href={plateSearchUrl()} rel="noreferrer" target="_blank"><ExternalLink size={14} /> Manual plate research</a>
-            <span>{plateLookupStatus}</span>
           </div>
           <div className="vehicle-catalog">
             <div className="catalog-head">
