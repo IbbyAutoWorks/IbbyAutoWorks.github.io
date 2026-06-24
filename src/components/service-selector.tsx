@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Calculator, ChevronDown, ExternalLink, PackagePlus, Search, X } from "lucide-react";
 
-import { buildRetailerEstimateResults, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries } from "@/lib/parts";
+import { buildRetailerEstimateResults, estimateCategoryPartTotal, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries, quantityForCategoryPart } from "@/lib/parts";
 import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 
 
@@ -16,6 +16,14 @@ type ServiceSelectorProps = {
   vehicleContext?: string;
   areaContext?: string;
 };
+
+function addPriceRange(a: { min: number; max: number }, b: { min: number; max: number }) {
+  return { min: a.min + b.min, max: a.max + b.max };
+}
+
+function estimateGroupPartTotal(parts: string[]) {
+  return parts.reduce((total, part) => addPriceRange(total, estimateCategoryPartTotal(part)), { min: 0, max: 0 });
+}
 
 function partsForCategory(category: (typeof estimatePartCategories)[number]) {
   return [
@@ -134,14 +142,21 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                   <strong>{category.label}</strong>
                   <span>{selectedCount}/{categoryParts.length} picked</span>
                 </summary>
-                {category.groups ? category.groups.map((group) => (
-                  <div className="estimate-part-group" key={group.label}>
-                    <strong>{group.label}</strong>
-                    <div className="estimate-part-button-grid">
-                      {group.parts.map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} pricingSettings={pricingSettings} />)}
-                    </div>
-                  </div>
-                )) : (
+                {category.groups ? category.groups.map((group) => {
+                  const groupTotal = estimateGroupPartTotal(group.parts);
+                  const groupPicked = group.parts.filter((part) => selectedSet.has(part.toLowerCase())).length;
+                  return (
+                    <details className="estimate-part-group requested-service-subgroup" key={group.label} open={groupPicked > 0}>
+                      <summary>
+                        <strong>{group.label}</strong>
+                        <span>{formatPriceRange(groupTotal)} group parts</span>
+                      </summary>
+                      <div className="estimate-part-button-grid">
+                        {group.parts.map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} pricingSettings={pricingSettings} />)}
+                      </div>
+                    </details>
+                  );
+                }) : (
                   <div className="estimate-part-button-grid">
                     {(category.parts ?? []).map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} pricingSettings={pricingSettings} />)}
                   </div>
@@ -258,10 +273,11 @@ function RequestedServiceOption({ serviceName, selected, onToggleService, pricin
 
 function EstimatePartButton({ label, selected, onAdd, onRemove, pricingSettings }: { label: string; selected: boolean; onAdd: (label: string) => void; onRemove: (label: string) => void; pricingSettings: PricingSettings }) {
   const estimate = estimateServiceParts(label, pricingSettings);
+  const qty = quantityForCategoryPart(label);
   return (
     <button className={selected ? "selected" : ""} onClick={() => selected ? onRemove(label) : onAdd(label)} type="button">
       <span>{label}</span>
-      <small>{formatPriceRange(estimate.total)}</small>
+      <small>{formatPriceRange(estimate.total)}{qty > 1 ? ` full part cost (${qty}x)` : " full part cost"}</small>
     </button>
   );
 }

@@ -148,6 +148,42 @@ export const popularEstimateQueries = [
   "front brake pads", "rear brake pads", "oil change", "front wiper blades", "low beam bulb", "battery", "single tire repair", "tire replacement", "check engine light diagnostic", "cooling", "transmission", "suspension", "exhaust", "hardware"
 ];
 
+export function flatEstimateCategoryParts() {
+  return estimatePartCategories.flatMap((category) => [
+    ...(category.parts ?? []),
+    ...(category.groups ?? []).flatMap((group) => group.parts)
+  ]);
+}
+
+export function isEstimateCategoryPart(part: string) {
+  const clean = String(part || "").trim().toLowerCase();
+  return flatEstimateCategoryParts().some((item) => item.toLowerCase() === clean);
+}
+
+export function quantityForCategoryPart(part: string) {
+  const clean = String(part || "").toLowerCase();
+  if (/rotors?|calipers?|struts?|shocks?|control arm|ball joint|sway bar links?|tie rod|cv axle|wheel bearing|hub assembly|oxygen sensor|bulbs?|wiper blades/.test(clean)) return 2;
+  if (/spark plugs?|ignition coils?/.test(clean)) return 4;
+  if (/tire replacement|p rated|lt rated|staggered fit/.test(clean)) return 4;
+  return 1;
+}
+
+export function estimateCategoryPartUnitPrice(part: string): PriceRange {
+  if (/free code light check/i.test(part)) return { min: 0, max: 0 };
+  if (/diagnostic trace flat rate/i.test(part)) return { min: 100, max: 100 };
+  const oilQuartMatch = String(part).match(/\b(\d+(?:\.\d+)?)\s*quart\b/i);
+  if (/full synthetic engine oil|motor oil|engine oil/i.test(part) && oilQuartMatch) {
+    const quarts = Number(oilQuartMatch[1]) || 5;
+    return { min: Math.round(quarts * 6), max: Math.round(quarts * 13) };
+  }
+  const bucket = priceCatalog.find((entry) => entry.match.test(part)) ?? { min: 18, max: 96 };
+  return { min: bucket.min, max: bucket.max };
+}
+
+export function estimateCategoryPartTotal(part: string): PriceRange {
+  return multiplyPrice(estimateCategoryPartUnitPrice(part), quantityForCategoryPart(part));
+}
+
 const priceCatalog: Array<{ match: RegExp; min: number; max: number }> = [
   { match: /strut|shock|coilover/i, min: 58, max: 184 },
   { match: /brake.*pad|pads/i, min: 24, max: 89 },
@@ -369,6 +405,15 @@ export function searchPhraseForPart(part: string) {
 }
 
 function catalogForService(service: string) {
+  if (isEstimateCategoryPart(service)) {
+    const partName = String(service || "Manual parts lookup").trim();
+    return {
+      label: `${partName} part lookup`,
+      laborHours: 0,
+      parts: [{ name: partName, qty: quantityForCategoryPart(partName), status: "selected" as const }]
+    };
+  }
+
   return servicePartCatalog.find((entry) => entry.match.test(service)) ?? {
     label: service,
     laborHours: defaultBookTime(service),
@@ -400,7 +445,7 @@ export function estimateServiceParts(service: string, pricingSettings?: Partial<
   const recipe = catalogForService(service);
   const rates = currentPricingSettings(pricingSettings);
   const parts = recipe.parts.map((part, index) => {
-    const unitPrice = estimatePartPrice(part.name, index);
+    const unitPrice = isEstimateCategoryPart(part.name) ? estimateCategoryPartUnitPrice(part.name) : estimatePartPrice(part.name, index);
     return {
       name: part.name,
       qty: part.qty,
