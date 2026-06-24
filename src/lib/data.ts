@@ -198,6 +198,18 @@ export const serviceOptions = [
     mid: "$180+",
     high: "$340+"
   }
+  ,
+  { name: "Wiper blade replacement", category: "Maintenance", subcategory: "Visibility", detail: "Front/rear blade lookup with driver, passenger, and rear options", low: "$28+", mid: "$48+", high: "$78+" },
+  { name: "Automotive light bulb replacement", category: "Electrical", subcategory: "Lighting", detail: "Headlight, fog, marker, turn, brake/tail, reverse, and license bulbs", low: "$32+", mid: "$72+", high: "$140+" },
+  { name: "TPMS service", category: "Tires", subcategory: "Sensors", detail: "TPMS service kits and sensor-related tire work planning", low: "$48+", mid: "$110+", high: "$220+" },
+  { name: "Steering estimate", category: "Steering", subcategory: "Tie rods / rack / pump", detail: "Outer/inner tie rods, rack and pinion, pump, hoses, and fluid", low: "$95+", mid: "$260+", high: "$760+" },
+  { name: "Drivetrain estimate", category: "Drivetrain", subcategory: "Axles / shafts / seals", detail: "CV axles, driveshaft, U-joints, center support bearing, seals, differential fluid", low: "$120+", mid: "$360+", high: "$860+" },
+  { name: "Fuel/EVAP estimate", category: "Fuel / EVAP", subcategory: "Fuel pump / injector / evap", detail: "Fuel pump, injectors, regulator, gas cap, purge valve, vent valve", low: "$95+", mid: "$280+", high: "$780+" },
+  { name: "HVAC estimate", category: "HVAC", subcategory: "Blower / A/C", detail: "Blower motor, resistor, A/C compressor, condenser, and actuator path", low: "$95+", mid: "$320+", high: "$900+" },
+  { name: "ABS light diagnostic", category: "Diagnostics", subcategory: "ABS / wheel speed", detail: "Free code/light check, diagnostic trace, and wheel speed sensor path", low: "$0+", mid: "$100+", high: "$240+" },
+  { name: "SRS airbag diagnostic", category: "Diagnostics", subcategory: "Airbag / clock spring", detail: "SRS scan path with clock spring and seat-belt buckle possibilities", low: "$0+", mid: "$100+", high: "$360+" },
+  { name: "Hardware and fastener lookup", category: "Hardware", subcategory: "Clips / bolts / retainers", detail: "Brake hardware, lug nuts/studs, body clips, retainers, hose clamps, thread locker", low: "$12+", mid: "$48+", high: "$120+" }
+
 ];
 
 export type ServiceOption = (typeof serviceOptions)[number];

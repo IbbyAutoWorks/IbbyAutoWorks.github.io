@@ -43,13 +43,22 @@ const supplierSearchBases = [
   { name: "Advance Auto Parts", type: "Local pickup" as const, base: "https://shop.advanceautoparts.com/web/SearchResults?searchTerm=", fulfillment: "Local pickup or ship-to-home" },
   { name: "NAPA Auto Parts", type: "Local pickup" as const, base: "https://www.napaonline.com/en/search?text=", fulfillment: "Local store pickup or PROLink when connected" },
   { name: "AutoZone", type: "Local pickup" as const, base: "https://www.autozone.com/searchresult?searchText=", fulfillment: "Local pickup or AutoZonePro when connected" },
+  { name: "Pep Boys", type: "Local pickup" as const, base: "https://www.pepboys.com/search?text=", fulfillment: "Local pickup/service options where available" },
+  { name: "Walmart Auto", type: "Local pickup" as const, base: "https://www.walmart.com/search?q=", fulfillment: "Local pickup or ship-to-home for common maintenance items" },
+  { name: "1A Auto", type: "Online" as const, base: "https://www.1aauto.com/search?q=", fulfillment: "Online order, how-to supported fitment check" },
   { name: "RockAuto", type: "Online" as const, base: "https://www.rockauto.com/en/partsearch/?partnum=", fulfillment: "Online order, shipping time required" },
   { name: "PartsTech", type: "Online" as const, base: "https://www.partstech.com/search?query=", fulfillment: "Multi-supplier shop lookup when account is connected" }
 ];
 
 const tireSearchBases = [
-  { name: "Tire Rack", type: "Tire" as const, base: "https://www.tirerack.com/tires/tires.jsp?keyword=", fulfillment: "Online tire order, installer/pickup planning required" },
+  { name: "VIP Tires & Service", type: "Tire" as const, base: "https://www.vipauto.com/tires/search?query=", fulfillment: "Regional tire/service lookup, local install confirmation required" },
   { name: "Sullivan Tire", type: "Tire" as const, base: "https://www.sullivantire.com/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" },
+  { name: "NTW", type: "Tire" as const, base: "https://www.ntw.com/search?query=", fulfillment: "Wholesale tire source, account/availability confirmation required" },
+  { name: "Max Finkelstein", type: "Tire" as const, base: "https://www.maxfinkelstein.com/search?query=", fulfillment: "Wholesale/local distributor lookup when account access is connected" },
+  { name: "Tire Rack", type: "Tire" as const, base: "https://www.tirerack.com/tires/tires.jsp?keyword=", fulfillment: "Online tire order, installer/pickup planning required" },
+  { name: "Discount Tire", type: "Tire" as const, base: "https://www.discounttire.com/search?q=", fulfillment: "Online/local tire lookup where available" },
+  { name: "Mavis Discount Tire", type: "Tire" as const, base: "https://www.mavis.com/search?q=", fulfillment: "Regional tire/service lookup" },
+  { name: "Town Fair Tire", type: "Tire" as const, base: "https://www.townfairtire.com/search?q=", fulfillment: "Regional tire/service lookup" },
   { name: "Tire Warehouse", type: "Tire" as const, base: "https://www.tirewarehouse.net/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" }
 ];
 
@@ -130,6 +139,7 @@ const priceCatalog: Array<{ match: RegExp; min: number; max: number }> = [
   { match: /engine oil|motor oil|synthetic oil/i, min: 26, max: 74 },
   { match: /drain plug|crush washer|oil drain gasket/i, min: 2, max: 9 },
   { match: /oil filter housing|filter housing gasket/i, min: 8, max: 38 },
+  { match: /oil absorbent|shop towel|funnel/i, min: 4, max: 18 },
   { match: /oil filter/i, min: 5, max: 16 },
   { match: /air filter/i, min: 12, max: 36 },
   { match: /cabin air filter/i, min: 12, max: 42 },
@@ -355,9 +365,9 @@ export function estimateServiceParts(service: string): ServiceEstimate {
   const partsTotal = addPrice(selectedParts, possibleParts);
   const labor = { min: Math.round(recipe.laborHours * SHOP_LABOR_RATE), max: Math.round(recipe.laborHours * SHOP_LABOR_RATE) };
   const marketLabor = { min: Math.round(recipe.laborHours * MARKET_LABOR_RATE), max: Math.round(recipe.laborHours * MARKET_LABOR_RATE) };
-  const total = addPrice(selectedParts, labor);
-  const marketTotal = addPrice(selectedParts, marketLabor);
-  const savingsAmount = Math.max(0, averagePrice(marketLabor) - averagePrice(labor));
+  const total = { min: selectedParts.min + labor.min, max: selectedParts.max + possibleParts.max + labor.max };
+  const marketTotal = { min: selectedParts.min + marketLabor.min, max: selectedParts.max + possibleParts.max + marketLabor.max };
+  const savingsAmount = Math.max(0, averagePrice(marketTotal) - averagePrice(total));
   return {
     service,
     label: recipe.label,
@@ -402,7 +412,7 @@ export function buildPartSupplierCandidates(part: string, tier: PartTier = "mid"
   const unitPrice = estimatePartPrice(part);
   const tierNote = tier === "low" ? "value" : tier === "mid" ? "recommended" : "premium/OEM";
 
-  return sources.slice(0, isTire ? 6 : 5).map((source) => ({
+  return sources.slice(0, isTire ? 9 : 7).map((source) => ({
     name: source.name,
     type: source.type,
     url: `${source.base}${query}`,
@@ -414,6 +424,6 @@ export function buildPartSupplierCandidates(part: string, tier: PartTier = "mid"
 
 export const partsIntegrationNotes = [
   { title: "Estimate engine", detail: "Parts now use the IAW price catalog, job-part recipes, book-time labor, and market-rate comparison from the NukeBox parts finder." },
-  { title: "Supplier lookup", detail: "O'Reilly, Advance, NAPA, AutoZone, RockAuto, PartsTech, and tire-specific links generate from the calculated part query." },
+  { title: "Supplier lookup", detail: "O'Reilly, Advance, NAPA, AutoZone, Pep Boys, Walmart, 1A Auto, RockAuto, PartsTech, and tire-specific links generate from the calculated part query." },
   { title: "Final quote rule", detail: "Displayed ranges are draft planning numbers. Admin still verifies live fitment, supplier image, price, stock, and customer approval before ordering." }
 ];

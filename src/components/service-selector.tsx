@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Calculator, ChevronDown, PackagePlus, Search, X } from "lucide-react";
 
 import { serviceCategories, serviceOptions } from "@/lib/data";
-import { estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries } from "@/lib/parts";
+import { buildPartSupplierCandidates, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries } from "@/lib/parts";
 
 
 type ServiceSelectorProps = {
@@ -129,11 +129,11 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
           <div className="estimate-total-card">
             <span>Customer-visible draft estimate</span>
             <strong>{selectedServices.length ? formatPriceRange(estimate.total) : "Pick a service"}</strong>
-            <small>{selectedServices.length ? `${estimate.jobs.length} job(s), ${estimate.parts.length} part line(s), ${estimate.laborHours.toFixed(1)} labor hr` : "Use the service list, quick chips, category browser, or manual part box."}</small>
+            <small>{selectedServices.length ? `${estimate.jobs.length} job(s), ${estimate.parts.length} part line(s), ${estimate.laborHours.toFixed(1)} labor hr. Max includes possible add-ons` : "Use the service list, quick chips, category browser, or manual part box."}</small>
           </div>
           <div className="estimate-total-breakdown">
             <div><span>Selected parts</span><strong>{formatPriceRange(estimate.selectedParts)}</strong></div>
-            <div><span>Possible add-ons</span><strong>{formatPriceRange(estimate.possibleParts)}</strong></div>
+            <div><span>Possible add-ons included in max</span><strong>{formatPriceRange(estimate.possibleParts)}</strong></div>
             <div><span>Ibby labor</span><strong>{formatPriceRange(estimate.labor)}</strong></div>
             <div><span>Market comparison</span><strong>{formatPriceRange(estimate.marketTotal)}</strong></div>
           </div>
@@ -159,10 +159,18 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                 <div className="estimate-part-lines">
                   {job.parts.map((part) => (
                     <div className={part.status === "possible" ? "possible" : "selected"} key={`${job.service}-${part.name}`}>
-                      <span>{part.qty > 1 ? `${part.qty}x ` : ""}{part.name}<em>{part.status === "possible" ? "not sure" : "selected"}</em></span>
+                      <span>{part.qty > 1 ? `${part.qty}x ` : ""}{part.name}<em>{part.status === "possible" ? "not sure / included in max" : "selected"}</em></span>
                       <strong>{formatPriceRange(part.totalPrice)}</strong>
                     </div>
                   ))}
+                </div>
+                <div className="estimate-supplier-strip">
+                  {job.parts.slice(0, 4).flatMap((part) => buildPartSupplierCandidates(part.name).slice(0, 3).map((supplier) => (
+                    <a href={supplier.url} key={`${job.service}-${part.name}-${supplier.name}`} rel="noreferrer" target="_blank">
+                      <span>{supplier.name}</span>
+                      <small>{part.name}</small>
+                    </a>
+                  )))}
                 </div>
               </article>
             ))}
