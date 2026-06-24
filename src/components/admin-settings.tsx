@@ -14,6 +14,7 @@ import {
 import { inspectionTemplates } from "@/lib/data";
 import { appointmentWindows, businessSchedule } from "@/lib/schedule";
 import { readSavedTheme, saveTheme, ThemeRoleColors } from "@/lib/theme";
+import { readPricingSettings, savePricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 import { PaymentSettingsPanel } from "@/components/payment-settings";
 import { IntegrationHub } from "@/components/integration-hub";
 import { PaymentPlanManager } from "@/components/payment-plan-manager";
@@ -55,6 +56,7 @@ export function AdminSettings() {
   const [blockedDays, setBlockedDays] = useState([12, 18]);
   const [calendarMonth, setCalendarMonth] = useState("June 2026");
   const [serviceRadius, setServiceRadius] = useState("25");
+  const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
 
   useEffect(() => {
     const savedTheme = readSavedTheme();
@@ -67,6 +69,19 @@ export function AdminSettings() {
   useEffect(() => {
     setBranding(readSavedBranding());
   }, []);
+
+  useEffect(() => {
+    setPricingSettings(readPricingSettings());
+  }, []);
+
+  function updatePricingSetting(field: keyof PricingSettings, value: string) {
+    const next = {
+      ...pricingSettings,
+      [field]: field === "defaultSearchArea" ? value : Number(value)
+    } as PricingSettings;
+    setPricingSettings(next);
+    savePricingSettings(next);
+  }
 
   function updateBranding(nextBranding: BrandingSettings) {
     setBranding(nextBranding);
@@ -144,7 +159,7 @@ export function AdminSettings() {
           <p className="section-label">Configurable admin workspace</p>
           <h1>Make the app editable without turning it into a fragile page builder.</h1>
         </div>
-        <button className="primary-button" onClick={() => saveTheme(roleColors)}><Save size={16} /> Save draft settings</button>
+        <button className="primary-button" onClick={() => { saveTheme(roleColors); savePricingSettings(pricingSettings); }}><Save size={16} /> Save draft settings</button>
       </section>
 
       <section className="settings-stack">
@@ -240,6 +255,27 @@ export function AdminSettings() {
                 </select>
               </label>
             ))}
+          </div>
+        </details>
+
+
+
+        <details className="panel settings-accordion" open>
+          <summary><span><Wrench size={16} /> IAW estimate pricing</span><ChevronDown size={16} /></summary>
+          <div className="settings-fields">
+            <label>
+              <span>Ibby labor rate ($/hr)</span>
+              <input type="number" min="0" step="1" value={pricingSettings.shopLaborRate} onChange={(event) => updatePricingSetting("shopLaborRate", event.target.value)} />
+            </label>
+            <label>
+              <span>Market comparison rate ($/hr)</span>
+              <input type="number" min="0" step="1" value={pricingSettings.marketLaborRate} onChange={(event) => updatePricingSetting("marketLaborRate", event.target.value)} />
+            </label>
+            <label className="wide-field">
+              <span>Default distributor search area</span>
+              <input value={pricingSettings.defaultSearchArea} onChange={(event) => updatePricingSetting("defaultSearchArea", event.target.value)} placeholder="Auburn ME" />
+            </label>
+            <p className="legal-note">These settings feed the customer request estimator, retailer comparison cards, and saved work-order part quotes in this browser prototype.</p>
           </div>
         </details>
 

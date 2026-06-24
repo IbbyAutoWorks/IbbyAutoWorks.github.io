@@ -290,7 +290,7 @@ export function getServiceReminders(order: PrototypeWorkOrder) {
   return reminders;
 }
 
-export function buildPrototypeParts(serviceInput: string | string[], tier: PrototypeWorkOrder["tier"] = "mid", supplierChoices: Record<string, string> = {}): PrototypePartQuote[] {
+export function buildPrototypeParts(serviceInput: string | string[], tier: PrototypeWorkOrder["tier"] = "mid", supplierChoices: Record<string, string> = {}, vehicleContext = "", areaContext = ""): PrototypePartQuote[] {
   const services = Array.isArray(serviceInput) ? serviceInput : [serviceInput];
 
   return services.flatMap((service) => {
@@ -304,7 +304,7 @@ export function buildPrototypeParts(serviceInput: string | string[], tier: Proto
         band: tier,
         status: part.status === "selected" ? "Ready to confirm" : "Possible add-on",
         price: part.totalPrice.min === part.totalPrice.max ? `$${part.totalPrice.min}` : `$${part.totalPrice.min} - $${part.totalPrice.max}`,
-        supplierCandidates: buildPartSupplierCandidates(part.name, tier),
+        supplierCandidates: buildPartSupplierCandidates(part.name, tier, vehicleContext, areaContext),
         selectedSupplier,
         pickupStatus: index === 0 ? "Verify price" : "Not needed",
         qty: part.qty,

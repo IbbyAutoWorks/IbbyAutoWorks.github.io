@@ -7,6 +7,7 @@ import { Bell, CalendarClock, Camera, Car, CheckCircle2, KeyRound, LocateFixed, 
 import { agreementSummaries, defaultAgreementAcceptance, hasRequiredAgreementAcceptance, partsReturnOptions, type AgreementId, type PartsReturnPreference } from "@/lib/agreements";
 import { serviceOptions, timeline } from "@/lib/data";
 import { estimateServices, formatPriceRange } from "@/lib/parts";
+import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 import { buildPrototypeInspection, buildPrototypeParts, CUSTOMER_RECORDS_EVENT, defaultCustomerPreferences, defaultServiceMeasurements, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, savePrototypeWorkOrder } from "@/lib/local-store";
 import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/lib/schedule";
 import { decodeVinWithNhtsa, fallbackVehicleSpec, findVehicleSpec, formatVehicle, vehicleCatalog, type VehicleSpec } from "@/lib/vehicles";
@@ -52,6 +53,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [activeStep, setActiveStep] = useState(0);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedSupplierChoices, setSelectedSupplierChoices] = useState<Record<string, string>>({});
+  const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
   const [submittedOrder, setSubmittedOrder] = useState<PrototypeWorkOrder | null>(null);
   const [savedCustomers, setSavedCustomers] = useState<PrototypeCustomerRecord[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
@@ -151,6 +153,19 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   }, []);
 
   useEffect(() => {
+    function syncPricingSettings() {
+      setPricingSettings(readPricingSettings());
+    }
+    syncPricingSettings();
+    window.addEventListener("storage", syncPricingSettings);
+    window.addEventListener("ibbys-auto.pricing-settings.changed", syncPricingSettings);
+    return () => {
+      window.removeEventListener("storage", syncPricingSettings);
+      window.removeEventListener("ibbys-auto.pricing-settings.changed", syncPricingSettings);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isAdminMode) return;
 
     function syncCustomers() {
@@ -166,8 +181,10 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     };
   }, [isAdminMode]);
 
-  const estimateDetails = useMemo(() => estimateServices(selectedServices), [selectedServices]);
+  const estimateDetails = useMemo(() => estimateServices(selectedServices, pricingSettings), [selectedServices, pricingSettings]);
   const selectedDistributorSummary = Object.entries(selectedSupplierChoices).map(([key, supplier]) => `${key}: ${supplier}`).join("; ");
+  const activeVehicleContext = form.vehicle || `${form.vehicleYear} ${form.vehicleMake} ${form.vehicleModel}`.replace(/\s+/g, " ").trim();
+  const activeAreaContext = `${form.town} ${form.serviceState}`.replace(/\s+/g, " ").trim();
   const reviewGroups = [
     {
       title: "Customer",
@@ -388,7 +405,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       inspectionExpires: `${form.inspectionMonth} ${form.inspectionYear}`.trim(),
       registrationExpires: `${form.registrationMonth} ${form.registrationYear}`.trim(),
       serviceLocationConfirmed: Boolean(form.address && form.town && form.serviceState),
-      estimateNotes: `IAW draft estimate includes ${estimateDetails.parts.length} part line(s), ${estimateDetails.laborHours.toFixed(1)} labor hour(s), and estimated labor savings of $${estimateDetails.savings.amount} vs market rate. Distributor choices: ${selectedDistributorSummary || "none selected yet"}. Final estimate requires technician acceptance and live supplier verification.`,
+      estimateNotes: `IAW draft estimate includes ${estimateDetails.parts.length} part line(s), ${estimateDetails.laborHours.toFixed(1)} labor hour(s) at $${pricingSettings.shopLaborRate}/hr, and estimated labor savings of $${estimateDetails.savings.amount} vs market rate. Distributor choices: ${selectedDistributorSummary || "none selected yet"}. Final estimate requires technician acceptance and live supplier verification.`,
       customerContactLog: [
         `${new Date().toLocaleString()}: ${isAdminMode ? "Admin created work order from intake page" : "Customer submitted service request"}`,
         `${new Date().toLocaleString()}: Preferences - notifications ${customerPreferences.notifications ? "allowed" : "not allowed"}, location ${customerPreferences.location ? "allowed" : "not allowed"}, remember login ${customerPreferences.rememberLogin ? "requested" : "not requested"}`
@@ -396,7 +413,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       techNotes: [],
       partRequests: [],
       measurements: defaultServiceMeasurements(),
-      parts: buildPrototypeParts(selectedServices, "mid", selectedSupplierChoices),
+      parts: buildPrototypeParts(selectedServices, "mid", selectedSupplierChoices, activeVehicleContext, activeAreaContext),
       inspection: buildPrototypeInspection(),
       vehicleSpec: selectedVehicleSpec ?? findVehicleSpec(form.vehicle) ?? fallbackVehicleSpec,
       agreementAcceptance: isAdminMode ? adminAgreementAcceptance : {
@@ -427,7 +444,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
         <div className="estimate-summary">
           <span>Draft estimate range</span>
           <strong>{selectedServices.length ? formatPriceRange(estimateDetails.total) : "Pending"}</strong>
-          <small>{selectedServices.length ? `${estimateDetails.parts.length} part lines - ${estimateDetails.laborHours.toFixed(1)} labor hr - saves about $${estimateDetails.savings.amount} labor vs market` : "Select requested services to calculate parts, labor, and draft price range."}</small>
+          <small>{selectedServices.length ? `${estimateDetails.parts.length} part lines - ${estimateDetails.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr - saves about $${estimateDetails.savings.amount} labor vs market` : "Select requested services to calculate parts, labor, and draft price range."}</small>
         </div>
       </section>
 
@@ -581,7 +598,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <h2>Requested services</h2>
             <Car />
           </div>
-          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} />
+          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} vehicleContext={activeVehicleContext} areaContext={activeAreaContext} />
           {needsTirePosition ? (
             <label className="inline-input tire-position-picker"><Car /><span>Tire needing attention</span>
               <select value={tireConcern} onChange={(event) => setTireConcern(event.target.value as (typeof tirePositions)[number])}>

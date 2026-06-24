@@ -1,3 +1,5 @@
+import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
+
 export type PartTier = "low" | "mid" | "high";
 
 export type PartSupplierCandidate = {
@@ -58,8 +60,6 @@ export type ServiceEstimate = {
   savings: { amount: number; percent: number };
 };
 
-const SHOP_LABOR_RATE = 50;
-const MARKET_LABOR_RATE = 110;
 
 const supplierSearchBases = [
   { name: "O'Reilly Auto Parts", type: "Local pickup" as const, color: "#14964d", base: "https://www.oreillyauto.com/search?q=", fulfillment: "Local pickup or delivery where available" },
@@ -286,6 +286,10 @@ const servicePartCatalog: Array<{ match: RegExp; label: string; parts: Array<{ n
   { match: /hardware|fasteners?|nuts?|bolts?|clips?|retainers?|thread locker/i, label: "Hardware estimate", laborHours: 0.3, parts: [{ name: "brake caliper bracket bolts", qty: 1, status: "possible" }, { name: "brake caliper slide pin kit", qty: 1, status: "possible" }, { name: "wheel lug nuts", qty: 1, status: "possible" }, { name: "body clips retainers", qty: 1, status: "possible" }, { name: "thread locker", qty: 1, status: "possible" }] }
 ];
 
+function currentPricingSettings(settings?: Partial<PricingSettings>): PricingSettings {
+  return { ...readPricingSettings(), ...settings };
+}
+
 function addPrice(a: PriceRange, b: PriceRange): PriceRange {
   return { min: a.min + b.min, max: a.max + b.max };
 }
@@ -392,8 +396,9 @@ function defaultBookTime(text: string) {
   return 1.0;
 }
 
-export function estimateServiceParts(service: string): ServiceEstimate {
+export function estimateServiceParts(service: string, pricingSettings?: Partial<PricingSettings>): ServiceEstimate {
   const recipe = catalogForService(service);
+  const rates = currentPricingSettings(pricingSettings);
   const parts = recipe.parts.map((part, index) => {
     const unitPrice = estimatePartPrice(part.name, index);
     return {
@@ -408,8 +413,8 @@ export function estimateServiceParts(service: string): ServiceEstimate {
   const selectedParts = parts.filter((part) => part.status === "selected").reduce((total, part) => addPrice(total, part.totalPrice), { min: 0, max: 0 });
   const possibleParts = parts.filter((part) => part.status === "possible").reduce((total, part) => addPrice(total, part.totalPrice), { min: 0, max: 0 });
   const partsTotal = addPrice(selectedParts, possibleParts);
-  const labor = { min: Math.round(recipe.laborHours * SHOP_LABOR_RATE), max: Math.round(recipe.laborHours * SHOP_LABOR_RATE) };
-  const marketLabor = { min: Math.round(recipe.laborHours * MARKET_LABOR_RATE), max: Math.round(recipe.laborHours * MARKET_LABOR_RATE) };
+  const labor = { min: Math.round(recipe.laborHours * rates.shopLaborRate), max: Math.round(recipe.laborHours * rates.shopLaborRate) };
+  const marketLabor = { min: Math.round(recipe.laborHours * rates.marketLaborRate), max: Math.round(recipe.laborHours * rates.marketLaborRate) };
   const total = { min: selectedParts.min + labor.min, max: selectedParts.max + possibleParts.max + labor.max };
   const marketTotal = { min: selectedParts.min + marketLabor.min, max: selectedParts.max + possibleParts.max + marketLabor.max };
   const savingsAmount = Math.max(0, averagePrice(marketTotal) - averagePrice(total));
@@ -425,12 +430,13 @@ export function estimateServiceParts(service: string): ServiceEstimate {
     marketLabor,
     total,
     marketTotal,
-    savings: { amount: savingsAmount, percent: Math.round(((MARKET_LABOR_RATE - SHOP_LABOR_RATE) / MARKET_LABOR_RATE) * 100) }
+    savings: { amount: savingsAmount, percent: rates.marketLaborRate > 0 ? Math.max(0, Math.round(((rates.marketLaborRate - rates.shopLaborRate) / rates.marketLaborRate) * 100)) : 0 }
   };
 }
 
-export function estimateServices(services: string[]): ServiceEstimate & { jobs: ServiceEstimate[] } {
-  const jobs = services.map(estimateServiceParts);
+export function estimateServices(services: string[], pricingSettings?: Partial<PricingSettings>): ServiceEstimate & { jobs: ServiceEstimate[] } {
+  const rates = currentPricingSettings(pricingSettings);
+  const jobs = services.map((service) => estimateServiceParts(service, rates));
   const empty = { min: 0, max: 0 };
   const totalJob = jobs.reduce((total, job) => ({
     ...total,
@@ -447,12 +453,32 @@ export function estimateServices(services: string[]): ServiceEstimate & { jobs: 
     service: services.join(", "), label: "Combined service estimate", parts: [] as EstimatedJobPart[], selectedParts: empty, possibleParts: empty,
     partsTotal: empty, laborHours: 0, labor: empty, marketLabor: empty, total: empty, marketTotal: empty, savings: { amount: 0, percent: 0 }
   });
-  return { ...totalJob, jobs, savings: { amount: Math.max(0, averagePrice(totalJob.marketLabor) - averagePrice(totalJob.labor)), percent: Math.round(((MARKET_LABOR_RATE - SHOP_LABOR_RATE) / MARKET_LABOR_RATE) * 100) } };
+  return { ...totalJob, jobs, savings: { amount: Math.max(0, averagePrice(totalJob.marketLabor) - averagePrice(totalJob.labor)), percent: rates.marketLaborRate > 0 ? Math.max(0, Math.round(((rates.marketLaborRate - rates.shopLaborRate) / rates.marketLaborRate) * 100)) : 0 } };
 }
 
-export function buildPartSupplierCandidates(part: string, tier: PartTier = "mid"): PartSupplierCandidate[] {
+function vehicleSearchText(vehicleContext?: string) {
+  return String(vehicleContext || "").replace(/\s+/g, " ").trim();
+}
+
+function areaSearchText(areaContext?: string) {
+  return String(areaContext || currentPricingSettings().defaultSearchArea || "").replace(/\s+/g, " ").trim();
+}
+
+function buildSupplierSearchUrl(source: { base: string; type: "Local pickup" | "Online" | "Tire" }, partOrPhrase: string, vehicleContext?: string, areaContext?: string, refined = false) {
+  const queryPart = refined ? partOrPhrase : searchPhraseForPart(partOrPhrase);
+  const vehicle = vehicleSearchText(vehicleContext);
+  const area = areaSearchText(areaContext);
+  const query = [
+    vehicle,
+    queryPart,
+    area && source.type !== "Online" ? `near ${area}` : ""
+  ].filter(Boolean).join(" ");
+  return `${source.base}${encodeURIComponent(query || queryPart)}`;
+}
+
+export function buildPartSupplierCandidates(part: string, tier: PartTier = "mid", vehicleContext = "", areaContext = ""): PartSupplierCandidate[] {
   const isTire = /tire|valve stem|balance|puncture|patch|plug/i.test(part);
-  const query = encodeURIComponent(searchPhraseForPart(part.replace(/^[^:]+:\s*/, "")));
+  const cleanPart = part.replace(/^[^:]+:\s*/, "");
   const sources = isTire ? [...tireSearchBases, ...supplierSearchBases] : supplierSearchBases;
   const unitPrice = estimatePartPrice(part);
   const tierNote = tier === "low" ? "value" : tier === "mid" ? "recommended" : "premium/OEM";
@@ -460,7 +486,7 @@ export function buildPartSupplierCandidates(part: string, tier: PartTier = "mid"
   return sources.slice(0, isTire ? 9 : 7).map((source) => ({
     name: source.name,
     type: source.type,
-    url: `${source.base}${query}`,
+    url: buildSupplierSearchUrl(source, cleanPart, vehicleContext, areaContext),
     priceNote: `${formatPriceRange(unitPrice)} estimated ${tierNote} range; open supplier to verify live fitment, image, stock, and price`,
     imageNote: "Use supplier/manufacturer image after live lookup; do not rely on placeholder art",
     fulfillment: source.fulfillment
@@ -478,8 +504,9 @@ function jobSearchPhrase(parts: Array<{ lookupQuery?: string; name: string }>, f
   return selected || fallback;
 }
 
-export function buildRetailerEstimateResults(service: string): RetailerEstimateResult[] {
+export function buildRetailerEstimateResults(service: string, options: { vehicleContext?: string; areaContext?: string; pricingSettings?: Partial<PricingSettings> } = {}): RetailerEstimateResult[] {
   const recipe = catalogForService(service);
+  const rates = currentPricingSettings(options.pricingSettings);
   const tireJob = /tire|tpms|valve stem|staggered|p rated|lt rated/i.test(`${service} ${recipe.label}`);
   const sources = tireJob ? [...tireSearchBases, ...supplierSearchBases] : supplierSearchBases;
 
@@ -495,15 +522,15 @@ export function buildRetailerEstimateResults(service: string): RetailerEstimateR
         totalPrice: retailerPrice,
         retailerPrice,
         lookupQuery: searchPhraseForPart(part.name),
-        url: `${source.base}${encodeURIComponent(searchPhraseForPart(part.name))}`
+        url: buildSupplierSearchUrl(source, part.name, options.vehicleContext, options.areaContext)
       } satisfies RetailerJobPartResult;
     });
     const selectedParts = parts.filter((part) => part.status === "selected").reduce((total, part) => addPrice(total, part.retailerPrice), { min: 0, max: 0 });
     const possibleParts = parts.filter((part) => part.status === "possible").reduce((total, part) => addPrice(total, part.retailerPrice), { min: 0, max: 0 });
     const fullPartsTotal = addPrice(selectedParts, possibleParts);
     const shipping = shippingAllowanceForSource(source, retailerIndex);
-    const labor = { min: Math.round(recipe.laborHours * SHOP_LABOR_RATE), max: Math.round(recipe.laborHours * SHOP_LABOR_RATE) };
-    const marketLabor = { min: Math.round(recipe.laborHours * MARKET_LABOR_RATE), max: Math.round(recipe.laborHours * MARKET_LABOR_RATE) };
+    const labor = { min: Math.round(recipe.laborHours * rates.shopLaborRate), max: Math.round(recipe.laborHours * rates.shopLaborRate) };
+    const marketLabor = { min: Math.round(recipe.laborHours * rates.marketLaborRate), max: Math.round(recipe.laborHours * rates.marketLaborRate) };
     const selectedTotal = addPrice(addPrice(selectedParts, labor), shipping);
     const marketTotal = addPrice(addPrice(selectedParts, marketLabor), shipping);
     return {
@@ -511,7 +538,7 @@ export function buildRetailerEstimateResults(service: string): RetailerEstimateR
       type: source.type,
       color: source.color,
       fulfillment: source.fulfillment,
-      url: `${source.base}${encodeURIComponent(jobSearchPhrase(parts, service))}`,
+      url: buildSupplierSearchUrl(source, jobSearchPhrase(parts, service), options.vehicleContext, options.areaContext, true),
       parts,
       selectedParts,
       possibleParts,

@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Calculator, ChevronDown, ExternalLink, PackagePlus, Search, X } from "lucide-react";
 
 import { buildRetailerEstimateResults, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries } from "@/lib/parts";
+import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 
 
 type ServiceSelectorProps = {
@@ -12,6 +13,8 @@ type ServiceSelectorProps = {
   compact?: boolean;
   selectedSupplierChoices?: Record<string, string>;
   onSupplierChoiceChange?: (choiceKey: string, supplierName: string) => void;
+  vehicleContext?: string;
+  areaContext?: string;
 };
 
 function partsForCategory(category: (typeof estimatePartCategories)[number]) {
@@ -21,12 +24,32 @@ function partsForCategory(category: (typeof estimatePartCategories)[number]) {
   ];
 }
 
-export function ServiceSelector({ selectedServices, onToggleService, compact = false, selectedSupplierChoices = {}, onSupplierChoiceChange }: ServiceSelectorProps) {
+export function ServiceSelector({ selectedServices, onToggleService, compact = false, selectedSupplierChoices = {}, onSupplierChoiceChange, vehicleContext = "", areaContext = "" }: ServiceSelectorProps) {
   const [partSearch, setPartSearch] = useState("");
-  const estimate = useMemo(() => estimateServices(selectedServices), [selectedServices]);
+  const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
+  useEffect(() => {
+    function syncPricingSettings() {
+      setPricingSettings(readPricingSettings());
+    }
+    syncPricingSettings();
+    window.addEventListener("storage", syncPricingSettings);
+    window.addEventListener("ibbys-auto.pricing-settings.changed", syncPricingSettings);
+    return () => {
+      window.removeEventListener("storage", syncPricingSettings);
+      window.removeEventListener("ibbys-auto.pricing-settings.changed", syncPricingSettings);
+    };
+  }, []);
+  const estimate = useMemo(() => estimateServices(selectedServices, pricingSettings), [selectedServices, pricingSettings]);
   const selectedSet = useMemo(() => new Set(selectedServices.map((service) => service.toLowerCase())), [selectedServices]);
   const normalizedPartSearch = partSearch.trim();
   const visibleCategories = compact ? estimatePartCategories.slice(0, 8) : estimatePartCategories;
+  const retailerResultsByService = useMemo(() => Object.fromEntries(selectedServices.map((service) => [service, buildRetailerEstimateResults(service, { vehicleContext, areaContext, pricingSettings })])), [selectedServices, vehicleContext, areaContext, pricingSettings]);
+  const bestDistributorTotal = selectedServices.length
+    ? selectedServices.reduce((total, service) => {
+        const best = retailerResultsByService[service]?.[0];
+        return best ? { min: total.min + best.selectedTotal.min, max: total.max + best.selectedTotal.max } : total;
+      }, { min: 0, max: 0 })
+    : null;
 
   function addEstimateItem(item: string) {
     const clean = item.trim();
@@ -61,12 +84,12 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                   <details className="estimate-part-group requested-service-subgroup" key={group.label} open={group.parts.some((part) => selectedSet.has(part.toLowerCase()))}>
                     <summary>{group.label}</summary>
                     <div className="service-option-list">
-                      {group.parts.map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} />)}
+                      {group.parts.map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} pricingSettings={pricingSettings} />)}
                     </div>
                   </details>
                 )) : (
                   <div className="service-option-list">
-                    {(category.parts ?? []).map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} />)}
+                    {(category.parts ?? []).map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} pricingSettings={pricingSettings} />)}
                   </div>
                 )}
               </details>
@@ -115,12 +138,12 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                   <div className="estimate-part-group" key={group.label}>
                     <strong>{group.label}</strong>
                     <div className="estimate-part-button-grid">
-                      {group.parts.map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} />)}
+                      {group.parts.map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} pricingSettings={pricingSettings} />)}
                     </div>
                   </div>
                 )) : (
                   <div className="estimate-part-button-grid">
-                    {(category.parts ?? []).map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} />)}
+                    {(category.parts ?? []).map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} pricingSettings={pricingSettings} />)}
                   </div>
                 )}
               </details>
@@ -132,13 +155,14 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
           <div className="estimate-total-card">
             <span>Customer-visible draft estimate</span>
             <strong>{selectedServices.length ? formatPriceRange(estimate.total) : "Pick a service"}</strong>
-            <small>{selectedServices.length ? `${estimate.jobs.length} job(s), ${estimate.parts.length} part line(s), ${estimate.laborHours.toFixed(1)} labor hr. Max includes possible add-ons` : "Use the collapsed requested-services list, quick chips, category browser, or manual part box."}</small>
+            <small>{selectedServices.length ? `${estimate.jobs.length} job(s), ${estimate.parts.length} part line(s), ${estimate.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr. Max includes possible add-ons` : "Use the collapsed requested-services list, quick chips, category browser, or manual part box."}</small>
           </div>
           <div className="estimate-total-breakdown">
             <div><span>Selected parts</span><strong>{formatPriceRange(estimate.selectedParts)}</strong></div>
             <div><span>Possible add-ons included in max</span><strong>{formatPriceRange(estimate.possibleParts)}</strong></div>
             <div><span>Ibby labor</span><strong>{formatPriceRange(estimate.labor)}</strong></div>
             <div><span>Market comparison</span><strong>{formatPriceRange(estimate.marketTotal)}</strong></div>
+            <div><span>Best distributor selected total</span><strong>{bestDistributorTotal ? formatPriceRange(bestDistributorTotal) : "Pending"}</strong></div>
           </div>
         </div>
 
@@ -168,7 +192,7 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                   ))}
                 </div>
                 <div className="retailer-result-stack">
-                  {buildRetailerEstimateResults(job.service).map((retailer, retailerIndex) => {
+                  {(retailerResultsByService[job.service] ?? []).map((retailer, retailerIndex) => {
                     const serviceChoiceKey = job.service;
                     const serviceChosen = selectedSupplierChoices[serviceChoiceKey] === retailer.name;
                     return (
@@ -218,8 +242,8 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
   );
 }
 
-function RequestedServiceOption({ serviceName, selected, onToggleService }: { serviceName: string; selected: boolean; onToggleService: (serviceName: string, checked: boolean) => void }) {
-  const serviceEstimate = estimateServiceParts(serviceName);
+function RequestedServiceOption({ serviceName, selected, onToggleService, pricingSettings }: { serviceName: string; selected: boolean; onToggleService: (serviceName: string, checked: boolean) => void; pricingSettings: PricingSettings }) {
+  const serviceEstimate = estimateServiceParts(serviceName, pricingSettings);
   return (
     <label className={selected ? "selected" : ""}>
       <input checked={selected} onChange={(event) => onToggleService(serviceName, event.target.checked)} type="checkbox" />
@@ -232,8 +256,8 @@ function RequestedServiceOption({ serviceName, selected, onToggleService }: { se
   );
 }
 
-function EstimatePartButton({ label, selected, onAdd, onRemove }: { label: string; selected: boolean; onAdd: (label: string) => void; onRemove: (label: string) => void }) {
-  const estimate = estimateServiceParts(label);
+function EstimatePartButton({ label, selected, onAdd, onRemove, pricingSettings }: { label: string; selected: boolean; onAdd: (label: string) => void; onRemove: (label: string) => void; pricingSettings: PricingSettings }) {
+  const estimate = estimateServiceParts(label, pricingSettings);
   return (
     <button className={selected ? "selected" : ""} onClick={() => selected ? onRemove(label) : onAdd(label)} type="button">
       <span>{label}</span>

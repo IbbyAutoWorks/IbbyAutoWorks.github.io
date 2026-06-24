@@ -4559,6 +4559,10 @@ h2 {
   gap: 8px;
 }
 
+.estimate-total-breakdown {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .estimate-total-breakdown div,
 .estimate-job-totals div {
   border: 1px solid var(--line);
