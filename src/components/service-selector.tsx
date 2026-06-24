@@ -1,24 +1,32 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Calculator, ChevronDown, PackagePlus, Search, X } from "lucide-react";
+import { useMemo, useState, type CSSProperties } from "react";
+import { Calculator, ChevronDown, ExternalLink, PackagePlus, Search, X } from "lucide-react";
 
-import { serviceCategories, serviceOptions } from "@/lib/data";
-import { buildPartSupplierCandidates, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries } from "@/lib/parts";
+import { buildRetailerEstimateResults, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries } from "@/lib/parts";
 
 
 type ServiceSelectorProps = {
   selectedServices: string[];
   onToggleService: (serviceName: string, checked: boolean) => void;
   compact?: boolean;
+  selectedSupplierChoices?: Record<string, string>;
+  onSupplierChoiceChange?: (choiceKey: string, supplierName: string) => void;
 };
 
-export function ServiceSelector({ selectedServices, onToggleService, compact = false }: ServiceSelectorProps) {
+function partsForCategory(category: (typeof estimatePartCategories)[number]) {
+  return [
+    ...(category.parts ?? []),
+    ...(category.groups ?? []).flatMap((group) => group.parts)
+  ];
+}
+
+export function ServiceSelector({ selectedServices, onToggleService, compact = false, selectedSupplierChoices = {}, onSupplierChoiceChange }: ServiceSelectorProps) {
   const [partSearch, setPartSearch] = useState("");
   const estimate = useMemo(() => estimateServices(selectedServices), [selectedServices]);
   const selectedSet = useMemo(() => new Set(selectedServices.map((service) => service.toLowerCase())), [selectedServices]);
   const normalizedPartSearch = partSearch.trim();
-  const visibleCategories = compact ? estimatePartCategories.slice(0, 6) : estimatePartCategories;
+  const visibleCategories = compact ? estimatePartCategories.slice(0, 8) : estimatePartCategories;
 
   function addEstimateItem(item: string) {
     const clean = item.trim();
@@ -33,36 +41,34 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
 
   return (
     <div className={compact ? "multi-service-picker compact-service-picker" : "multi-service-picker"}>
-      <details open>
+      <details className="requested-services-shell">
         <summary>
-          <span>{selectedServices.length} service{selectedServices.length === 1 ? "" : "s"} selected</span>
+          <span>{selectedServices.length} requested service{selectedServices.length === 1 ? "" : "s"} selected</span>
+          <small>Click to expand IAW service categories</small>
           <ChevronDown size={16} />
         </summary>
         <div className="service-category-list">
-          {serviceCategories.map((category, index) => {
-            const services = serviceOptions.filter((service) => service.category === category);
-            const selectedCount = services.filter((service) => selectedServices.includes(service.name)).length;
+          {visibleCategories.map((category) => {
+            const categoryParts = partsForCategory(category);
+            const selectedCount = categoryParts.filter((part) => selectedSet.has(part.toLowerCase())).length;
             return (
-              <details className="service-category" key={category} open={!compact && index < 3}>
+              <details className="service-category" key={category.label} open={selectedCount > 0}>
                 <summary>
-                  <strong>{category}</strong>
-                  <span>{selectedCount}/{services.length} selected</span>
+                  <strong>{category.label}</strong>
+                  <span>{selectedCount}/{categoryParts.length} selected</span>
                 </summary>
-                <div className="service-option-list">
-                  {services.map((service) => {
-                    const serviceEstimate = estimateServiceParts(service.name);
-                    return (
-                      <label className={selectedServices.includes(service.name) ? "selected" : ""} key={service.name}>
-                        <input checked={selectedServices.includes(service.name)} onChange={(event) => onToggleService(service.name, event.target.checked)} type="checkbox" />
-                        <div>
-                          <strong>{service.name}</strong>
-                          <span>{service.subcategory} - {service.detail}</span>
-                          <small>{formatPriceRange(serviceEstimate.total)} draft range - {serviceEstimate.parts.length} parts - {serviceEstimate.laborHours} labor hr</small>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
+                {category.groups ? category.groups.map((group) => (
+                  <details className="estimate-part-group requested-service-subgroup" key={group.label} open={group.parts.some((part) => selectedSet.has(part.toLowerCase()))}>
+                    <summary>{group.label}</summary>
+                    <div className="service-option-list">
+                      {group.parts.map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} />)}
+                    </div>
+                  </details>
+                )) : (
+                  <div className="service-option-list">
+                    {(category.parts ?? []).map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} />)}
+                  </div>
+                )}
               </details>
             );
           })}
@@ -73,11 +79,11 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
         <div className="panel-title estimate-builder-title">
           <div>
             <p className="section-label">IAW estimate builder</p>
-            <h2>Pick parts or job sections and watch the estimate add up.</h2>
+            <h2>Pick IAW categories, compare distributors, then flow the choice into this Ibby request.</h2>
           </div>
           <Calculator />
         </div>
-        <p className="legal-note">These are draft customer planning numbers from the IAW parts finder logic. Final quotes still require live fitment, supplier price/stock, photos, and technician approval.</p>
+        <p className="legal-note">These are draft customer planning numbers from the standalone IAW parts finder flow. Open each distributor for live fitment, images, stock, and exact local price before ordering.</p>
 
         <div className="part-search-row">
           <Search size={16} />
@@ -96,14 +102,11 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
         </div>
 
         <div className="estimate-category-browser">
-          {visibleCategories.map((category, index) => {
-            const categoryParts = [
-              ...(category.parts ?? []),
-              ...(category.groups ?? []).flatMap((group) => group.parts)
-            ];
+          {visibleCategories.map((category) => {
+            const categoryParts = partsForCategory(category);
             const selectedCount = categoryParts.filter((part) => selectedSet.has(part.toLowerCase())).length;
             return (
-              <details className="service-category estimate-parts-category" key={category.label} open={!compact && index < 4}>
+              <details className="service-category estimate-parts-category" key={category.label} open={selectedCount > 0}>
                 <summary>
                   <strong>{category.label}</strong>
                   <span>{selectedCount}/{categoryParts.length} picked</span>
@@ -129,7 +132,7 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
           <div className="estimate-total-card">
             <span>Customer-visible draft estimate</span>
             <strong>{selectedServices.length ? formatPriceRange(estimate.total) : "Pick a service"}</strong>
-            <small>{selectedServices.length ? `${estimate.jobs.length} job(s), ${estimate.parts.length} part line(s), ${estimate.laborHours.toFixed(1)} labor hr. Max includes possible add-ons` : "Use the service list, quick chips, category browser, or manual part box."}</small>
+            <small>{selectedServices.length ? `${estimate.jobs.length} job(s), ${estimate.parts.length} part line(s), ${estimate.laborHours.toFixed(1)} labor hr. Max includes possible add-ons` : "Use the collapsed requested-services list, quick chips, category browser, or manual part box."}</small>
           </div>
           <div className="estimate-total-breakdown">
             <div><span>Selected parts</span><strong>{formatPriceRange(estimate.selectedParts)}</strong></div>
@@ -164,13 +167,47 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                     </div>
                   ))}
                 </div>
-                <div className="estimate-supplier-strip">
-                  {job.parts.slice(0, 4).flatMap((part) => buildPartSupplierCandidates(part.name).slice(0, 3).map((supplier) => (
-                    <a href={supplier.url} key={`${job.service}-${part.name}-${supplier.name}`} rel="noreferrer" target="_blank">
-                      <span>{supplier.name}</span>
-                      <small>{part.name}</small>
-                    </a>
-                  )))}
+                <div className="retailer-result-stack">
+                  {buildRetailerEstimateResults(job.service).map((retailer, retailerIndex) => {
+                    const serviceChoiceKey = job.service;
+                    const serviceChosen = selectedSupplierChoices[serviceChoiceKey] === retailer.name;
+                    return (
+                      <details className="retailer-result-row" key={`${job.service}-${retailer.name}`} style={{ "--retailer": retailer.color } as CSSProperties} open={serviceChosen || retailerIndex === 0}>
+                        <summary>
+                          <div className="retailer-main">
+                            <span className="retailer-dot" />
+                            <div>
+                              <strong>{retailer.name}</strong>
+                              <small>{retailer.type} - {retailer.parts.length} part lookup(s)</small>
+                            </div>
+                          </div>
+                          <div className="retailer-total"><strong>{formatPriceRange(retailer.selectedTotal)}</strong><small>selected total</small></div>
+                        </summary>
+                        <div className="retailer-detail-grid">
+                          <div className="retailer-part-links">
+                            {retailer.parts.map((part) => {
+                              const partChoiceKey = `${job.service}::${part.name}`;
+                              const partChosen = selectedSupplierChoices[partChoiceKey] === retailer.name;
+                              return (
+                                <a className={part.status} href={part.url} key={`${retailer.name}-${part.name}`} rel="noreferrer" target="_blank">
+                                  <span>{part.qty > 1 ? `${part.qty}x ` : ""}{part.name}<em>{part.status === "possible" ? "not sure" : "selected"}</em></span>
+                                  <strong>{formatPriceRange(part.retailerPrice)}</strong>
+                                  <button className={partChosen ? "mini-button primary-mini" : "mini-button"} onClick={(event) => { event.preventDefault(); onSupplierChoiceChange?.(partChoiceKey, retailer.name); }} type="button">{partChosen ? "Chosen" : "Use"}</button>
+                                </a>
+                              );
+                            })}
+                          </div>
+                          <div className="retailer-price-cell">
+                            <span>Shipping / pickup</span><strong>{formatPriceRange(retailer.shipping)}</strong>
+                            <span>Not sure parts</span><strong>{formatPriceRange(retailer.possibleParts)}</strong>
+                            <span>Market compare</span><strong>{formatPriceRange(retailer.marketTotal)}</strong>
+                            <a className="open-button" href={retailer.url} rel="noreferrer" target="_blank">Open job search <ExternalLink size={13} /></a>
+                            <button className={serviceChosen ? "primary-button" : "secondary-button"} onClick={() => onSupplierChoiceChange?.(serviceChoiceKey, retailer.name)} type="button">{serviceChosen ? "Distributor selected" : "Use this distributor for service"}</button>
+                          </div>
+                        </div>
+                      </details>
+                    );
+                  })}
                 </div>
               </article>
             ))}
@@ -178,6 +215,20 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
         ) : null}
       </section>
     </div>
+  );
+}
+
+function RequestedServiceOption({ serviceName, selected, onToggleService }: { serviceName: string; selected: boolean; onToggleService: (serviceName: string, checked: boolean) => void }) {
+  const serviceEstimate = estimateServiceParts(serviceName);
+  return (
+    <label className={selected ? "selected" : ""}>
+      <input checked={selected} onChange={(event) => onToggleService(serviceName, event.target.checked)} type="checkbox" />
+      <div>
+        <strong>{serviceName}</strong>
+        <span>{serviceEstimate.label}</span>
+        <small>{formatPriceRange(serviceEstimate.total)} draft range - {serviceEstimate.parts.length} parts - {serviceEstimate.laborHours} labor hr</small>
+      </div>
+    </label>
   );
 }
 

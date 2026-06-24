@@ -9,6 +9,29 @@ export type PartSupplierCandidate = {
   fulfillment: string;
 };
 
+export type RetailerJobPartResult = EstimatedJobPart & {
+  url: string;
+  retailerPrice: PriceRange;
+};
+
+export type RetailerEstimateResult = {
+  name: string;
+  type: "Local pickup" | "Online" | "Tire";
+  color: string;
+  fulfillment: string;
+  url: string;
+  parts: RetailerJobPartResult[];
+  selectedParts: PriceRange;
+  possibleParts: PriceRange;
+  shipping: PriceRange;
+  labor: PriceRange;
+  marketLabor: PriceRange;
+  selectedTotal: PriceRange;
+  fullPartsTotal: PriceRange;
+  marketTotal: PriceRange;
+  average: number;
+};
+
 export type PriceRange = { min: number; max: number };
 
 export type EstimatedJobPart = {
@@ -39,27 +62,27 @@ const SHOP_LABOR_RATE = 50;
 const MARKET_LABOR_RATE = 110;
 
 const supplierSearchBases = [
-  { name: "O'Reilly Auto Parts", type: "Local pickup" as const, base: "https://www.oreillyauto.com/search?q=", fulfillment: "Local pickup or delivery where available" },
-  { name: "Advance Auto Parts", type: "Local pickup" as const, base: "https://shop.advanceautoparts.com/web/SearchResults?searchTerm=", fulfillment: "Local pickup or ship-to-home" },
-  { name: "NAPA Auto Parts", type: "Local pickup" as const, base: "https://www.napaonline.com/en/search?text=", fulfillment: "Local store pickup or PROLink when connected" },
-  { name: "AutoZone", type: "Local pickup" as const, base: "https://www.autozone.com/searchresult?searchText=", fulfillment: "Local pickup or AutoZonePro when connected" },
-  { name: "Pep Boys", type: "Local pickup" as const, base: "https://www.pepboys.com/search?text=", fulfillment: "Local pickup/service options where available" },
-  { name: "Walmart Auto", type: "Local pickup" as const, base: "https://www.walmart.com/search?q=", fulfillment: "Local pickup or ship-to-home for common maintenance items" },
-  { name: "1A Auto", type: "Online" as const, base: "https://www.1aauto.com/search?q=", fulfillment: "Online order, how-to supported fitment check" },
-  { name: "RockAuto", type: "Online" as const, base: "https://www.rockauto.com/en/partsearch/?partnum=", fulfillment: "Online order, shipping time required" },
-  { name: "PartsTech", type: "Online" as const, base: "https://www.partstech.com/search?query=", fulfillment: "Multi-supplier shop lookup when account is connected" }
+  { name: "O'Reilly Auto Parts", type: "Local pickup" as const, color: "#14964d", base: "https://www.oreillyauto.com/search?q=", fulfillment: "Local pickup or delivery where available" },
+  { name: "Advance Auto Parts", type: "Local pickup" as const, color: "#f2a600", base: "https://shop.advanceautoparts.com/web/SearchResults?searchTerm=", fulfillment: "Local pickup or ship-to-home" },
+  { name: "NAPA Auto Parts", type: "Local pickup" as const, color: "#145bd7", base: "https://www.napaonline.com/en/search?text=", fulfillment: "Local store pickup or PROLink when connected" },
+  { name: "AutoZone", type: "Local pickup" as const, color: "#dc2b26", base: "https://www.autozone.com/searchresult?searchText=", fulfillment: "Local pickup or AutoZonePro when connected" },
+  { name: "Pep Boys", type: "Local pickup" as const, color: "#d8272f", base: "https://www.pepboys.com/search?text=", fulfillment: "Local pickup/service options where available" },
+  { name: "Walmart Auto", type: "Local pickup" as const, color: "#0071ce", base: "https://www.walmart.com/search?q=", fulfillment: "Local pickup or ship-to-home for common maintenance items" },
+  { name: "1A Auto", type: "Online" as const, color: "#234f9b", base: "https://www.1aauto.com/search?q=", fulfillment: "Online order, how-to supported fitment check" },
+  { name: "RockAuto", type: "Online" as const, color: "#7f1d1d", base: "https://www.rockauto.com/en/partsearch/?partnum=", fulfillment: "Online order, shipping time required" },
+  { name: "PartsTech", type: "Online" as const, color: "#4c5b6b", base: "https://www.partstech.com/search?query=", fulfillment: "Multi-supplier shop lookup when account is connected" }
 ];
 
 const tireSearchBases = [
-  { name: "VIP Tires & Service", type: "Tire" as const, base: "https://www.vipauto.com/tires/search?query=", fulfillment: "Regional tire/service lookup, local install confirmation required" },
-  { name: "Sullivan Tire", type: "Tire" as const, base: "https://www.sullivantire.com/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" },
-  { name: "NTW", type: "Tire" as const, base: "https://www.ntw.com/search?query=", fulfillment: "Wholesale tire source, account/availability confirmation required" },
-  { name: "Max Finkelstein", type: "Tire" as const, base: "https://www.maxfinkelstein.com/search?query=", fulfillment: "Wholesale/local distributor lookup when account access is connected" },
-  { name: "Tire Rack", type: "Tire" as const, base: "https://www.tirerack.com/tires/tires.jsp?keyword=", fulfillment: "Online tire order, installer/pickup planning required" },
-  { name: "Discount Tire", type: "Tire" as const, base: "https://www.discounttire.com/search?q=", fulfillment: "Online/local tire lookup where available" },
-  { name: "Mavis Discount Tire", type: "Tire" as const, base: "https://www.mavis.com/search?q=", fulfillment: "Regional tire/service lookup" },
-  { name: "Town Fair Tire", type: "Tire" as const, base: "https://www.townfairtire.com/search?q=", fulfillment: "Regional tire/service lookup" },
-  { name: "Tire Warehouse", type: "Tire" as const, base: "https://www.tirewarehouse.net/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" }
+  { name: "VIP Tires & Service", type: "Tire" as const, color: "#2f6fbd", base: "https://www.vipauto.com/tires/search?query=", fulfillment: "Regional tire/service lookup, local install confirmation required" },
+  { name: "Sullivan Tire", type: "Tire" as const, color: "#b6202b", base: "https://www.sullivantire.com/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" },
+  { name: "NTW", type: "Tire" as const, color: "#4c5b6b", base: "https://www.ntw.com/search?query=", fulfillment: "Wholesale tire source, account/availability confirmation required" },
+  { name: "Max Finkelstein", type: "Tire" as const, color: "#6c4f9b", base: "https://www.maxfinkelstein.com/search?query=", fulfillment: "Wholesale/local distributor lookup when account access is connected" },
+  { name: "Tire Rack", type: "Tire" as const, color: "#cc2530", base: "https://www.tirerack.com/tires/tires.jsp?keyword=", fulfillment: "Online tire order, installer/pickup planning required" },
+  { name: "Discount Tire", type: "Tire" as const, color: "#d71920", base: "https://www.discounttire.com/search?q=", fulfillment: "Online/local tire lookup where available" },
+  { name: "Mavis Discount Tire", type: "Tire" as const, color: "#1168b3", base: "https://www.mavis.com/search?q=", fulfillment: "Regional tire/service lookup" },
+  { name: "Town Fair Tire", type: "Tire" as const, color: "#1f4b8f", base: "https://www.townfairtire.com/search?q=", fulfillment: "Regional tire/service lookup" },
+  { name: "Tire Warehouse", type: "Tire" as const, color: "#344256", base: "https://www.tirewarehouse.net/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" }
 ];
 
 
@@ -72,35 +95,57 @@ export type EstimatePartCategory = {
 
 export const estimatePartCategories: EstimatePartCategory[] = [
   { label: "Brakes", query: "brakes", groups: [
-    { label: "Front brakes", parts: ["front brake pads", "front brake rotors", "front brake calipers", "front brake hardware kit", "brake fluid"] },
-    { label: "Rear brakes", parts: ["rear brake pads", "rear brake rotors", "rear brake calipers", "rear brake hardware kit", "brake fluid"] }
+    { label: "Front brakes", parts: ["front brake pads", "front brake rotors", "front brake calipers"] },
+    { label: "Rear brakes", parts: ["rear brake pads", "rear brake rotors", "rear brake calipers"] },
+    { label: "Brake fluids", parts: ["brake fluid"] }
   ] },
-  { label: "Oil & filters", query: "oil change", parts: ["engine oil and filter change", "5 quart full synthetic engine oil", "oil filter", "engine air filter", "cabin air filter", "fuel filter"] },
-  { label: "Lighting", query: "light bulbs", parts: ["low beam headlight bulb", "high beam headlight bulb", "fog light bulb", "license plate light bulb", "front turn signal bulb", "rear turn signal bulb", "brake tail light bulb", "reverse light bulb"] },
-  { label: "Wipers", query: "wiper blades", parts: ["driver side windshield wiper blade", "passenger side windshield wiper blade", "rear wiper blade"] },
-  { label: "Tires", query: "tire fitment", parts: ["single tire repair", "tire replacement", "tire", "tpms sensor service kit", "P rated passenger tire", "LT light truck tire"] },
+  { label: "Oil & filters", query: "oil change", parts: ["oil", "oil filter", "engine air filter", "cabin air filter", "fuel filter"] },
+  { label: "Engine", query: "engine", parts: ["spark plugs", "ignition coils", "pcv valve", "serpentine belt", "drive belt tensioner", "idler pulley", "engine mount", "camshaft sensor", "crankshaft sensor", "mass air flow sensor", "oxygen sensor"] },
+  { label: "Transmission", query: "transmission", parts: ["transmission fluid", "transmission filter", "transmission pan gasket", "shift solenoid", "transmission mount", "transmission cooler line", "transmission speed sensor"] },
+  { label: "Cooling", query: "cooling", parts: ["coolant", "thermostat", "radiator", "water pump", "upper radiator hose", "lower radiator hose", "radiator cap", "cooling fan assembly", "coolant temperature sensor"] },
   { label: "Suspension", query: "suspension", groups: [
-    { label: "Front suspension", parts: ["front strut assembly", "front shock", "front lower control arm", "front lower ball joint", "front sway bar links", "front wheel bearing hub assembly"] },
-    { label: "Rear suspension", parts: ["rear shock strut assembly", "rear shock", "rear lower control arm", "rear lower ball joint", "rear sway bar links", "rear wheel bearing hub assembly"] }
+    { label: "Front suspension", parts: ["front struts", "front shocks", "front lower control arm", "front upper control arm", "front lower ball joint", "front upper ball joint", "front sway bar links", "front sway bar bushings"] },
+    { label: "Rear suspension", parts: ["rear struts", "rear shocks", "rear lower control arm", "rear upper control arm", "rear lower ball joint", "rear upper ball joint", "rear sway bar links", "rear sway bar bushings"] },
+    { label: "Wheel end", parts: ["front wheel bearing hub assembly", "rear wheel bearing hub assembly"] }
   ] },
-  { label: "Steering", query: "steering", parts: ["outer tie rod end", "inner tie rod end", "rack and pinion steering rack", "power steering pump", "power steering pressure hose", "power steering return hose", "power steering fluid"] },
-  { label: "Drivetrain", query: "drivetrain", parts: ["front cv axle", "drive shaft", "u-joint", "center support bearing", "axle seal", "differential fluid"] },
-  { label: "Cooling", query: "cooling", parts: ["engine coolant antifreeze", "thermostat", "radiator cap", "upper radiator hose", "lower radiator hose", "water pump", "radiator", "cooling fan assembly", "coolant temperature sensor"] },
-  { label: "Transmission", query: "transmission", parts: ["6 quart vehicle spec transmission fluid ATF CVT", "transmission filter", "transmission pan gasket", "transmission drain plug gasket", "shift solenoid", "transmission mount", "transmission cooler line"] },
-  { label: "Engine", query: "engine maintenance", parts: ["spark plug", "ignition coil", "ignition coil boot", "pcv valve", "serpentine belt", "drive belt tensioner", "idler pulley", "engine mount"] },
-  { label: "Fuel / EVAP", query: "fuel system", parts: ["fuel filter", "fuel pump", "fuel injector", "fuel pressure regulator", "gas cap", "evap purge valve", "evap vent valve"] },
-  { label: "Exhaust", query: "exhaust", parts: ["oxygen sensor", "catalytic converter", "exhaust manifold gasket", "exhaust flex pipe", "muffler", "resonator", "exhaust flange bolts nuts"] },
-  { label: "HVAC", query: "hvac", parts: ["blower motor", "blower motor resistor", "ac compressor", "ac condenser", "hvac blend door actuator"] },
-  { label: "Electrical", query: "electrical", parts: ["battery", "alternator", "starter", "starter relay", "main fuse", "battery terminals", "ground strap"] },
-  { label: "Diagnostics", query: "engine diagnostics", parts: ["free code light check", "diagnostic trace flat rate", "check engine light diagnostic", "ABS light diagnostic", "airbag SRS diagnostic"] },
+  { label: "Steering", query: "steering", groups: [
+    { label: "Front steering", parts: ["front outer tie rod end", "front inner tie rod end", "rack and pinion steering rack", "steering rack boot"] },
+    { label: "Power steering", parts: ["power steering pump", "power steering pressure hose", "power steering return hose", "power steering fluid"] }
+  ] },
+  { label: "Drivetrain", query: "drivetrain", groups: [
+    { label: "Front drivetrain", parts: ["front cv axle", "front axle seal", "front wheel bearing hub assembly"] },
+    { label: "Rear drivetrain", parts: ["rear cv axle", "rear axle seal", "rear wheel bearing hub assembly"] },
+    { label: "Shafts and differential", parts: ["drive shaft", "u-joint", "center support bearing", "differential fluid"] }
+  ] },
+  { label: "Exhaust", query: "exhaust", parts: ["oxygen sensor", "catalytic converter", "exhaust manifold gasket", "exhaust flex pipe", "muffler", "resonator"] },
+  { label: "Fuel", query: "fuel system", parts: ["fuel pump", "fuel injector", "fuel pump relay", "fuel pressure regulator", "gas cap", "evap purge valve", "evap vent valve"] },
+  { label: "HVAC", query: "hvac", parts: ["blower motor", "blower motor resistor", "ac compressor", "ac condenser", "ac expansion valve", "heater core", "hvac blend door actuator"] },
+  { label: "Electrical", query: "electrical", parts: ["battery", "alternator", "starter", "starter relay", "main fuse", "ignition switch", "battery terminals", "ground strap"] },
+  { label: "Diagnostics", query: "engine diagnostics", parts: ["free code light check", "detailed diagnostics", "check engine light diagnostic", "ABS light diagnostic", "SRS airbag diagnostic"] },
+  { label: "Lighting", query: "light bulbs", parts: ["low beam bulb", "high beam bulb", "fog light bulb", "license plate bulb", "brake light bulb", "turn signal bulb", "running light bulb", "reverse light bulb"] },
+  { label: "Wipers", query: "wiper blades", parts: ["front wiper blades", "rear wiper blade", "windshield washer pump", "washer fluid reservoir", "wiper arm", "wiper motor"] },
+  { label: "Tires", query: "tire fitment", parts: ["TPMS System", "P Rated", "LT Rated", "Staggered Fit", "single tire repair", "tire replacement", "tire rotation"] },
   { label: "Hardware", query: "hardware", groups: [
-    { label: "Brake hardware", parts: ["brake caliper bracket bolts", "brake caliper slide pin kit", "brake caliper pin boot kit", "brake pad abutment clips", "brake bleeder screws"] },
-    { label: "General hardware", parts: ["wheel lug nuts", "wheel lug studs", "exhaust flange bolts nuts", "body clips retainers", "hose clamps", "thread locker"] }
+    { label: "Brake hardware", parts: ["brake caliper bracket bolts", "brake caliper slide pins", "brake caliper pin boot kit", "brake pad abutment clips", "brake bleeder screws"] },
+    { label: "Oil and filter hardware", parts: ["engine oil drain plug", "oil drain plug gasket crush washer", "oil filter housing cap", "oil filter housing gasket", "oil pan bolts"] },
+    { label: "Filter hardware", parts: ["air box clips", "cabin filter cover clips", "fuel filter clips", "fuel line quick connect clips"] },
+    { label: "Wheel hardware", parts: ["wheel lug nuts", "wheel lug studs", "wheel locks", "wheel spacers", "hub centric rings"] },
+    { label: "Suspension hardware", parts: ["strut mount nuts", "strut pinch bolts", "control arm bolts", "ball joint pinch bolt", "sway bar link nuts"] },
+    { label: "Steering hardware", parts: ["tie rod jam nuts", "steering rack mounting bolts", "power steering line o-rings", "cotter pins"] },
+    { label: "Drivetrain hardware", parts: ["cv axle nut", "axle snap ring", "driveshaft flange bolts", "u-joint straps", "differential cover bolts"] },
+    { label: "Exhaust hardware", parts: ["exhaust flange bolts nuts", "exhaust manifold studs", "exhaust spring bolts", "exhaust hanger", "exhaust clamp"] },
+    { label: "Cooling hardware", parts: ["radiator mounting clips", "coolant hose clamps", "thermostat housing bolts", "water pump bolts", "cooling fan clips"] },
+    { label: "Fuel hardware", parts: ["fuel line clips", "fuel pump lock ring", "fuel injector o-rings", "fuel rail bolts"] },
+    { label: "HVAC hardware", parts: ["ac line o-rings", "hvac case screws", "blower motor screws", "heater hose clamps"] },
+    { label: "Body hardware", parts: ["body clips retainers", "push pins", "fender liner clips", "bumper cover clips", "door panel clips"] },
+    { label: "Hose and line hardware", parts: ["hose clamps", "fuel line clips", "brake line clips", "vacuum hose connectors", "coolant hose clamps"] },
+    { label: "Electrical hardware", parts: ["electrical connector clips", "battery terminal bolts", "ground strap bolts", "wire loom clips", "fuse assortment"] },
+    { label: "General shop hardware", parts: ["metric bolt assortment", "metric nut assortment", "washer assortment", "cotter pins", "thread locker"] }
   ] }
 ];
 
 export const popularEstimateQueries = [
-  "front brake pads and rotors", "rear brake pads and rotors", "oil change", "wipers", "light bulbs", "battery", "single tire repair", "tire replacement", "check engine light diagnostic", "coolant flush", "transmission service", "suspension noise inspection", "exhaust leak inspection"
+  "front brake pads", "rear brake pads", "oil change", "front wiper blades", "low beam bulb", "battery", "single tire repair", "tire replacement", "check engine light diagnostic", "cooling", "transmission", "suspension", "exhaust", "hardware"
 ];
 
 const priceCatalog: Array<{ match: RegExp; min: number; max: number }> = [
@@ -420,6 +465,65 @@ export function buildPartSupplierCandidates(part: string, tier: PartTier = "mid"
     imageNote: "Use supplier/manufacturer image after live lookup; do not rely on placeholder art",
     fulfillment: source.fulfillment
   }));
+}
+
+function shippingAllowanceForSource(source: { type: "Local pickup" | "Online" | "Tire" }, index: number): PriceRange {
+  if (source.type === "Local pickup" || source.type === "Tire") return { min: 0, max: 0 };
+  const base = index % 2 === 0 ? 14 : 19;
+  return { min: base, max: base + 18 };
+}
+
+function jobSearchPhrase(parts: Array<{ lookupQuery?: string; name: string }>, fallback: string) {
+  const selected = parts.slice(0, 4).map((part) => part.lookupQuery || searchPhraseForPart(part.name)).join(" ").trim();
+  return selected || fallback;
+}
+
+export function buildRetailerEstimateResults(service: string): RetailerEstimateResult[] {
+  const recipe = catalogForService(service);
+  const tireJob = /tire|tpms|valve stem|staggered|p rated|lt rated/i.test(`${service} ${recipe.label}`);
+  const sources = tireJob ? [...tireSearchBases, ...supplierSearchBases] : supplierSearchBases;
+
+  return sources.map((source, retailerIndex) => {
+    const parts = recipe.parts.map((part, partIndex) => {
+      const unitPrice = estimatePartPrice(part.name, retailerIndex + partIndex);
+      const retailerPrice = multiplyPrice(unitPrice, part.qty);
+      return {
+        name: part.name,
+        qty: part.qty,
+        status: part.status ?? "selected",
+        unitPrice,
+        totalPrice: retailerPrice,
+        retailerPrice,
+        lookupQuery: searchPhraseForPart(part.name),
+        url: `${source.base}${encodeURIComponent(searchPhraseForPart(part.name))}`
+      } satisfies RetailerJobPartResult;
+    });
+    const selectedParts = parts.filter((part) => part.status === "selected").reduce((total, part) => addPrice(total, part.retailerPrice), { min: 0, max: 0 });
+    const possibleParts = parts.filter((part) => part.status === "possible").reduce((total, part) => addPrice(total, part.retailerPrice), { min: 0, max: 0 });
+    const fullPartsTotal = addPrice(selectedParts, possibleParts);
+    const shipping = shippingAllowanceForSource(source, retailerIndex);
+    const labor = { min: Math.round(recipe.laborHours * SHOP_LABOR_RATE), max: Math.round(recipe.laborHours * SHOP_LABOR_RATE) };
+    const marketLabor = { min: Math.round(recipe.laborHours * MARKET_LABOR_RATE), max: Math.round(recipe.laborHours * MARKET_LABOR_RATE) };
+    const selectedTotal = addPrice(addPrice(selectedParts, labor), shipping);
+    const marketTotal = addPrice(addPrice(selectedParts, marketLabor), shipping);
+    return {
+      name: source.name,
+      type: source.type,
+      color: source.color,
+      fulfillment: source.fulfillment,
+      url: `${source.base}${encodeURIComponent(jobSearchPhrase(parts, service))}`,
+      parts,
+      selectedParts,
+      possibleParts,
+      shipping,
+      labor,
+      marketLabor,
+      selectedTotal,
+      fullPartsTotal,
+      marketTotal,
+      average: averagePrice(selectedTotal)
+    };
+  }).sort((a, b) => a.selectedTotal.min - b.selectedTotal.min || a.average - b.average || a.name.localeCompare(b.name));
 }
 
 export const partsIntegrationNotes = [

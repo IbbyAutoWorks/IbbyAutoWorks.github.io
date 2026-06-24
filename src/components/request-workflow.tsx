@@ -51,6 +51,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const isAdminMode = mode === "admin";
   const [activeStep, setActiveStep] = useState(0);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedSupplierChoices, setSelectedSupplierChoices] = useState<Record<string, string>>({});
   const [submittedOrder, setSubmittedOrder] = useState<PrototypeWorkOrder | null>(null);
   const [savedCustomers, setSavedCustomers] = useState<PrototypeCustomerRecord[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
@@ -89,7 +90,6 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     preferredWindow: appointmentWindows.find((window) => !window.booked)?.label ?? appointmentWindows[0]?.label ?? "",
     symptoms: ""
   });
-  const selected = serviceOptions.find((service) => service.name === selectedServices[0]) ?? serviceOptions[0];
   const agreementsReady = isAdminMode || hasRequiredAgreementAcceptance(agreementAcceptance);
   const selectedWindow = findAppointmentWindow(form.preferredWindow);
   const needsTirePosition = selectedServices.includes("Single tire repair");
@@ -167,6 +167,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   }, [isAdminMode]);
 
   const estimateDetails = useMemo(() => estimateServices(selectedServices), [selectedServices]);
+  const selectedDistributorSummary = Object.entries(selectedSupplierChoices).map(([key, supplier]) => `${key}: ${supplier}`).join("; ");
   const reviewGroups = [
     {
       title: "Customer",
@@ -195,6 +196,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
         ["Services", selectedServices.length ? selectedServices.join(", ") : "None selected"],
         ["Tire position", needsTirePosition ? tireConcern : "Not needed"],
         ["Draft estimate", selectedServices.length ? formatPriceRange(estimateDetails.total) : "Pending service selection"],
+        ["Distributor choices", selectedDistributorSummary || "Customer can compare/select during parts review"],
         ["Symptoms / notes", form.symptoms || "No symptoms entered"]
       ]
     },
@@ -301,8 +303,15 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   function toggleService(serviceName: string, checked: boolean) {
     setSelectedServices((current) => {
       const next = checked ? [...current, serviceName] : current.filter((item) => item !== serviceName);
+      if (!checked) {
+        setSelectedSupplierChoices((choices) => Object.fromEntries(Object.entries(choices).filter(([key]) => key !== serviceName && !key.startsWith(`${serviceName}::`))));
+      }
       return next;
     });
+  }
+
+  function chooseSupplier(choiceKey: string, supplierName: string) {
+    setSelectedSupplierChoices((current) => ({ ...current, [choiceKey]: supplierName }));
   }
 
   async function decodeVin() {
@@ -379,7 +388,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       inspectionExpires: `${form.inspectionMonth} ${form.inspectionYear}`.trim(),
       registrationExpires: `${form.registrationMonth} ${form.registrationYear}`.trim(),
       serviceLocationConfirmed: Boolean(form.address && form.town && form.serviceState),
-      estimateNotes: `IAW draft estimate includes ${estimateDetails.parts.length} part line(s), ${estimateDetails.laborHours.toFixed(1)} labor hour(s), and estimated labor savings of $${estimateDetails.savings.amount} vs market rate. Final estimate requires technician acceptance and live supplier verification.`,
+      estimateNotes: `IAW draft estimate includes ${estimateDetails.parts.length} part line(s), ${estimateDetails.laborHours.toFixed(1)} labor hour(s), and estimated labor savings of $${estimateDetails.savings.amount} vs market rate. Distributor choices: ${selectedDistributorSummary || "none selected yet"}. Final estimate requires technician acceptance and live supplier verification.`,
       customerContactLog: [
         `${new Date().toLocaleString()}: ${isAdminMode ? "Admin created work order from intake page" : "Customer submitted service request"}`,
         `${new Date().toLocaleString()}: Preferences - notifications ${customerPreferences.notifications ? "allowed" : "not allowed"}, location ${customerPreferences.location ? "allowed" : "not allowed"}, remember login ${customerPreferences.rememberLogin ? "requested" : "not requested"}`
@@ -387,7 +396,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       techNotes: [],
       partRequests: [],
       measurements: defaultServiceMeasurements(),
-      parts: buildPrototypeParts(selectedServices, "mid"),
+      parts: buildPrototypeParts(selectedServices, "mid", selectedSupplierChoices),
       inspection: buildPrototypeInspection(),
       vehicleSpec: selectedVehicleSpec ?? findVehicleSpec(form.vehicle) ?? fallbackVehicleSpec,
       agreementAcceptance: isAdminMode ? adminAgreementAcceptance : {
@@ -572,7 +581,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <h2>Requested services</h2>
             <Car />
           </div>
-          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} />
+          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} />
           {needsTirePosition ? (
             <label className="inline-input tire-position-picker"><Car /><span>Tire needing attention</span>
               <select value={tireConcern} onChange={(event) => setTireConcern(event.target.value as (typeof tirePositions)[number])}>
