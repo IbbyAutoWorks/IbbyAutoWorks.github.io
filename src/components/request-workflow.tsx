@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell, CalendarClock, Camera, Car, CheckCircle2, KeyRound, LocateFixed, MapPin, PackageCheck, Scale, Send, UserRound } from "lucide-react";
+import { Bell, CalendarClock, Camera, Car, CheckCircle2, ExternalLink, KeyRound, LocateFixed, MapPin, PackageCheck, Scale, Send, UserRound, X } from "lucide-react";
 
 import { agreementSummaries, defaultAgreementAcceptance, hasRequiredAgreementAcceptance, partsReturnOptions, type AgreementId, type PartsReturnPreference } from "@/lib/agreements";
 import { serviceOptions, timeline } from "@/lib/data";
@@ -11,6 +11,7 @@ import { readPricingSettings, type PricingSettings } from "@/lib/pricing-setting
 import { buildPrototypeInspection, buildPrototypeParts, CUSTOMER_RECORDS_EVENT, defaultCustomerPreferences, defaultServiceMeasurements, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, savePrototypeWorkOrder } from "@/lib/local-store";
 import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/lib/schedule";
 import { decodeVinWithNhtsa, fallbackVehicleSpec, findVehicleSpec, formatVehicle, vehicleCatalog, type VehicleSpec } from "@/lib/vehicles";
+import { readPrayerScheduleSettings, prayerBlockLabel, timeToMinutes, effectivePrayerTime, type PrayerScheduleSettings } from "@/lib/prayer-times";
 import { ServiceSelector } from "@/components/service-selector";
 import { CustomerPaymentOptions } from "@/components/customer-payment-options";
 import { CustomerPromoOffers } from "@/components/customer-promo-offers";
@@ -30,6 +31,14 @@ const appointmentDays = [
   { day: 14, label: "Sun", date: "2026-06-14", booked: true }
 ];
 const appointmentTimes = ["8:00", "8:30", "9:00", "9:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "1:00", "1:30", "2:00", "2:30", "3:00", "3:30", "4:00", "4:30"];
+function appointmentTimeToMinutes(time: string, period: string) {
+  const [hourText, minuteText] = time.split(":");
+  let hour = Number(hourText) || 0;
+  const minute = Number(minuteText) || 0;
+  if (period === "PM" && hour !== 12) hour += 12;
+  if (period === "AM" && hour === 12) hour = 0;
+  return hour * 60 + minute;
+}
 const appointmentMonths = [
   { label: "June 2026", year: 2026, month: 5 },
   { label: "July 2026", year: 2026, month: 6 },
@@ -54,6 +63,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedSupplierChoices, setSelectedSupplierChoices] = useState<Record<string, string>>({});
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
+  const [prayerSettings, setPrayerSettings] = useState<PrayerScheduleSettings>(() => readPrayerScheduleSettings());
   const [submittedOrder, setSubmittedOrder] = useState<PrototypeWorkOrder | null>(null);
   const [savedCustomers, setSavedCustomers] = useState<PrototypeCustomerRecord[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
@@ -61,6 +71,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [selectedVehicleSpec, setSelectedVehicleSpec] = useState<VehicleSpec | null>(null);
   const [vinStatus, setVinStatus] = useState("");
   const [vinDecoded, setVinDecoded] = useState(false);
+  const [plateLookupStatus, setPlateLookupStatus] = useState("Plate lookup needs a connected provider; free public VIN decode stays available.");
   const [agreementError, setAgreementError] = useState("");
   const [agreementAcceptance, setAgreementAcceptance] = useState(defaultAgreementAcceptance);
   const [customerPreferences, setCustomerPreferences] = useState(defaultCustomerPreferences);
@@ -156,12 +167,20 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     function syncPricingSettings() {
       setPricingSettings(readPricingSettings());
     }
+    function syncPrayerSettings() {
+      setPrayerSettings(readPrayerScheduleSettings());
+    }
     syncPricingSettings();
+    syncPrayerSettings();
     window.addEventListener("storage", syncPricingSettings);
+    window.addEventListener("storage", syncPrayerSettings);
     window.addEventListener("ibbys-auto.pricing-settings.changed", syncPricingSettings);
+    window.addEventListener("ibbys-auto.prayer-settings.changed", syncPrayerSettings);
     return () => {
       window.removeEventListener("storage", syncPricingSettings);
+      window.removeEventListener("storage", syncPrayerSettings);
       window.removeEventListener("ibbys-auto.pricing-settings.changed", syncPricingSettings);
+      window.removeEventListener("ibbys-auto.prayer-settings.changed", syncPrayerSettings);
     };
   }, []);
 
@@ -185,6 +204,13 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const selectedDistributorSummary = Object.entries(selectedSupplierChoices).map(([key, supplier]) => `${key}: ${supplier}`).join("; ");
   const activeVehicleContext = form.vehicle || `${form.vehicleYear} ${form.vehicleMake} ${form.vehicleModel}`.replace(/\s+/g, " ").trim();
   const activeAreaContext = `${form.town} ${form.serviceState}`.replace(/\s+/g, " ").trim();
+  const selectedAppointmentMinutes = appointmentTimeToMinutes(form.appointmentTime, form.appointmentPeriod);
+  const activePrayerBlocks = prayerSettings.enabled ? prayerSettings.blocks.filter((block) => block.enabled) : [];
+  const selectedPrayerConflict = activePrayerBlocks.find((block) => {
+    const start = timeToMinutes(effectivePrayerTime(block));
+    const end = start + block.durationMinutes;
+    return selectedAppointmentMinutes >= start && selectedAppointmentMinutes < end;
+  });
   const reviewGroups = [
     {
       title: "Customer",
@@ -221,7 +247,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       title: "Appointment",
       rows: [
         ["Preferred window", preferredWindow],
-        ["Availability", selectedAppointmentDay?.booked ? "Booked" : "Open"],
+        ["Availability", selectedPrayerConflict ? `Prayer block: ${selectedPrayerConflict.name}` : selectedAppointmentDay?.booked ? "Booked" : "Open"],
         ["Business hours", businessSchedule.hours],
         ["Google Calendar", businessSchedule.googleCalendarStatus]
       ]
@@ -329,6 +355,20 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
 
   function chooseSupplier(choiceKey: string, supplierName: string) {
     setSelectedSupplierChoices((current) => ({ ...current, [choiceKey]: supplierName }));
+  }
+
+  function lookupPlate() {
+    const cleanPlate = form.plate.trim().toUpperCase();
+    if (!cleanPlate) {
+      setPlateLookupStatus("Enter a plate number first.");
+      return;
+    }
+    setPlateLookupStatus(`Saved ${cleanPlate} ${form.plateState}. Free public plate-to-VIN decoding is not available in this static app; connect a plate-data provider or verify manually, then use VIN/manual vehicle fields.`);
+  }
+
+  function plateSearchUrl() {
+    const query = encodeURIComponent(`${form.plate} ${form.plateState} vehicle plate lookup`.trim());
+    return `https://www.google.com/search?q=${query}`;
   }
 
   async function decodeVin() {
@@ -525,6 +565,11 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <button className={vinDecoded ? "vin-decode-button valid" : vinLengthReady ? "vin-decode-button ready" : "vin-decode-button invalid"} disabled={!vinLengthReady} onClick={decodeVin}><Car size={15} /> Decode VIN</button>
             <span>{vinStatus || "VIN decode uses the free NHTSA vPIC API when online."}</span>
           </div>
+          <div className="vin-decode-row plate-lookup-row">
+            <button className="secondary-button" disabled={!form.plate.trim()} onClick={lookupPlate} type="button"><Car size={15} /> Save / check plate</button>
+            <a className="secondary-button" href={plateSearchUrl()} rel="noreferrer" target="_blank"><ExternalLink size={14} /> Manual plate research</a>
+            <span>{plateLookupStatus}</span>
+          </div>
           <div className="vehicle-catalog">
             <div className="catalog-head">
               <div>
@@ -599,6 +644,15 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <Car />
           </div>
           <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} vehicleContext={activeVehicleContext} areaContext={activeAreaContext} />
+          {selectedServices.length ? (
+            <div className="selected-service-removal-row">
+              {selectedServices.map((service) => (
+                <button className="removable-service-chip" key={service} onClick={() => toggleService(service, false)} type="button">
+                  <X size={13} /> Remove {service}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {needsTirePosition ? (
             <label className="inline-input tire-position-picker"><Car /><span>Tire needing attention</span>
               <select value={tireConcern} onChange={(event) => setTireConcern(event.target.value as (typeof tirePositions)[number])}>
@@ -642,14 +696,23 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
               ))}
             </div>
             <div className="time-select-grid">
-              <label><span>Time</span><select value={form.appointmentTime} onChange={(event) => updateForm("appointmentTime", event.target.value)}>{appointmentTimes.map((time) => <option key={time}>{time}</option>)}</select></label>
+              <label><span>Time</span><select value={form.appointmentTime} onChange={(event) => updateForm("appointmentTime", event.target.value)}>{appointmentTimes.map((time) => {
+                const minutes = appointmentTimeToMinutes(time, form.appointmentPeriod);
+                const blockedByPrayer = activePrayerBlocks.find((block) => minutes >= timeToMinutes(effectivePrayerTime(block)) && minutes < timeToMinutes(effectivePrayerTime(block)) + block.durationMinutes);
+                return <option disabled={Boolean(blockedByPrayer)} key={time}>{time}{blockedByPrayer ? ` - Prayer block (${blockedByPrayer.name})` : ""}</option>;
+              })}</select></label>
               <label><span>AM / PM</span><select value={form.appointmentPeriod} onChange={(event) => updateForm("appointmentPeriod", event.target.value)}><option>AM</option><option>PM</option></select></label>
             </div>
-            <div className={selectedAppointmentDay?.booked ? "availability-card booked" : "availability-card"}>
-              <strong>{selectedAppointmentDay?.booked ? "Booked" : "Available"}</strong>
+            <div className={selectedPrayerConflict || selectedAppointmentDay?.booked ? "availability-card booked" : "availability-card"}>
+              <strong>{selectedPrayerConflict ? `Blocked for ${selectedPrayerConflict.name}` : selectedAppointmentDay?.booked ? "Booked" : "Available"}</strong>
               <span>{preferredWindow} - Hours: {businessSchedule.hours}</span>
-              <small>Google Calendar: {businessSchedule.googleCalendarStatus}</small>
+              <small>{selectedPrayerConflict ? prayerBlockLabel(selectedPrayerConflict) : `Google Calendar: ${businessSchedule.googleCalendarStatus}`}</small>
             </div>
+            {activePrayerBlocks.length ? (
+              <div className="prayer-window-strip">
+                {activePrayerBlocks.map((block) => <span key={block.name}>{prayerBlockLabel(block)} · reminder {block.reminderMinutes} min before</span>)}
+              </div>
+            ) : null}
             <button className="secondary-button"><Camera size={15} /> Add photos of issue or vehicle</button>
           </div>
         </div>

@@ -100,9 +100,20 @@ export const estimatePartCategories: EstimatePartCategory[] = [
     { label: "Brake fluids", parts: ["brake fluid"] }
   ] },
   { label: "Oil & filters", query: "oil change", parts: ["oil", "oil filter", "engine air filter", "cabin air filter", "fuel filter"] },
-  { label: "Engine", query: "engine", parts: ["spark plugs", "ignition coils", "pcv valve", "serpentine belt", "drive belt tensioner", "idler pulley", "engine mount", "camshaft sensor", "crankshaft sensor", "mass air flow sensor", "oxygen sensor"] },
-  { label: "Transmission", query: "transmission", parts: ["transmission fluid", "transmission filter", "transmission pan gasket", "shift solenoid", "transmission mount", "transmission cooler line", "transmission speed sensor"] },
-  { label: "Cooling", query: "cooling", parts: ["coolant", "thermostat", "radiator", "water pump", "upper radiator hose", "lower radiator hose", "radiator cap", "cooling fan assembly", "coolant temperature sensor"] },
+  { label: "Engine", query: "engine", groups: [
+    { label: "Ignition and tune-up", parts: ["spark plugs", "ignition coils", "pcv valve"] },
+    { label: "Belts and brackets", parts: ["serpentine belt", "drive belt tensioner", "idler pulley", "engine mount"] },
+    { label: "Engine sensors", parts: ["camshaft sensor", "crankshaft sensor", "mass air flow sensor", "oxygen sensor"] }
+  ] },
+  { label: "Transmission", query: "transmission", groups: [
+    { label: "Transmission fluids", parts: ["transmission fluid", "transmission filter", "transmission pan gasket"] },
+    { label: "Transmission sensors and lines", parts: ["shift solenoid", "transmission mount", "transmission cooler line", "transmission speed sensor"] }
+  ] },
+  { label: "Cooling", query: "cooling", groups: [
+    { label: "Fluids and caps", parts: ["coolant", "thermostat", "radiator cap"] },
+    { label: "Hoses", parts: ["upper radiator hose", "lower radiator hose", "coolant hose clamps"] },
+    { label: "Cooling parts and sensors", parts: ["radiator", "water pump", "cooling fan assembly", "coolant temperature sensor"] }
+  ] },
   { label: "Suspension", query: "suspension", groups: [
     { label: "Front suspension", parts: ["front struts", "front shocks", "front lower control arm", "front upper control arm", "front lower ball joint", "front upper ball joint", "front sway bar links", "front sway bar bushings"] },
     { label: "Rear suspension", parts: ["rear struts", "rear shocks", "rear lower control arm", "rear upper control arm", "rear lower ball joint", "rear upper ball joint", "rear sway bar links", "rear sway bar bushings"] },
@@ -118,13 +129,34 @@ export const estimatePartCategories: EstimatePartCategory[] = [
     { label: "Shafts and differential", parts: ["drive shaft", "u-joint", "center support bearing", "differential fluid"] }
   ] },
   { label: "Exhaust", query: "exhaust", parts: ["oxygen sensor", "catalytic converter", "exhaust manifold gasket", "exhaust flex pipe", "muffler", "resonator"] },
-  { label: "Fuel", query: "fuel system", parts: ["fuel pump", "fuel injector", "fuel pump relay", "fuel pressure regulator", "gas cap", "evap purge valve", "evap vent valve"] },
-  { label: "HVAC", query: "hvac", parts: ["blower motor", "blower motor resistor", "ac compressor", "ac condenser", "ac expansion valve", "heater core", "hvac blend door actuator"] },
-  { label: "Electrical", query: "electrical", parts: ["battery", "alternator", "starter", "starter relay", "main fuse", "ignition switch", "battery terminals", "ground strap"] },
+  { label: "Fuel", query: "fuel system", groups: [
+    { label: "Fuel parts", parts: ["fuel pump", "fuel injector", "fuel pressure regulator", "gas cap"] },
+    { label: "Fuel sensors and fuses", parts: ["fuel pump relay", "fuel pump fuse", "fuel pressure sensor"] },
+    { label: "EVAP sensors and valves", parts: ["evap purge valve", "evap vent valve"] }
+  ] },
+  { label: "HVAC", query: "hvac", groups: [
+    { label: "HVAC electrical", parts: ["blower motor", "blower motor resistor", "hvac blend door actuator", "ac fuse"] },
+    { label: "A/C components", parts: ["ac compressor", "ac condenser", "ac expansion valve"] },
+    { label: "HVAC hoses and seals", parts: ["heater core", "heater hose", "ac line o-rings"] }
+  ] },
+  { label: "Electrical", query: "electrical", groups: [
+    { label: "Starting and charging", parts: ["battery", "alternator", "starter", "starter relay"] },
+    { label: "Fuses and connectors", parts: ["main fuse", "fuse assortment", "battery terminals", "ground strap"] },
+    { label: "Switches", parts: ["ignition switch"] }
+  ] },
   { label: "Diagnostics", query: "engine diagnostics", parts: ["free code light check", "detailed diagnostics", "check engine light diagnostic", "ABS light diagnostic", "SRS airbag diagnostic"] },
   { label: "Lighting", query: "light bulbs", parts: ["low beam bulb", "high beam bulb", "fog light bulb", "license plate bulb", "brake light bulb", "turn signal bulb", "running light bulb", "reverse light bulb"] },
   { label: "Wipers", query: "wiper blades", parts: ["front wiper blades", "rear wiper blade", "windshield washer pump", "washer fluid reservoir", "wiper arm", "wiper motor"] },
   { label: "Tires", query: "tire fitment", parts: ["TPMS System", "P Rated", "LT Rated", "Staggered Fit", "single tire repair", "tire replacement", "tire rotation"] },
+  { label: "Fluids & hoses", query: "automotive fluids hoses", groups: [
+    { label: "Fluids", parts: ["brake fluid", "coolant", "transmission fluid", "power steering fluid", "differential fluid", "washer fluid"] },
+    { label: "Hoses", parts: ["upper radiator hose", "lower radiator hose", "heater hose", "power steering pressure hose", "power steering return hose", "transmission cooler line"] }
+  ] },
+  { label: "Sensors, belts & fuses", query: "automotive sensors belts fuses", groups: [
+    { label: "Sensors", parts: ["oxygen sensor", "camshaft sensor", "crankshaft sensor", "mass air flow sensor", "coolant temperature sensor", "transmission speed sensor"] },
+    { label: "Belts", parts: ["serpentine belt", "drive belt tensioner", "idler pulley"] },
+    { label: "Fuses and relays", parts: ["main fuse", "starter relay", "fuel pump relay", "fuse assortment"] }
+  ] },
   { label: "Hardware", query: "hardware", groups: [
     { label: "Brake hardware", parts: ["brake caliper bracket bolts", "brake caliper slide pins", "brake caliper pin boot kit", "brake pad abutment clips", "brake bleeder screws"] },
     { label: "Oil and filter hardware", parts: ["engine oil drain plug", "oil drain plug gasket crush washer", "oil filter housing cap", "oil filter housing gasket", "oil pan bolts"] },

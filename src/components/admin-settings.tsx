@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, ChevronDown, Clock3, Crown, FileImage, FileText, MapPinned, Palette, RotateCcw, Save, SlidersHorizontal, Upload, Wrench } from "lucide-react";
+import { CalendarClock, ChevronDown, Clock3, Crown, FileImage, FileText, MapPinned, Palette, RotateCcw, Save, SlidersHorizontal, Upload, Wrench, Bell } from "lucide-react";
 
 import {
   CROWN_LOGO_SRC,
@@ -15,6 +15,7 @@ import { inspectionTemplates } from "@/lib/data";
 import { appointmentWindows, businessSchedule } from "@/lib/schedule";
 import { readSavedTheme, saveTheme, ThemeRoleColors } from "@/lib/theme";
 import { readPricingSettings, savePricingSettings, type PricingSettings } from "@/lib/pricing-settings";
+import { fetchPrayerTimesFromAladhan, prayerBlockLabel, readPrayerScheduleSettings, savePrayerScheduleSettings, type PrayerBlock, type PrayerScheduleSettings } from "@/lib/prayer-times";
 import { PaymentSettingsPanel } from "@/components/payment-settings";
 import { IntegrationHub } from "@/components/integration-hub";
 import { PaymentPlanManager } from "@/components/payment-plan-manager";
@@ -57,6 +58,8 @@ export function AdminSettings() {
   const [calendarMonth, setCalendarMonth] = useState("June 2026");
   const [serviceRadius, setServiceRadius] = useState("25");
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
+  const [prayerSettings, setPrayerSettings] = useState<PrayerScheduleSettings>(() => readPrayerScheduleSettings());
+  const [prayerFetchStatus, setPrayerFetchStatus] = useState("Prayer blocks are local until live calendar sync is connected.");
 
   useEffect(() => {
     const savedTheme = readSavedTheme();
@@ -72,6 +75,7 @@ export function AdminSettings() {
 
   useEffect(() => {
     setPricingSettings(readPricingSettings());
+    setPrayerSettings(readPrayerScheduleSettings());
   }, []);
 
   function updatePricingSetting(field: keyof PricingSettings, value: string) {
@@ -81,6 +85,35 @@ export function AdminSettings() {
     } as PricingSettings;
     setPricingSettings(next);
     savePricingSettings(next);
+  }
+
+  function updatePrayerSettings(nextSettings: PrayerScheduleSettings) {
+    setPrayerSettings(nextSettings);
+    savePrayerScheduleSettings(nextSettings);
+  }
+
+  function updatePrayerBlock(index: number, field: keyof PrayerBlock, value: string | boolean) {
+    const nextBlocks = prayerSettings.blocks.map((block, blockIndex) => blockIndex === index ? {
+      ...block,
+      [field]: typeof block[field] === "number" ? Number(value) : value
+    } : block);
+    updatePrayerSettings({ ...prayerSettings, blocks: nextBlocks });
+  }
+
+  function pushPrayerBlock(index: number, minutes: number) {
+    const nextBlocks = prayerSettings.blocks.map((block, blockIndex) => blockIndex === index ? { ...block, oneTimePushMinutes: minutes } : block);
+    updatePrayerSettings({ ...prayerSettings, blocks: nextBlocks });
+  }
+
+  async function syncPrayerTimes() {
+    setPrayerFetchStatus("Fetching prayer times from Aladhan...");
+    try {
+      const next = await fetchPrayerTimesFromAladhan(prayerSettings);
+      setPrayerSettings(next);
+      setPrayerFetchStatus(`Fetched prayer times for ${next.city}, ${next.state}. Review before relying on blocks.`);
+    } catch (error) {
+      setPrayerFetchStatus(`${error instanceof Error ? error.message : "Prayer time lookup failed."} Manual times are still editable.`);
+    }
   }
 
   function updateBranding(nextBranding: BrandingSettings) {
@@ -276,6 +309,35 @@ export function AdminSettings() {
               <input value={pricingSettings.defaultSearchArea} onChange={(event) => updatePricingSetting("defaultSearchArea", event.target.value)} placeholder="Auburn ME" />
             </label>
             <p className="legal-note">These settings feed the customer request estimator, retailer comparison cards, and saved work-order part quotes in this browser prototype.</p>
+          </div>
+        </details>
+
+        <details className="panel settings-accordion" open>
+          <summary><span><Bell size={16} /> Prayer time blocks and reminders</span><ChevronDown size={16} /></summary>
+          <div className="settings-fields prayer-settings-fields">
+            <label><span>Enable prayer blocking</span><select value={prayerSettings.enabled ? "yes" : "no"} onChange={(event) => updatePrayerSettings({ ...prayerSettings, enabled: event.target.value === "yes" })}><option value="yes">Yes - show as booked windows</option><option value="no">No - keep as reminders only</option></select></label>
+            <label><span>City</span><input value={prayerSettings.city} onChange={(event) => updatePrayerSettings({ ...prayerSettings, city: event.target.value })} /></label>
+            <label><span>State</span><input value={prayerSettings.state} onChange={(event) => updatePrayerSettings({ ...prayerSettings, state: event.target.value })} /></label>
+            <label><span>Country</span><input value={prayerSettings.country} onChange={(event) => updatePrayerSettings({ ...prayerSettings, country: event.target.value })} /></label>
+            <button className="secondary-button" onClick={syncPrayerTimes} type="button"><Clock3 size={15} /> Pull today's prayer times</button>
+            <p className="legal-note wide-field">{prayerFetchStatus} Reminders are shown in-app for now; native push notifications need the later notification/backend worker.</p>
+          </div>
+          <div className="prayer-block-grid">
+            {prayerSettings.blocks.map((block, index) => (
+              <div className={block.enabled ? "prayer-block-card enabled" : "prayer-block-card"} key={block.name}>
+                <label className="inline-input"><input checked={block.enabled} onChange={(event) => updatePrayerBlock(index, "enabled", event.target.checked)} type="checkbox" /> <strong>{block.name}</strong></label>
+                <label><span>Time</span><input type="time" value={block.time} onChange={(event) => updatePrayerBlock(index, "time", event.target.value)} /></label>
+                <label><span>Block minutes</span><input min="5" max="120" type="number" value={block.durationMinutes} onChange={(event) => updatePrayerBlock(index, "durationMinutes", event.target.value)} /></label>
+                <label><span>Reminder before</span><input min="0" max="120" type="number" value={block.reminderMinutes} onChange={(event) => updatePrayerBlock(index, "reminderMinutes", event.target.value)} /></label>
+                <div className="prayer-push-row">
+                  <button onClick={() => pushPrayerBlock(index, 10)} type="button">Push once +10</button>
+                  <button onClick={() => pushPrayerBlock(index, 30)} type="button">Push once +30</button>
+                  <button onClick={() => pushPrayerBlock(index, 0)} type="button">Clear push</button>
+                </div>
+                <small>{prayerBlockLabel(block)}{block.oneTimePushMinutes ? ` (one-time +${block.oneTimePushMinutes} min)` : ""}</small>
+                <small>Admin reminder: {block.reminderMinutes} min before this prayer block</small>
+              </div>
+            ))}
           </div>
         </details>
 
