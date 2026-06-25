@@ -69,8 +69,7 @@ const supplierSearchBases = [
   { name: "Pep Boys", type: "Local pickup" as const, color: "#d8272f", base: "https://www.pepboys.com/search?text=", fulfillment: "Local pickup/service options where available" },
   { name: "Walmart Auto", type: "Local pickup" as const, color: "#0071ce", base: "https://www.walmart.com/search?q=", fulfillment: "Local pickup or ship-to-home for common maintenance items" },
   { name: "1A Auto", type: "Online" as const, color: "#234f9b", base: "https://www.1aauto.com/search?q=", fulfillment: "Online order, how-to supported fitment check" },
-  { name: "RockAuto", type: "Online" as const, color: "#7f1d1d", base: "https://www.rockauto.com/en/partsearch/?partnum=", fulfillment: "Online order, shipping time required" },
-  { name: "PartsTech", type: "Online" as const, color: "#4c5b6b", base: "https://www.partstech.com/search?query=", fulfillment: "Multi-supplier shop lookup when account is connected" }
+  { name: "RockAuto", type: "Online" as const, color: "#7f1d1d", base: "https://www.rockauto.com/en/partsearch/?partnum=", fulfillment: "Online order, shipping time required" }
 ];
 
 const tireSearchBases = [
@@ -632,6 +631,6 @@ export function buildRetailerEstimateResults(service: string, options: { vehicle
 
 export const partsIntegrationNotes = [
   { title: "Estimate engine", detail: "Parts now use the IAW price catalog, job-part recipes, book-time labor, and market-rate comparison from the NukeBox parts finder." },
-  { title: "Supplier lookup", detail: "O'Reilly, Advance, NAPA, AutoZone, Pep Boys, Walmart, 1A Auto, RockAuto, PartsTech, and tire-specific links generate from the calculated part query." },
+  { title: "Supplier lookup", detail: "O'Reilly, Advance, NAPA, AutoZone, Pep Boys, Walmart, 1A Auto, RockAuto, and tire-specific links generate from the calculated part query." },
   { title: "Final quote rule", detail: "Displayed ranges are draft planning numbers. Admin still verifies live fitment, supplier image, price, stock, and customer approval before ordering." }
 ];

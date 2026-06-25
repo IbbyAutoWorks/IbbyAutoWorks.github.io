@@ -413,15 +413,29 @@ export function AdminDashboard() {
                   </div>
                   <div>
                     <strong>{part.part}</strong>
-                    <span>{part.selectedSupplier} - {part.band} cost - {part.pickupStatus}</span>
+                    <span>{part.selectedSupplier || "No distributor chosen"} - {part.band} cost - {part.pickupStatus}</span>
                     <small>Listed estimate: {part.price}. Confirm current image, fitment, price, and availability before ordering.</small>
-                    <div className="supplier-link-strip">
-                      {part.supplierCandidates.map((source) => (
-                        <a href={source.url} key={source.name} target="_blank" rel="noreferrer" title={source.imageNote}>
-                          {source.name}
-                        </a>
-                      ))}
+                    <div className="supplier-choice-strip">
+                      {part.supplierCandidates.map((source) => {
+                        const chosen = part.selectedSupplier === source.name;
+                        return (
+                          <div className={chosen ? "supplier-choice chosen" : "supplier-choice"} key={source.name}>
+                            <a href={source.url} target="_blank" rel="noreferrer" title={source.imageNote}>
+                              {source.name}
+                            </a>
+                            <button onClick={() => updatePart(part.part, { selectedSupplier: source.name, supplier: source.name, pickupStatus: "Order required", status: "Confirmed" })}>
+                              {chosen ? "Chosen" : "Use"}
+                            </button>
+                            {chosen ? (
+                              <button className="remove-choice" onClick={() => updatePart(part.part, { selectedSupplier: "", pickupStatus: "Verify price", status: "Needs supplier check" })}>
+                                Remove
+                              </button>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
+                    <em className="parts-split-note">Each part can use a different distributor; choose or remove suppliers independently.</em>
                   </div>
                   <button className="part-status-button" onClick={() => updatePart(part.part, { status: part.status === "Confirmed" ? "Needs supplier check" : "Confirmed", pickupStatus: part.pickupStatus === "Ready for pickup" ? "Picked up" : "Ready for pickup" })}>
                     {part.status}

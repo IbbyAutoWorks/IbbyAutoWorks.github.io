@@ -10,6 +10,7 @@ import {
   PrototypeWorkOrder,
   readPrototypeWorkOrders,
   updatePrototypeInspectionItem,
+  updatePrototypePartQuote,
   updatePrototypeWorkOrder,
   updatePrototypeWorkOrderStatus,
   WORK_ORDERS_EVENT
@@ -201,6 +202,27 @@ export function ServicePortal() {
     refresh(selectedOrder.id);
   }
 
+  function choosePartSupplier(part: string, supplier: string) {
+    if (!selectedOrder) return;
+    updatePrototypePartQuote(selectedOrder.id, part, {
+      selectedSupplier: supplier,
+      supplier,
+      pickupStatus: "Order required",
+      status: "Confirmed"
+    });
+    refresh(selectedOrder.id);
+  }
+
+  function removePartSupplier(part: string) {
+    if (!selectedOrder) return;
+    updatePrototypePartQuote(selectedOrder.id, part, {
+      selectedSupplier: "",
+      pickupStatus: "Verify price",
+      status: "Needs supplier check"
+    });
+    refresh(selectedOrder.id);
+  }
+
   function addTechNote(prefix = "Tech note") {
     if (!selectedOrder || !techNote.trim()) return;
     updatePrototypeWorkOrder(selectedOrder.id, {
@@ -359,15 +381,29 @@ export function ServicePortal() {
               </div>
               <div>
                 <strong>{part.part}</strong>
-                <span>{part.selectedSupplier} - {part.pickupStatus}</span>
+                <span>{part.selectedSupplier || "No distributor chosen"} - {part.pickupStatus}</span>
                 <small>{part.status} - {part.price}</small>
-                <div className="supplier-link-strip">
-                  {part.supplierCandidates.slice(0, 4).map((source) => (
-                    <a href={source.url} key={source.name} target="_blank" rel="noreferrer" title={source.fulfillment}>
-                      {source.name}
-                    </a>
-                  ))}
+                <div className="supplier-choice-strip compact">
+                  {part.supplierCandidates.slice(0, 4).map((source) => {
+                    const chosen = part.selectedSupplier === source.name;
+                    return (
+                      <div className={chosen ? "supplier-choice chosen" : "supplier-choice"} key={source.name}>
+                        <a href={source.url} target="_blank" rel="noreferrer" title={source.fulfillment}>
+                          {source.name}
+                        </a>
+                        <button onClick={() => choosePartSupplier(part.part, source.name)}>
+                          {chosen ? "Chosen" : "Use"}
+                        </button>
+                        {chosen ? (
+                          <button className="remove-choice" onClick={() => removePartSupplier(part.part)}>
+                            Remove
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
+                <em className="parts-split-note">Use different distributors per part when stock is split.</em>
               </div>
             </div>
           ))}

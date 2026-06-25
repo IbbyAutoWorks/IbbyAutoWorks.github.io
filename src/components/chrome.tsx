@@ -21,8 +21,8 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
   const isAdmin = isAdminSession(session);
   const isSignedInCustomer = Boolean(session) && !isAdmin;
   const visibleNav = isSignedInCustomer ? nav.filter((item) => item.href === "/account") : isAdmin ? nav : nav.filter((item) => !["/admin", "/service", "/admin/settings"].includes(item.href));
-  const settingsHref = isSignedInCustomer || customerSettingsActive ? "/account/settings" : serviceSettingsActive ? "/service/settings" : "/admin/settings";
-  const settingsLabel = isSignedInCustomer || customerSettingsActive ? "Customer settings" : serviceSettingsActive ? "Service settings" : "Admin settings";
+  const settingsHref = isSignedInCustomer ? "/account/settings" : serviceSettingsActive ? "/service/settings" : "/admin/settings";
+  const settingsLabel = isSignedInCustomer ? "Customer settings" : serviceSettingsActive ? "Service settings" : "Admin settings";
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
