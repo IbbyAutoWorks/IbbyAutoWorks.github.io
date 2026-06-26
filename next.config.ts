@@ -4,8 +4,7 @@ const isVercelBuild = process.env.VERCEL === "1";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  distDir: "next-live",
-  ...(isVercelBuild ? {} : { output: "export" as const }),
+  ...(isVercelBuild ? {} : { distDir: "next-live", output: "export" as const }),
   images: {
     unoptimized: true
   },
