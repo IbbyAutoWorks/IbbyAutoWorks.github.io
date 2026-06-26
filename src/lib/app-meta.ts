@@ -1,5 +1,8 @@
-export const appVersion = "01.03.45";
-export const appBuild = "202606140233";
+const defaultVersion = "1.4.0";
+const defaultBuild = "202606260408";
+
+export const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || defaultVersion;
+export const appBuild = process.env.NEXT_PUBLIC_APP_BUILD || defaultBuild;
 export const appBuildLabel = `Build ${appBuild}`;
 
 export const supportEmail = "ibbyautoworks@gmail.com";

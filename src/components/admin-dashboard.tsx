@@ -8,6 +8,7 @@ import { agreementSummaries, partsReturnOptions } from "@/lib/agreements";
 import { activity } from "@/lib/data";
 import { partsIntegrationNotes } from "@/lib/parts";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
+import { OpsStatusPanel } from "@/components/ops-status-panel";
 import {
   CUSTOMER_RECORDS_EVENT,
   clearPrototypeWorkOrders,
@@ -186,6 +187,8 @@ export function AdminDashboard() {
           );
         })}
       </section>
+
+      <OpsStatusPanel />
 
       {/* Dashboard grid: live work orders, selected job details, parts, messages, and customer records. */}
       <section className="dashboard-grid">
