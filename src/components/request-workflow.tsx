@@ -453,6 +453,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       ],
       techNotes: [],
       partRequests: [],
+      supplyRequests: [],
+      mileageLogs: [],
       measurements: defaultServiceMeasurements(),
       parts: buildPrototypeParts(selectedServices, "mid", selectedSupplierChoices, activeVehicleContext, activeAreaContext),
       inspection: buildPrototypeInspection(),

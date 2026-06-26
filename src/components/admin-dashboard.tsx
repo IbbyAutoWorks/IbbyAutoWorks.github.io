@@ -23,6 +23,7 @@ import {
   savePrototypeCustomerRecord,
   updatePrototypePartQuote,
   updatePrototypePartRequest,
+  updatePrototypeSupplyRequest,
   updatePrototypeWorkOrderStatus,
   WORK_ORDERS_EVENT
 } from "@/lib/local-store";
@@ -150,6 +151,12 @@ export function AdminDashboard() {
       waitTime,
       adminNote: status === "Denied" ? "Denied after customer/admin review" : "Approved by admin/customer call"
     });
+    refreshOrders(selectedOrder.id);
+  }
+
+  function updateSupplyRequest(requestId: string, status: "Denied" | "Approved" | "Ordered" | "Ready for pickup" | "Picked up" | "Expensed", adminNote: string) {
+    if (!selectedOrder) return;
+    updatePrototypeSupplyRequest(selectedOrder.id, requestId, { status, adminNote });
     refreshOrders(selectedOrder.id);
   }
 
@@ -464,6 +471,31 @@ export function AdminDashboard() {
                     <button onClick={() => updatePartRequest(request.id, "Approved", "Call complete")}>Approve</button>
                     <button onClick={() => updatePartRequest(request.id, "Ordered", "30-60 min")}>Ordered</button>
                     <button onClick={() => updatePartRequest(request.id, "Ready for pickup", "Ready now")}>Pickup</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {selectedOrder?.supplyRequests?.length ? (
+            <div className="admin-part-requests supply-approval-panel">
+              <strong>Tech-requested supplies, tools, and consumables</strong>
+              {selectedOrder.supplyRequests.map((request) => (
+                <div className="part-request-row" key={request.id}>
+                  <div>
+                    <strong>{request.qty} {request.unit} {request.item}</strong>
+                    <span>{request.category} · {request.selectedVendor} · ${request.estimatedTotal.toFixed(2)} est.</span>
+                    <small>{request.status} - {request.reason} - {request.adminNote}</small>
+                    <div className="supplier-choice-strip compact">
+                      {request.vendorCandidates.slice(0, 5).map((vendor) => (
+                        <a key={vendor.name} href={vendor.url} target="_blank" rel="noreferrer">{vendor.name}</a>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="part-request-actions">
+                    <button onClick={() => updateSupplyRequest(request.id, "Denied", "Denied by admin")}>Deny</button>
+                    <button onClick={() => updateSupplyRequest(request.id, "Approved", "Approved; order when ready")}>Approve</button>
+                    <button onClick={() => updateSupplyRequest(request.id, "Ordered", "Ordered from selected vendor")}>Ordered</button>
+                    <button onClick={() => updateSupplyRequest(request.id, "Expensed", "Approved and marked for expense tracker")}>Expense</button>
                   </div>
                 </div>
               ))}

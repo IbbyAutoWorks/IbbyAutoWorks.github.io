@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BadgeDollarSign, BadgePercent, FileSpreadsheet, RefreshCcw, Save, Trash2 } from "lucide-react";
 
 import { archivePromotionOffer, getYearEndSummary, listExpenses, listPromotionOffers, MaineTaxSettings, ManagedPromotionOffer, saveExpense, saveMaineTaxSettings, savePromotionOffer, syncAllPromotions, type BusinessExpenseRecord } from "@/lib/payment-backend";
+import { businessLedgerFromWorkOrders, readPrototypeWorkOrders, WORK_ORDERS_EVENT } from "@/lib/local-store";
 
 const emptyPromotion: ManagedPromotionOffer = {
   slug: "",
@@ -55,11 +56,27 @@ export function CouponTaxManager() {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const amountDollars = useMemo(() => (draft.discount_cents / 100).toFixed(2), [draft.discount_cents]);
+  const [localLedger, setLocalLedger] = useState(() => businessLedgerFromWorkOrders([]));
+  const localSupplyTotal = useMemo(() => localLedger.supplyExpenses.reduce((sum, item) => sum + item.amount, 0), [localLedger]);
+  const localMileageTotal = useMemo(() => localLedger.mileageExpenses.reduce((sum, item) => sum + item.amount, 0), [localLedger]);
+  const localRevenueTotal = useMemo(() => localLedger.revenue.reduce((sum, item) => sum + item.estimate, 0), [localLedger]);
+  const localNetTotal = localRevenueTotal - localSupplyTotal - localMileageTotal;
 
   useEffect(() => {
     const saved = window.sessionStorage.getItem("ibby-admin-payment-token") || "";
     setAdminToken(saved);
     void refresh(saved);
+  }, []);
+
+  useEffect(() => {
+    function syncLedger() { setLocalLedger(businessLedgerFromWorkOrders(readPrototypeWorkOrders())); }
+    syncLedger();
+    window.addEventListener(WORK_ORDERS_EVENT, syncLedger);
+    window.addEventListener("storage", syncLedger);
+    return () => {
+      window.removeEventListener(WORK_ORDERS_EVENT, syncLedger);
+      window.removeEventListener("storage", syncLedger);
+    };
   }, []);
 
   function rememberToken(value: string) {
@@ -227,12 +244,33 @@ export function CouponTaxManager() {
           {summary ? <pre className="summary-json">{JSON.stringify(summary, null, 2)}</pre> : null}
         </div>
       </div>
+      <div className="business-reconciliation-panel">
+        <div className="panel-title">
+          <div>
+            <p className="section-label">Work-order reconciliation</p>
+            <h2>Year-to-date job revenue, supplies, mileage, and estimated in-pocket totals.</h2>
+          </div>
+          <FileSpreadsheet />
+        </div>
+        <div className="reconciliation-metrics">
+          <div><span>Estimated revenue</span><strong>${localRevenueTotal.toFixed(2)}</strong></div>
+          <div><span>Supplies/tools</span><strong>${localSupplyTotal.toFixed(2)}</strong></div>
+          <div><span>Mileage deduction est.</span><strong>${localMileageTotal.toFixed(2)}</strong></div>
+          <div><span>Estimated net before tax</span><strong>${localNetTotal.toFixed(2)}</strong></div>
+        </div>
+        <p className="legal-note">Mileage uses a placeholder $0.70/mi planning rate until the official yearly IRS/Maine business mileage rate is configured. Google Sheets/Docs export should be the production reporting layer once Google OAuth is connected.</p>
+        <div className="reconciliation-table">
+          {[...localLedger.supplyExpenses, ...localLedger.mileageExpenses].slice(0, 12).map((item) => (
+            <small key={`${item.workOrderId}-${item.date}-${item.description}`}>#{item.workOrderId} · {item.date} · {item.category} · ${item.amount.toFixed(2)} · {item.description}</small>
+          ))}
+        </div>
+      </div>
       <div className="payment-manager-form expense-entry-form">
         <h3>Expense tracker</h3>
         <div className="expense-entry-grid">
           <label><span>Date</span><input type="date" value={expenseDraft.expense_date} onChange={(event) => setExpenseDraft({ ...expenseDraft, expense_date: event.target.value })} /></label>
           <label><span>Vendor</span><input value={expenseDraft.vendor} onChange={(event) => setExpenseDraft({ ...expenseDraft, vendor: event.target.value })} /></label>
-          <label><span>Category</span><select value={expenseDraft.category} onChange={(event) => setExpenseDraft({ ...expenseDraft, category: event.target.value })}><option>parts</option><option>tires</option><option>tools</option><option>supplies</option><option>fuel</option><option>software</option><option>fees</option><option>insurance</option><option>marketing</option><option>other</option></select></label>
+          <label><span>Category</span><select value={expenseDraft.category} onChange={(event) => setExpenseDraft({ ...expenseDraft, category: event.target.value })}><option>parts</option><option>tires</option><option>tools</option><option>supplies</option><option>shop rags / cleanup</option><option>chemicals</option><option>mileage</option><option>fuel</option><option>software</option><option>fees</option><option>insurance</option><option>marketing</option><option>google workspace</option><option>other</option></select></label>
           <label><span>Amount</span><input type="number" step="0.01" min="0" value={(expenseDraft.amount_cents / 100).toFixed(2)} onChange={(event) => setExpenseDraft({ ...expenseDraft, amount_cents: Math.round(Number(event.target.value || 0) * 100) })} /></label>
           <label><span>Payment method</span><input value={expenseDraft.payment_method} onChange={(event) => setExpenseDraft({ ...expenseDraft, payment_method: event.target.value })} /></label>
           <label><span>Receipt URL</span><input value={expenseDraft.receipt_url || ""} onChange={(event) => setExpenseDraft({ ...expenseDraft, receipt_url: event.target.value })} /></label>

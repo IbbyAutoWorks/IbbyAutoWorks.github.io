@@ -1,5 +1,6 @@
 import { defaultAgreementAcceptance, type AgreementAcceptance } from "@/lib/agreements";
 import { buildPartSupplierCandidates, estimateServiceParts, type PartSupplierCandidate, type PriceRange } from "@/lib/parts";
+import { supplyCatalog, supplyVendorCandidates } from "@/lib/supplies";
 import { fallbackVehicleSpec, findVehicleSpec, type VehicleSpec } from "@/lib/vehicles";
 import { syncCustomerRecordToCloud, syncWorkOrderToCloud } from "@/lib/cloud-sync";
 
@@ -33,6 +34,33 @@ export type PrototypePartRequest = {
   requestedAt: string;
   adminNote: string;
   waitTime: string;
+};
+
+export type PrototypeSupplyRequest = {
+  id: string;
+  itemId: string;
+  item: string;
+  category: string;
+  qty: number;
+  unit: string;
+  estimatedUnitCost: number;
+  estimatedTotal: number;
+  reason: string;
+  status: "Requested" | "Denied" | "Approved" | "Ordered" | "Ready for pickup" | "Picked up" | "Expensed";
+  requestedAt: string;
+  adminNote: string;
+  selectedVendor: string;
+  vendorCandidates: PartSupplierCandidate[];
+};
+
+export type PrototypeMileageLog = {
+  id: string;
+  date: string;
+  from: string;
+  to: string;
+  miles: number;
+  purpose: string;
+  status: "Draft" | "Logged" | "Reimbursable";
 };
 
 export type PrototypeServiceMeasurements = {
@@ -100,6 +128,8 @@ export type PrototypeWorkOrder = {
   customerContactLog: string[];
   techNotes: string[];
   partRequests: PrototypePartRequest[];
+  supplyRequests: PrototypeSupplyRequest[];
+  mileageLogs: PrototypeMileageLog[];
   measurements: PrototypeServiceMeasurements;
   parts: PrototypePartQuote[];
   inspection: PrototypeInspectionItem[];
@@ -131,6 +161,13 @@ export function readPrototypeWorkOrders(): PrototypeWorkOrder[] {
       customerContactLog: Array.isArray(order.customerContactLog) ? order.customerContactLog : [],
       techNotes: Array.isArray(order.techNotes) ? order.techNotes : [],
       partRequests: Array.isArray(order.partRequests) ? order.partRequests : [],
+      supplyRequests: Array.isArray(order.supplyRequests) ? order.supplyRequests.map((request) => ({
+        ...request,
+        vendorCandidates: Array.isArray(request.vendorCandidates) && request.vendorCandidates.length
+          ? request.vendorCandidates
+          : supplyVendorCandidates(supplyCatalog.find((item) => item.id === request.itemId) ?? supplyCatalog[0])
+      })) : [],
+      mileageLogs: Array.isArray(order.mileageLogs) ? order.mileageLogs : [],
       measurements: { ...defaultServiceMeasurements(), ...(order.measurements ?? {}) },
       parts: Array.isArray(order.parts)
         ? order.parts.map((part) => ({
@@ -453,6 +490,101 @@ export function updatePrototypePartRequest(orderId: string, requestId: string, p
   ));
   window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+}
+
+export function addPrototypeSupplyRequest(orderId: string, itemId: string, qty: number, reason: string) {
+  const item = supplyCatalog.find((candidate) => candidate.id === itemId) ?? supplyCatalog[0];
+  const safeQty = Math.max(1, Number(qty) || item.defaultQty || 1);
+  const request: PrototypeSupplyRequest = {
+    id: `S${Date.now().toString().slice(-6)}`,
+    itemId: item.id,
+    item: item.name,
+    category: item.category,
+    qty: safeQty,
+    unit: item.unit,
+    estimatedUnitCost: item.estimatedUnitCost,
+    estimatedTotal: Math.round(item.estimatedUnitCost * safeQty * 100) / 100,
+    reason: reason || item.notes,
+    status: "Requested",
+    requestedAt: new Date().toISOString(),
+    adminNote: "Awaiting admin approval and expense coding",
+    selectedVendor: item.vendors[0]?.name ?? "Verify vendor",
+    vendorCandidates: supplyVendorCandidates(item)
+  };
+  const current = readPrototypeWorkOrders();
+  const next = current.map((order) => order.id === orderId
+    ? {
+        ...order,
+        supplyRequests: [request, ...(order.supplyRequests ?? [])],
+        techNotes: [`${new Date().toLocaleString()}: Requested supplies: ${request.qty} ${request.unit} ${request.item}`, ...(order.techNotes ?? [])]
+      }
+    : order);
+  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+}
+
+export function updatePrototypeSupplyRequest(orderId: string, requestId: string, patch: Partial<PrototypeSupplyRequest>) {
+  const current = readPrototypeWorkOrders();
+  const next = current.map((order) => order.id === orderId
+    ? {
+        ...order,
+        supplyRequests: (order.supplyRequests ?? []).map((request) => request.id === requestId ? { ...request, ...patch } : request),
+        customerContactLog: patch.status ? [`${new Date().toLocaleString()}: Supply request ${requestId} marked ${patch.status}`, ...(order.customerContactLog ?? [])] : order.customerContactLog
+      }
+    : order);
+  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+}
+
+export function addPrototypeMileageLog(orderId: string, log: Omit<PrototypeMileageLog, "id" | "status">) {
+  const entry: PrototypeMileageLog = {
+    id: `M${Date.now().toString().slice(-6)}`,
+    status: "Logged",
+    ...log,
+    miles: Math.max(0, Number(log.miles) || 0)
+  };
+  const current = readPrototypeWorkOrders();
+  const next = current.map((order) => order.id === orderId
+    ? {
+        ...order,
+        mileageLogs: [entry, ...(order.mileageLogs ?? [])],
+        techNotes: [`${new Date().toLocaleString()}: Logged ${entry.miles} business miles (${entry.purpose})`, ...(order.techNotes ?? [])]
+      }
+    : order);
+  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+}
+
+export function businessLedgerFromWorkOrders(orders = readPrototypeWorkOrders()) {
+  const supplyExpenses = orders.flatMap((order) => (order.supplyRequests ?? [])
+    .filter((request) => !["Denied"].includes(request.status))
+    .map((request) => ({
+      workOrderId: order.id,
+      date: request.requestedAt.slice(0, 10),
+      vendor: request.selectedVendor,
+      category: request.category.toLowerCase().replaceAll(" ", "-"),
+      description: `${request.qty} ${request.unit} ${request.item} for ${order.customer} / ${order.vehicle}`,
+      amount: request.estimatedTotal,
+      status: request.status
+    })));
+  const mileageExpenses = orders.flatMap((order) => (order.mileageLogs ?? []).map((log) => ({
+    workOrderId: order.id,
+    date: log.date,
+    vendor: "Business mileage",
+    category: "mileage",
+    description: `${log.from} → ${log.to} (${log.purpose})`,
+    amount: Math.round(log.miles * 0.70 * 100) / 100,
+    miles: log.miles,
+    status: log.status
+  })));
+  const revenue = orders.map((order) => ({
+    workOrderId: order.id,
+    customer: order.customer,
+    vehicle: order.vehicle,
+    estimate: Number.parseInt(String(order.estimate).replace(/[^0-9]/g, ""), 10) || 0,
+    status: order.status
+  }));
+  return { supplyExpenses, mileageExpenses, revenue };
 }
 
 export function clearPrototypeWorkOrders() {

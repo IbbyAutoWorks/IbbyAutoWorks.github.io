@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CalendarClock, Camera, CheckCircle2, ClipboardCheck, CreditCard, FileCheck2, Map, Navigation, PackagePlus, Phone, ShieldCheck, Wrench } from "lucide-react";
+import { AlertTriangle, CalendarClock, Camera, CheckCircle2, ClipboardCheck, CreditCard, FileCheck2, Map, Navigation, PackagePlus, Phone, ReceiptText, ShieldCheck, Wrench } from "lucide-react";
 
 import {
   addPrototypePartRequest,
+  addPrototypeMileageLog,
+  addPrototypeSupplyRequest,
   PrototypeInspectionItem,
   PrototypeServiceMeasurements,
   PrototypeWorkOrder,
@@ -15,6 +17,7 @@ import {
   updatePrototypeWorkOrderStatus,
   WORK_ORDERS_EVENT
 } from "@/lib/local-store";
+import { supplyCatalog, supplyCategories } from "@/lib/supplies";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
 
 // Technician workflow configuration: statuses, step loaders, and fixed inspection checklists.
@@ -80,7 +83,7 @@ const serviceWorkflowSteps = [
   { title: "Drive", detail: "Use the service address, map, route, call, and customer en-route notification." },
   { title: "Walkaround", detail: "Document exterior condition, controls, lights, tires, visible brakes, jack points, and under-hood checks." },
   { title: "Pre inspect", detail: "Lift if needed and inspect suspension, steering, exhaust, undercar leaks, and lower vehicle condition." },
-  { title: "Parts", detail: "Verify approved parts or request additional parts for admin/customer approval." },
+  { title: "Parts & supplies", detail: "Verify approved parts or request additional parts, tools, or shop supplies for admin/customer approval." },
   { title: "Logistics", detail: "Wait for ordered parts, pick them up, or reschedule the work if needed." },
   { title: "Start job", detail: "Show job-specific quick reference before beginning the approved work." },
   { title: "Finish job", detail: "Review full vehicle specs and final checks before wrapping the job completely." },
@@ -104,6 +107,11 @@ export function ServicePortal() {
   const [selectedOrderId, setSelectedOrderId] = useState("");
   const [partName, setPartName] = useState("");
   const [partReason, setPartReason] = useState("");
+  const [supplyItemId, setSupplyItemId] = useState(supplyCatalog[0]?.id ?? "");
+  const [supplyQty, setSupplyQty] = useState("1");
+  const [supplyReason, setSupplyReason] = useState("");
+  const [mileageFrom, setMileageFrom] = useState("Shop / starting point");
+  const [mileageMiles, setMileageMiles] = useState("");
   const [techNote, setTechNote] = useState("");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
 
@@ -199,6 +207,27 @@ export function ServicePortal() {
     addPrototypePartRequest(selectedOrder.id, partName.trim(), partReason.trim());
     setPartName("");
     setPartReason("");
+    refresh(selectedOrder.id);
+  }
+
+  function submitSupplyRequest(itemId = supplyItemId, qty = Number(supplyQty || 1)) {
+    if (!selectedOrder || !itemId) return;
+    addPrototypeSupplyRequest(selectedOrder.id, itemId, qty, supplyReason.trim());
+    setSupplyQty("1");
+    setSupplyReason("");
+    refresh(selectedOrder.id);
+  }
+
+  function logMileage() {
+    if (!selectedOrder) return;
+    addPrototypeMileageLog(selectedOrder.id, {
+      date: new Date().toISOString().slice(0, 10),
+      from: mileageFrom || "Starting point",
+      to: selectedOrder.location,
+      miles: Number(mileageMiles || 0),
+      purpose: `Service call for work order #${selectedOrder.id}`
+    });
+    setMileageMiles("");
     refresh(selectedOrder.id);
   }
 
@@ -414,6 +443,48 @@ export function ServicePortal() {
           <textarea value={partReason} onChange={(event) => setPartReason(event.target.value)} placeholder="Why it is needed, what changed, or what failed visual inspection" />
           <button className="secondary-button" onClick={submitPartRequest}><PackagePlus size={15} /> Send request to admin</button>
         </div>
+        <div className="supply-request-panel">
+          <div className="panel-title">
+            <div>
+              <p className="section-label">Job supplies and tools</p>
+              <h2>Request consumables, tools, PPE, or mobile-shop gear for this job.</h2>
+            </div>
+            <ReceiptText />
+          </div>
+          <div className="supply-quick-grid">
+            {supplyCategories.map((category) => (
+              <div className="supply-category-card" key={category}>
+                <strong>{category}</strong>
+                {supplyCatalog.filter((item) => item.category === category).slice(0, 4).map((item) => (
+                  <button key={item.id} onClick={() => { setSupplyItemId(item.id); setSupplyQty(String(item.defaultQty)); submitSupplyRequest(item.id, item.defaultQty); }}>
+                    <span>{item.name}</span>
+                    <small>{item.defaultQty} {item.unit} · ${item.estimatedUnitCost.toFixed(2)} est.</small>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="supply-custom-row">
+            <label><span>Supply item</span><select value={supplyItemId} onChange={(event) => setSupplyItemId(event.target.value)}>{supplyCatalog.map((item) => <option key={item.id} value={item.id}>{item.name} — {item.category}</option>)}</select></label>
+            <label><span>Qty</span><input inputMode="numeric" value={supplyQty} onChange={(event) => setSupplyQty(event.target.value.replace(/[^0-9]/g, ""))} /></label>
+            <label className="wide-field"><span>Reason</span><input value={supplyReason} onChange={(event) => setSupplyReason(event.target.value)} placeholder="Needed for cleanup, stuck bolts, PPE, tool gap, etc." /></label>
+            <button className="secondary-button" onClick={() => submitSupplyRequest()}><PackagePlus size={15} /> Request supply</button>
+          </div>
+          {order.supplyRequests?.length ? (
+            <div className="part-request-list">
+              {order.supplyRequests.map((request) => (
+                <div className="part-request-row" key={request.id}>
+                  <ReceiptText size={15} />
+                  <div>
+                    <strong>{request.qty} {request.unit} {request.item}</strong>
+                    <span>{request.selectedVendor} · ${request.estimatedTotal.toFixed(2)} est. · {request.category}</span>
+                    <small>{request.status} — {request.adminNote}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </>
     );
   }
@@ -502,6 +573,16 @@ export function ServicePortal() {
             <a href={`tel:${order.phone}`}><Phone size={16} /> Call customer</a>
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(order.location)}`} target="_blank" rel="noreferrer"><Map size={16} /> Open route</a>
             <button onClick={notifyEnRoute}>Notify customer on my way</button>
+          </div>
+          <div className="mileage-log-card">
+            <div>
+              <strong>Business mileage log</strong>
+              <span>Track trip miles against this work order for year-end reconciliation.</span>
+            </div>
+            <label><span>From</span><input value={mileageFrom} onChange={(event) => setMileageFrom(event.target.value)} /></label>
+            <label><span>Miles</span><input inputMode="decimal" value={mileageMiles} onChange={(event) => setMileageMiles(event.target.value.replace(/[^0-9.]/g, ""))} placeholder="12.4" /></label>
+            <button className="secondary-button" onClick={logMileage}><ReceiptText size={15} /> Log trip</button>
+            {order.mileageLogs?.length ? <small>{order.mileageLogs.length} trip log{order.mileageLogs.length === 1 ? "" : "s"} recorded for this job.</small> : null}
           </div>
         </div>
       );

@@ -5238,3 +5238,146 @@ h2 {
     grid-column: 1 / -1;
   }
 }
+
+/* Service portal supply/order and accounting controls */
+.service-wizard-tabs {
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+}
+
+.service-wizard-tabs button,
+.request-step-tabs button {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.18;
+  align-content: center;
+}
+
+.service-wizard-tabs button span,
+.request-step-tabs button span {
+  flex: 0 0 auto;
+}
+
+.supply-request-panel,
+.mileage-log-card,
+.business-reconciliation-panel {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.supply-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.supply-category-card {
+  border: 1px solid rgba(183, 25, 42, .14);
+  border-radius: 14px;
+  background: #fff8f4;
+  padding: 10px;
+  display: grid;
+  gap: 7px;
+}
+
+.supply-category-card > strong {
+  color: var(--red-dark);
+}
+
+.supply-category-card button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 9px;
+  text-align: left;
+  display: grid;
+  gap: 3px;
+  cursor: pointer;
+}
+
+.supply-category-card button span {
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.supply-category-card button small,
+.mileage-log-card small,
+.reconciliation-table small {
+  color: var(--muted);
+}
+
+.supply-custom-row,
+.mileage-log-card {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) 100px minmax(220px, 2fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.supply-custom-row label,
+.mileage-log-card label {
+  display: grid;
+  gap: 5px;
+}
+
+.supply-custom-row .wide-field {
+  grid-column: auto;
+}
+
+.supply-approval-panel .supplier-choice-strip.compact {
+  margin-top: 8px;
+}
+
+.supply-approval-panel .supplier-choice-strip.compact a {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 8px;
+  text-decoration: none;
+  color: var(--red-dark);
+  font-weight: 800;
+}
+
+.reconciliation-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.reconciliation-metrics div {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f9fafb;
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.reconciliation-metrics span {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: .75rem;
+}
+
+.reconciliation-table {
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.reconciliation-table small {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+}
+
+@media (max-width: 840px) {
+  .supply-custom-row,
+  .mileage-log-card {
+    grid-template-columns: 1fr;
+  }
+}
