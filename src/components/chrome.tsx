@@ -68,9 +68,9 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
           ))}
         </nav>
         <div className="sidebar-card">
-          <span>Free-stack mode</span>
-          <strong>Expo + Next + Supabase-ready</strong>
-          <p>Local preview now. Cloudflare/Supabase later.</p>
+          <span>Cloud operations</span>
+          <strong>Next + Supabase + Vercel</strong>
+          <p>Live requests now. Google archive/calendar and Cloudflare health are being wired in.</p>
         </div>
       </aside>
       {/* Main pane: mobile menu button, global search placeholder, settings shortcut, and page content. */}

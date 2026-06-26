@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, ChevronDown, Clock3, Crown, FileImage, FileText, MapPinned, Palette, RotateCcw, Save, SlidersHorizontal, Upload, Wrench, Bell } from "lucide-react";
+import { BadgePercent, CalendarClock, ChevronDown, Clock3, Cloud, Crown, FileImage, FileText, MapPinned, Palette, RotateCcw, Save, SlidersHorizontal, Upload, Wrench, Bell } from "lucide-react";
 
 import {
   CROWN_LOGO_SRC,
@@ -16,6 +16,7 @@ import { appointmentWindows, businessSchedule } from "@/lib/schedule";
 import { readSavedTheme, saveTheme, ThemeRoleColors } from "@/lib/theme";
 import { readPricingSettings, savePricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 import { fetchPrayerTimesFromAladhan, prayerBlockLabel, readPrayerScheduleSettings, savePrayerScheduleSettings, type PrayerBlock, type PrayerScheduleSettings } from "@/lib/prayer-times";
+import { defaultMarketingSettings, readMarketingSettings, saveMarketingSettings, type MarketingSettings } from "@/lib/marketing-settings";
 import { PaymentSettingsPanel } from "@/components/payment-settings";
 import { IntegrationHub } from "@/components/integration-hub";
 import { PaymentPlanManager } from "@/components/payment-plan-manager";
@@ -59,6 +60,7 @@ export function AdminSettings() {
   const [serviceRadius, setServiceRadius] = useState("25");
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
   const [prayerSettings, setPrayerSettings] = useState<PrayerScheduleSettings>(() => readPrayerScheduleSettings());
+  const [marketingSettings, setMarketingSettings] = useState<MarketingSettings>(() => readMarketingSettings());
   const [prayerFetchStatus, setPrayerFetchStatus] = useState("Prayer blocks are local until live calendar sync is connected.");
 
   useEffect(() => {
@@ -76,7 +78,13 @@ export function AdminSettings() {
   useEffect(() => {
     setPricingSettings(readPricingSettings());
     setPrayerSettings(readPrayerScheduleSettings());
+    setMarketingSettings(readMarketingSettings());
   }, []);
+
+  function updateMarketingSettings(nextSettings: MarketingSettings) {
+    setMarketingSettings(nextSettings);
+    saveMarketingSettings(nextSettings);
+  }
 
   function updatePricingSetting(field: keyof PricingSettings, value: string) {
     const next = {
@@ -200,6 +208,35 @@ export function AdminSettings() {
       <PaymentPlanManager />
       <CouponTaxManager />
       <PaymentSettingsPanel />
+
+        <details className="panel settings-accordion" open>
+          <summary><span><BadgePercent size={16} /> Public popups, reviews, and homepage widget</span><ChevronDown size={16} /></summary>
+          <div className="settings-fields marketing-settings-fields">
+            <label><span>Coupon popup</span><select value={marketingSettings.couponPopupEnabled ? "on" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupEnabled: event.target.value === "on" })}><option value="on">On</option><option value="off">Off</option></select></label>
+            <label><span>Popup delay seconds</span><input type="number" min="0" max="120" value={marketingSettings.couponPopupDelaySeconds} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupDelaySeconds: Number(event.target.value || 0) })} /></label>
+            <label><span>Popup visible seconds</span><input type="number" min="5" max="120" value={marketingSettings.couponPopupDurationSeconds} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupDurationSeconds: Number(event.target.value || 5) })} /></label>
+            <label><span>Coupon code or slug</span><input value={marketingSettings.couponPopupCode} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupCode: event.target.value.toUpperCase() })} /></label>
+            <label><span>Fallback title</span><input value={marketingSettings.couponPopupTitle} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupTitle: event.target.value })} /></label>
+            <label className="wide-field"><span>Fallback popup message</span><textarea value={marketingSettings.couponPopupMessage} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupMessage: event.target.value })} /></label>
+            <label><span>Review carousel</span><select value={marketingSettings.reviewCarouselEnabled ? "on" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, reviewCarouselEnabled: event.target.value === "on" })}><option value="on">On</option><option value="off">Off</option></select></label>
+            <label><span>Review cards visible</span><input type="number" min="1" max="6" value={marketingSettings.reviewCardsVisible} onChange={(event) => updateMarketingSettings({ ...marketingSettings, reviewCardsVisible: Number(event.target.value || 3) })} /></label>
+            <label><span>Homepage widget</span><select value={marketingSettings.homepageWidgetEnabled ? "on" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, homepageWidgetEnabled: event.target.value === "on" })}><option value="on">On</option><option value="off">Off</option></select></label>
+            <label><span>Widget title</span><input value={marketingSettings.homepageWidgetTitle} onChange={(event) => updateMarketingSettings({ ...marketingSettings, homepageWidgetTitle: event.target.value })} /></label>
+            <label className="wide-field"><span>Widget message</span><textarea value={marketingSettings.homepageWidgetMessage} onChange={(event) => updateMarketingSettings({ ...marketingSettings, homepageWidgetMessage: event.target.value })} /></label>
+            <label><span>Widget CTA</span><input value={marketingSettings.homepageWidgetCta} onChange={(event) => updateMarketingSettings({ ...marketingSettings, homepageWidgetCta: event.target.value })} /></label>
+            <button className="secondary-button" onClick={() => updateMarketingSettings(defaultMarketingSettings())} type="button"><RotateCcw size={15} /> Reset marketing widgets</button>
+          </div>
+        </details>
+
+        <details className="panel settings-accordion" open>
+          <summary><span><Cloud size={16} /> Google Photos, Drive, and Calendar readiness</span><ChevronDown size={16} /></summary>
+          <div className="settings-fields marketing-settings-fields">
+            <label><span>Google Photos work-order album flow</span><select value={marketingSettings.googlePhotosEnabled ? "planned" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, googlePhotosEnabled: event.target.value === "planned" })}><option value="off">Off / not authorized</option><option value="planned">Planned after Google OAuth</option></select></label>
+            <label><span>Google Drive ZIP archive</span><select value={marketingSettings.googleDriveArchiveEnabled ? "planned" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, googleDriveArchiveEnabled: event.target.value === "planned" })}><option value="off">Off / not authorized</option><option value="planned">Planned after Google OAuth</option></select></label>
+            <label><span>Google Calendar booking blocks</span><select value={marketingSettings.googleCalendarBookingEnabled ? "planned" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, googleCalendarBookingEnabled: event.target.value === "planned" })}><option value="off">Off / local blocks only</option><option value="planned">Planned after Calendar OAuth</option></select></label>
+            <p className="legal-note wide-field">Recommended architecture: Supabase remains the app database/storage index; Google Photos stores job-progress albums; Google Drive stores compressed per-work-order ZIP archives; Google Calendar becomes the private source for accepted work-order and prayer booking blocks. Production write access needs Google OAuth/server routes first.</p>
+          </div>
+        </details>
 
         <details className="panel settings-accordion" open>
           <summary><span><Crown size={16} /> Logo and browser icon</span><ChevronDown size={16} /></summary>

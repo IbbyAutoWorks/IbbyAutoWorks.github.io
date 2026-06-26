@@ -5079,3 +5079,162 @@ h2 {
     grid-column: 1 / -1;
   }
 }
+
+.iaw-home-widget {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(190px, 260px);
+  gap: 18px;
+  align-items: center;
+  border: 1px solid rgba(183, 25, 42, .18);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #fff 0%, #fff8f4 55%, #ffe8ea 100%);
+  box-shadow: 0 18px 48px rgba(17, 20, 24, .08);
+  padding: 20px;
+  margin: 18px 0;
+}
+
+.iaw-home-widget-arm {
+  width: 96px;
+  height: 96px;
+  border-radius: 28px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: radial-gradient(circle at 35% 25%, #f7c948, #b7192a 58%, #111418 100%);
+  box-shadow: inset 0 -8px 18px rgba(0, 0, 0, .22), 0 12px 28px rgba(183, 25, 42, .24);
+  transform: rotate(-7deg);
+}
+
+.iaw-home-widget h2 {
+  margin: 4px 0;
+}
+
+.iaw-home-widget p {
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.iaw-widget-stats {
+  display: grid;
+  gap: 8px;
+  background: rgba(255, 255, 255, .76);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.iaw-widget-stats span {
+  color: var(--muted);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.iaw-widget-stats strong {
+  color: var(--ink);
+}
+
+.floating-coupon-popup,
+.admin-prayer-reminder {
+  position: fixed;
+  z-index: 50;
+  right: 18px;
+  bottom: 18px;
+  width: min(340px, calc(100vw - 32px));
+  border: 1px solid rgba(183, 25, 42, .28);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(17, 20, 24, .18);
+  padding: 16px;
+}
+
+.floating-coupon-popup {
+  display: grid;
+  gap: 8px;
+}
+
+.floating-coupon-popup > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--red-dark);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .76rem;
+}
+
+.floating-coupon-popup p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.floating-coupon-popup a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  background: var(--red);
+  color: #fff;
+  border-radius: 999px;
+  padding: 9px 12px;
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.coupon-popup-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: #f2f4f7;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.admin-prayer-reminder {
+  bottom: auto;
+  top: 16px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-prayer-reminder span {
+  display: block;
+  color: var(--muted);
+}
+
+.admin-prayer-reminder button {
+  border: 0;
+  border-radius: 999px;
+  background: #111418;
+  color: #fff;
+  padding: 9px 12px;
+  font-weight: 900;
+}
+
+.marketing-settings-fields textarea {
+  min-height: 92px;
+}
+
+@media (max-width: 760px) {
+  .iaw-home-widget {
+    grid-template-columns: 1fr;
+  }
+
+  .iaw-home-widget-arm {
+    width: 82px;
+    height: 82px;
+  }
+
+  .admin-prayer-reminder {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .admin-prayer-reminder button {
+    grid-column: 1 / -1;
+  }
+}

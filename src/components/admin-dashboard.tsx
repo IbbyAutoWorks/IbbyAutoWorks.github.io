@@ -9,6 +9,7 @@ import { activity } from "@/lib/data";
 import { partsIntegrationNotes } from "@/lib/parts";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
 import { OpsStatusPanel } from "@/components/ops-status-panel";
+import { AdminPrayerReminder } from "@/components/marketing-widgets";
 import {
   CUSTOMER_RECORDS_EVENT,
   clearPrototypeWorkOrders,
@@ -161,6 +162,7 @@ export function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
+      <AdminPrayerReminder />
       {/* Admin header: dashboard purpose plus shortcuts for settings and new work orders. */}
       <section className="admin-header">
         <div>

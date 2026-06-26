@@ -232,7 +232,7 @@ export function CustomerSettings() {
               <label className={preferences.rememberLogin ? "selected" : ""}>
                 <input checked={preferences.rememberLogin} onChange={(event) => updatePreference("rememberLogin", event.target.checked)} type="checkbox" />
                 <KeyRound size={16} />
-                <div><strong>Remember my login</strong><span>Prototype preference for easier account access after Supabase auth is connected.</span></div>
+                <div><strong>Remember my login</strong><span>Preference for easier account access after signing in on this device.</span></div>
               </label>
               <label className={preferences.oneTimeRequest ? "selected" : ""}>
                 <input checked={preferences.oneTimeRequest} onChange={(event) => updatePreference("oneTimeRequest", event.target.checked)} type="checkbox" />
