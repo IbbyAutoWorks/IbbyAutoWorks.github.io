@@ -155,18 +155,37 @@ async function supabaseStatus(now: string): Promise<ProviderHealth> {
 
 async function cloudflareStatus(now: string): Promise<ProviderHealth> {
   const token = env("CLOUDFLARE_API_TOKEN") || env("CLOUDFLARE_TOKEN");
-  if (!token) return configuredMissing("cloudflare", "Cloudflare", ["CLOUDFLARE_API_TOKEN"], "https://dash.cloudflare.com/");
-  const result = await readJson("https://api.cloudflare.com/client/v4/user/tokens/verify", { headers: { authorization: "Bearer " + token } });
-  const data = asRecord(result.data);
-  const cfSuccess = data.success === true;
+  const accountId = env("CLOUDFLARE_ACCOUNT_ID") || env("CF_ACCOUNT_ID");
+  if (!token || !accountId) return configuredMissing("cloudflare", "Cloudflare", [!token && "CLOUDFLARE_API_TOKEN", !accountId && "CLOUDFLARE_ACCOUNT_ID"].filter(Boolean) as string[], "https://dash.cloudflare.com/");
+
+  // The Ibby token is scoped to the Cloudflare account, so verify it against the
+  // account token endpoint. User-level token verification can 401 even when the
+  // account-scoped token is active and valid for this account.
+  const verify = await readJson(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/tokens/verify`, { headers: { authorization: "Bearer " + token } });
+  const verifyData = asRecord(verify.data);
+  const verifySuccess = verifyData.success === true;
+  if (!verifySuccess) {
+    return {
+      id: "cloudflare",
+      label: "Cloudflare",
+      color: verify.status === 401 ? "red" : colorFromResponse(verify.status),
+      summary: `Token check ${verify.status}`,
+      detail: String(verify.text).slice(0, 180),
+      checkedAt: now,
+      href: `https://dash.cloudflare.com/${accountId}`
+    };
+  }
+
+  const account = await readJson(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}`, { headers: { authorization: "Bearer " + token } });
+  const color = account.ok ? "green" : colorFromResponse(account.status);
   return {
     id: "cloudflare",
     label: "Cloudflare",
-    color: cfSuccess ? "green" : result.status === 401 ? "red" : colorFromResponse(result.status),
-    summary: cfSuccess ? "Token verified" : `Token check ${result.status}`,
-    detail: cfSuccess ? "Cloudflare API token is valid for status checks." : String(result.text).slice(0, 180),
+    color,
+    summary: account.ok ? "Account token verified" : `Account check ${account.status}`,
+    detail: account.ok ? "Cloudflare account-scoped API token is valid and the account is reachable." : String(account.text).slice(0, 180),
     checkedAt: now,
-    href: "https://dash.cloudflare.com/"
+    href: `https://dash.cloudflare.com/${accountId}`
   };
 }
 
