@@ -74,8 +74,8 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
     <div className={compact ? "multi-service-picker compact-service-picker" : "multi-service-picker"}>
       <details className="requested-services-shell">
         <summary>
-          <span>{selectedServices.length} requested service{selectedServices.length === 1 ? "" : "s"} selected</span>
-          <small>Click to expand IAW service categories</small>
+          <span>{selectedServices.length} job estimate{selectedServices.length === 1 ? "" : "s"} selected</span>
+          <small>Click to expand IAW job estimate categories</small>
           <ChevronDown size={16} />
         </summary>
         <div className="service-category-list">
@@ -109,16 +109,16 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
       <section className="estimate-builder-panel">
         <div className="panel-title estimate-builder-title">
           <div>
-            <p className="section-label">IAW estimate builder</p>
-            <h2>Pick IAW categories, compare distributors, then flow the choice into this Ibby request.</h2>
+            <p className="section-label">IAW job estimate builder</p>
+            <h2>Choose full job estimates or add individual parts, then compare distributors.</h2>
           </div>
           <Calculator />
         </div>
-        <p className="legal-note">These are draft customer planning numbers from the standalone IAW parts finder flow. Open each distributor for live fitment, images, stock, and exact local price before ordering.</p>
+        <p className="legal-note">Job estimate buttons are quick “inspect plus parts if needed” planning bundles. Individual parts can still be added one by one. Open each distributor for live fitment, images, stock, and exact local price before ordering.</p>
 
         <div className="part-search-row">
           <Search size={16} />
-          <input value={partSearch} onChange={(event) => setPartSearch(event.target.value)} placeholder="Add a part or job: rear struts, wipers, alternator, exhaust leak..." />
+          <input value={partSearch} onChange={(event) => setPartSearch(event.target.value)} placeholder="Add an individual part or job estimate: rear struts, wipers, alternator, exhaust leak..." />
           <button className="secondary-button" disabled={!normalizedPartSearch || selectedSet.has(normalizedPartSearch.toLowerCase())} onClick={() => addEstimateItem(normalizedPartSearch)} type="button">
             <PackagePlus size={15} /> Add
           </button>
@@ -170,7 +170,7 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
           <div className="estimate-total-card">
             <span>Customer-visible draft estimate</span>
             <strong>{selectedServices.length ? formatPriceRange(estimate.total) : "Pick a service"}</strong>
-            <small>{selectedServices.length ? `${estimate.jobs.length} job(s), ${estimate.parts.length} part line(s), ${estimate.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr. Max includes possible add-ons` : "Use the collapsed requested-services list, quick chips, category browser, or manual part box."}</small>
+            <small>{selectedServices.length ? `${estimate.jobs.length} job estimate(s), ${estimate.parts.length} part line(s), ${estimate.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr. Max includes possible add-ons` : "Use the collapsed job-estimate list, quick chips, category browser, or manual part box."}</small>
           </div>
           <div className="estimate-total-breakdown">
             <div><span>Selected parts</span><strong>{formatPriceRange(estimate.selectedParts)}</strong></div>

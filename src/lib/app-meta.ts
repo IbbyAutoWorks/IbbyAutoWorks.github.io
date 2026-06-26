@@ -1,5 +1,5 @@
-const defaultVersion = "1.4.0";
-const defaultBuild = "202606260408";
+const defaultVersion = "1.4.1";
+const defaultBuild = "202606260647";
 
 export const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || defaultVersion;
 export const appBuild = process.env.NEXT_PUBLIC_APP_BUILD || defaultBuild;

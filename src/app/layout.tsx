@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { RouteBurnoutLoader } from "@/components/route-burnout-loader";
 import { ThemeBoot } from "@/components/theme-boot";
 import "./styles.css";
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ThemeBoot />
         <RouteBurnoutLoader />
         {children}
+        <Analytics />
       </body>
     </html>
   );

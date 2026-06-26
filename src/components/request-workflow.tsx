@@ -18,9 +18,19 @@ import { CustomerPromoOffers } from "@/components/customer-promo-offers";
 
 const tirePositions = ["Left front", "Right front", "Left rear", "Right rear", "Not sure"] as const;
 const includedServiceTowns = ["auburn", "lewiston", "minot", "poland", "turner", "mechanic falls", "sabattus", "lisbon", "new gloucester"];
+const serviceTownSuggestions = ["Auburn", "Lewiston", "Minot", "Poland", "Turner", "Mechanic Falls", "Sabattus", "Lisbon", "New Gloucester"];
+const addressSuggestions = [
+  "Main Street, Auburn, ME 04210",
+  "Center Street, Auburn, ME 04210",
+  "Court Street, Auburn, ME 04210",
+  "Lisbon Street, Lewiston, ME 04240",
+  "Sabattus Street, Lewiston, ME 04240"
+];
 const stateOptions = ["ME", "NH", "MA", "VT", "NY", "CT", "RI"];
 const monthOptions = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const yearOptions = Array.from({ length: 37 }, (_, index) => String(new Date().getFullYear() + 6 - index));
+const today = new Date();
+const todayIsoDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 const appointmentDays = [
   { day: 8, label: "Mon", date: "2026-06-08", booked: false },
   { day: 9, label: "Tue", date: "2026-06-09", booked: false },
@@ -39,12 +49,10 @@ function appointmentTimeToMinutes(time: string, period: string) {
   if (period === "AM" && hour === 12) hour = 0;
   return hour * 60 + minute;
 }
-const appointmentMonths = [
-  { label: "June 2026", year: 2026, month: 5 },
-  { label: "July 2026", year: 2026, month: 6 },
-  { label: "August 2026", year: 2026, month: 7 },
-  { label: "September 2026", year: 2026, month: 8 }
-];
+const appointmentMonths = Array.from({ length: 4 }, (_, index) => {
+  const date = new Date(today.getFullYear(), today.getMonth() + index, 1);
+  return { label: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }), year: date.getFullYear(), month: date.getMonth() };
+});
 const requestSteps = [
   "Contact",
   "Vehicle",
@@ -77,9 +85,12 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [tireConcern, setTireConcern] = useState<(typeof tirePositions)[number]>("Not sure");
   const [form, setForm] = useState({
     name: "",
+    firstName: "",
+    lastName: "",
     phone: "",
     address: "",
     town: "",
+    zip: "",
     serviceState: "ME",
     email: "",
     vin: "",
@@ -95,8 +106,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     registrationMonth: "",
     registrationYear: "",
     appointmentMonth: appointmentMonths[0].label,
-    appointmentDay: "8",
-    appointmentDate: "2026-06-08",
+    appointmentDay: String(today.getDate()),
+    appointmentDate: todayIsoDate,
     appointmentTime: "8:00",
     appointmentPeriod: "AM",
     preferredWindow: appointmentWindows.find((window) => !window.booked)?.label ?? appointmentWindows[0]?.label ?? "",
@@ -144,7 +155,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     return townMatch
       ? {
           className: "service-area-card in-range",
-          label: "Inside prototype service radius",
+          label: "Inside mobile service radius",
           detail: `${townMatch.replace(/\b\w/g, (letter) => letter.toUpperCase())} is treated as inside the ${businessSchedule.includedRadiusMiles}-mile included radius.`
         }
       : {
@@ -201,6 +212,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
 
   const estimateDetails = useMemo(() => estimateServices(selectedServices, pricingSettings), [selectedServices, pricingSettings]);
   const selectedDistributorSummary = Object.entries(selectedSupplierChoices).map(([key, supplier]) => `${key}: ${supplier}`).join("; ");
+  const customerDisplayName = `${form.firstName} ${form.lastName}`.replace(/\s+/g, " ").trim() || form.name;
+  const serviceLocation = `${form.address}${form.town ? `, ${form.town}` : ""}${form.serviceState ? `, ${form.serviceState}` : ""}${form.zip ? ` ${form.zip}` : ""}`.trim();
   const activeVehicleContext = form.vehicle || `${form.vehicleYear} ${form.vehicleMake} ${form.vehicleModel}`.replace(/\s+/g, " ").trim();
   const activeAreaContext = `${form.town} ${form.serviceState}`.replace(/\s+/g, " ").trim();
   const selectedAppointmentMinutes = appointmentTimeToMinutes(form.appointmentTime, form.appointmentPeriod);
@@ -214,10 +227,10 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     {
       title: "Customer",
       rows: [
-        ["Name", form.name || (isAdminMode ? "Admin-entered customer" : "Guest customer")],
+        ["Name", customerDisplayName || (isAdminMode ? "Admin-entered customer" : "Guest customer")],
         ["Phone", form.phone || "Not entered"],
         ["Email", form.email || "Not entered"],
-        ["Service address", `${form.address}${form.town ? `, ${form.town}` : ""}${form.serviceState ? `, ${form.serviceState}` : ""}`.trim() || "Not entered"],
+        ["Service address", serviceLocation || "Not entered"],
         ["Service radius", serviceAreaStatus.label]
       ]
     },
@@ -320,6 +333,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     setForm((current) => ({
       ...current,
       name: customer.name,
+      firstName: customer.name.split(" ")[0] ?? "",
+      lastName: customer.name.split(" ").slice(1).join(" "),
       phone: customer.phone,
       email: customer.email,
       address: customer.address
@@ -409,7 +424,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
 
     const order: PrototypeWorkOrder = {
       id: `${isAdminMode ? "A" : "C"}${Date.now().toString().slice(-6)}`,
-      customer: form.name || (isAdminMode ? "Admin-entered customer" : "Guest customer"),
+      customer: customerDisplayName || (isAdminMode ? "Admin-entered customer" : "Guest customer"),
       phone: form.phone || "No phone entered",
       email: form.email || "No email entered",
       vehicle: form.vehicle || "Vehicle pending",
@@ -417,7 +432,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       vin: form.vin || "VIN pending",
       plate: `${form.plate || "Plate pending"} ${form.plateState}`.trim(),
       mileage: form.mileage || "Mileage pending",
-      location: `${form.address}${form.town ? `, ${form.town}` : ""}${form.serviceState ? `, ${form.serviceState}` : ""}`.trim() || "Address pending",
+      location: serviceLocation || "Address pending",
       service: selectedServices.length ? (needsTirePosition ? `${selectedServices.join(", ")} (${tireConcern} tire)` : selectedServices.join(", ")) : "Service pending",
       services: selectedServices,
       tier: "mid",
@@ -445,7 +460,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       agreementAcceptance: isAdminMode ? adminAgreementAcceptance : {
         ...agreementAcceptance,
         acceptedAt,
-        acceptedBy: form.name || "Guest customer"
+        acceptedBy: customerDisplayName || "Guest customer"
       },
       customerPreferences: isAdminMode ? { ...customerPreferences, oneTimeRequest: false } : customerPreferences
     };
@@ -464,7 +479,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
           <p>
             {isAdminMode
               ? "Use the same intake flow for phone, in-person, or admin-entered requests. Customer-only authorization prompts are skipped here."
-              : "This prototype saves locally and mirrors into the admin dashboard immediately. Supabase will replace this local storage layer when the backend account is ready."}
+              : "This request saves to the work-order board and syncs to Supabase when you are signed in; local storage remains the offline fallback."}
           </p>
         </div>
         <div className="estimate-summary">
@@ -510,13 +525,17 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             </label>
           ) : null}
           <div className="form-grid">
-            <label><span>Name</span><input value={form.name} onChange={(event) => updateForm("name", event.target.value)} placeholder="Customer name" /></label>
+            <label><span>First name</span><input autoComplete="given-name" value={form.firstName} onChange={(event) => updateForm("firstName", event.target.value)} placeholder="First name" /></label>
+            <label><span>Last name</span><input autoComplete="family-name" value={form.lastName} onChange={(event) => updateForm("lastName", event.target.value)} placeholder="Last name" /></label>
             <label><span>Phone</span><input value={form.phone} onChange={(event) => updateForm("phone", event.target.value)} placeholder="Best phone number" /></label>
-            <label><span>Address</span><input value={form.address} onChange={(event) => updateForm("address", event.target.value)} placeholder="Street address" /></label>
-            <label><span>Town</span><input value={form.town} onChange={(event) => updateForm("town", event.target.value)} placeholder="Town / city" /></label>
+            <label><span>Address</span><input autoComplete="street-address" list="service-address-suggestions" value={form.address} onChange={(event) => updateForm("address", event.target.value)} placeholder="Street address" /></label>
+            <label><span>Town</span><input autoComplete="address-level2" list="service-town-suggestions" value={form.town} onChange={(event) => updateForm("town", event.target.value)} placeholder="Town / city" /></label>
             <label><span>State</span><select value={form.serviceState} onChange={(event) => updateForm("serviceState", event.target.value)}>{stateOptions.map((state) => <option key={state}>{state}</option>)}</select></label>
+            <label><span>ZIP code</span><input autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={(event) => updateForm("zip", event.target.value.replace(/[^0-9-]/g, "").slice(0, 10))} placeholder="04210" /></label>
             <label><span>Email</span><input value={form.email} onChange={(event) => updateForm("email", event.target.value)} placeholder="Email for updates and PDFs" /></label>
           </div>
+          <datalist id="service-address-suggestions">{addressSuggestions.map((address) => <option key={address} value={address} />)}</datalist>
+          <datalist id="service-town-suggestions">{serviceTownSuggestions.map((town) => <option key={town} value={town} />)}</datalist>
           <div className={serviceAreaStatus.className}>
             <MapPin size={17} />
             <div>
@@ -605,7 +624,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
               <label className={customerPreferences.rememberLogin ? "selected" : ""}>
                 <input checked={customerPreferences.rememberLogin} onChange={(event) => toggleCustomerPreference("rememberLogin", event.target.checked)} type="checkbox" />
                 <KeyRound size={16} />
-                <div><strong>Remember my login</strong><span>Prototype preference for easier account access after Supabase auth is connected.</span></div>
+                <div><strong>Remember my login</strong><span>Preference for easier account access after signing in on this device.</span></div>
               </label>
               <label className={customerPreferences.oneTimeRequest ? "selected" : ""}>
                 <input checked={customerPreferences.oneTimeRequest} onChange={(event) => toggleCustomerPreference("oneTimeRequest", event.target.checked)} type="checkbox" />
@@ -780,12 +799,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <FileReviewIcon />
           </div>
           <p className="legal-note">Review each section before submitting. The admin dashboard will receive this as a new work order and link it to matching customer history when the contact and vehicle details match.</p>
-          {!isAdminMode ? (
-            <>
-              <CustomerPaymentOptions estimate={selectedServices.length ? formatPriceRange(estimateDetails.total) : "pending service selection"} />
-              <CustomerPromoOffers />
-            </>
-          ) : null}
+          {!isAdminMode ? <CustomerPromoOffers /> : null}
           <div className="request-review-grid">
             {reviewGroups.map((group) => (
               <div className="request-review-card" key={group.title}>
@@ -799,6 +813,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
               </div>
             ))}
           </div>
+          {!isAdminMode ? <CustomerPaymentOptions estimate={selectedServices.length ? formatPriceRange(estimateDetails.total) : "pending service selection"} /> : null}
           {agreementError ? <div className="agreement-error">{agreementError}</div> : null}
         </div>
 
