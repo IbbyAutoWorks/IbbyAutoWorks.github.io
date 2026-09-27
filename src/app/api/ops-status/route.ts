@@ -138,7 +138,7 @@ async function vercelStatus(now: string): Promise<ProviderHealth> {
 
 async function supabaseStatus(now: string): Promise<ProviderHealth> {
   const supabaseUrl = env("NEXT_PUBLIC_SUPABASE_URL") || env("SUPABASE_URL");
-  const publicKey = env("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") || env("NEXT_PUBLIC_SUPABASE_ANON_KEY") || env("SUPABASE_ANON_KEY");
+  const publicKey = env("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") || env("SUPABASE_PUBLISHABLE_KEY");
   if (!supabaseUrl || !publicKey) return configuredMissing("supabase", "Supabase", [!supabaseUrl && "NEXT_PUBLIC_SUPABASE_URL", !publicKey && "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"].filter(Boolean) as string[], "https://supabase.com/dashboard");
   const settings = await readJson(`${supabaseUrl}/auth/v1/settings`, { headers: { apikey: publicKey, authorization: "Bearer " + publicKey } });
   const color = settings.ok ? "green" : colorFromResponse(settings.status);
