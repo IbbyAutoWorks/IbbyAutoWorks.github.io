@@ -91,7 +91,12 @@ export function AdminDashboard() {
   const dashboardMetrics = useMemo(() => {
     const openOrders = allWorkOrders.filter((order) => order.status !== "Complete");
     const scheduled = allWorkOrders.filter((order) => order.status === "Scheduled");
-    const revenue = allWorkOrders.reduce((sum, order) => sum + Number.parseInt(order.estimate.replace(/[$+]/g, ""), 10), 0);
+    const revenue = allWorkOrders.reduce((sum, order) => {
+      // Estimates are strings like "$48 - $178" or "Pending"; guard non-numeric
+      // values so a single "Pending" order can't turn the whole metric into $NaN.
+      const amount = Number.parseInt(String(order.estimate).replace(/[$,+]/g, ""), 10);
+      return sum + (Number.isFinite(amount) ? amount : 0);
+    }, 0);
     const completed = allWorkOrders.filter((order) => order.status === "Complete").length;
     const progress = allWorkOrders.length > 0 ? Math.round((completed / allWorkOrders.length) * 100) : 0;
 
