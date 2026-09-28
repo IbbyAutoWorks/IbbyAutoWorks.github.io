@@ -20,6 +20,7 @@ import {
   updatePrototypeWorkOrderStatus,
   WORK_ORDERS_EVENT
 } from "@/lib/local-store";
+import { createWorkOrderCheckout } from "@/lib/payment-backend";
 import { supplyCatalog, supplyCategories } from "@/lib/supplies";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
 
@@ -119,6 +120,8 @@ export function ServicePortal() {
   const [paymentMethod, setPaymentMethod] = useState<PrototypePayment["method"] | "">("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [stripeLink, setStripeLink] = useState("");
+  const [stripeStatus, setStripeStatus] = useState("");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
 
   useEffect(() => {
@@ -198,8 +201,27 @@ export function ServicePortal() {
     refresh(selectedOrder.id);
   }
 
+  async function createStripeLink() {
+    if (!selectedOrder) return;
+    const cents = Math.round(Number.parseFloat(paymentAmount.replace(/[^0-9.]/g, "")) * 100);
+    if (!Number.isFinite(cents) || cents < 50) {
+      setStripeStatus("Enter the amount to charge first (for example 110 or $110.00).");
+      return;
+    }
+    try {
+      setStripeStatus("Creating Stripe checkout...");
+      const url = await createWorkOrderCheckout(selectedOrder.id, cents);
+      setStripeLink(url);
+      setStripeStatus("Send this link to the customer or open it on this device. The job completes automatically when Stripe confirms payment.");
+    } catch (error) {
+      setStripeStatus(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   function selectJob(orderId: string, nextStep = 1) {
     setSelectedOrderId(orderId);
+    setStripeLink("");
+    setStripeStatus("");
     goToStep(nextStep);
   }
 
@@ -718,6 +740,18 @@ export function ServicePortal() {
             </label>
           </div>
         )}
+        {order.payment ? null : (
+          <div className="service-decision-grid">
+            <button className="secondary-button" onClick={createStripeLink}><CreditCard size={16} /> Charge card with Stripe</button>
+            {stripeLink ? (
+              <>
+                <a className="secondary-button" href={stripeLink} target="_blank" rel="noopener noreferrer">Open checkout</a>
+                <button className="secondary-button" onClick={() => void navigator.clipboard?.writeText(stripeLink)}>Copy link for customer</button>
+              </>
+            ) : null}
+          </div>
+        )}
+        {stripeStatus && !order.payment ? <p className="legal-note">{stripeStatus}</p> : null}
         {renderTechNotes(order, "Billing/payment note")}
         {order.payment ? null : (
           <button className="primary-button" disabled={!paymentMethod} onClick={recordPayment}><CreditCard size={16} /> Record payment and complete</button>
