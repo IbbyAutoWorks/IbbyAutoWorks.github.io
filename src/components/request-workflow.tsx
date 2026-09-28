@@ -467,7 +467,9 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     };
 
     const order: PrototypeWorkOrder = {
-      id: `${isAdminMode ? "A" : "C"}${Date.now().toString().slice(-6)}`,
+      // Time plus random suffix: orders from different devices share one board, so
+      // the old last-6-digits-of-the-clock ids could collide.
+      id: `${isAdminMode ? "A" : "C"}${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`,
       customer: customerDisplayName || (isAdminMode ? "Admin-entered customer" : "Guest customer"),
       phone: form.phone || "No phone entered",
       email: form.email || "No email entered",
