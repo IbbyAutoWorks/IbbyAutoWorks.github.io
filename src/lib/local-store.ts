@@ -100,6 +100,16 @@ export type PrototypeCustomerRecord = {
   updatedAt: string;
 };
 
+export const paymentMethods = ["Cash", "Card", "PayPal", "Stripe", "Invoice", "Payment plan"] as const;
+
+export type PrototypePayment = {
+  method: (typeof paymentMethods)[number];
+  amount: string;
+  reference: string;
+  recordedAt: string;
+  source: "manual" | "stripe";
+};
+
 export type PrototypeWorkOrder = {
   id: string;
   customer: string;
@@ -117,7 +127,7 @@ export type PrototypeWorkOrder = {
   estimate: string;
   preferredWindow: string;
   symptoms: string;
-  status: "Requested" | "Parts Search" | "Accepted" | "Estimate Sent" | "Scheduled" | "En Route" | "On Site" | "In Progress" | "Waiting Parts" | "Complete";
+  status: "Requested" | "Parts Search" | "Accepted" | "Estimate Sent" | "Scheduled" | "En Route" | "On Site" | "In Progress" | "Waiting Parts" | "Awaiting Payment" | "Complete";
   due: string;
   risk: string;
   createdAt: string;
@@ -136,6 +146,7 @@ export type PrototypeWorkOrder = {
   vehicleSpec: VehicleSpec;
   agreementAcceptance: AgreementAcceptance;
   customerPreferences: PrototypeCustomerPreferences;
+  payment?: PrototypePayment;
 };
 
 export const WORK_ORDERS_KEY = "ibbys-auto.work-orders";
@@ -425,10 +436,33 @@ export function updatePrototypeWorkOrderStatus(orderId: string, status: Prototyp
       ? {
           ...order,
           status,
-          risk: status === "Complete" ? "PDF ready" : status === "Scheduled" ? "Appointment set" : status === "Accepted" ? "Work accepted" : status === "En Route" ? "Technician en route" : order.risk,
+          risk: status === "Complete" ? "PDF ready" : status === "Awaiting Payment" ? "Bill customer" : status === "Scheduled" ? "Appointment set" : status === "Accepted" ? "Work accepted" : status === "En Route" ? "Technician en route" : order.risk,
           customerContactLog: [
             ...(order.customerContactLog ?? []),
             `${new Date().toLocaleString()}: Status changed to ${status}`
+          ]
+        }
+      : order
+  ));
+  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+}
+
+// Payment is the only path to "Complete" from billing, so a finished job stays
+// visible as "Awaiting Payment" until someone records how it was paid.
+export function recordPrototypePayment(orderId: string, payment: Omit<PrototypePayment, "recordedAt">) {
+  const recordedAt = new Date().toISOString();
+  const current = readPrototypeWorkOrders();
+  const next = current.map((order) => (
+    order.id === orderId
+      ? {
+          ...order,
+          status: "Complete" as const,
+          risk: "PDF ready",
+          payment: { ...payment, recordedAt },
+          customerContactLog: [
+            ...(order.customerContactLog ?? []),
+            `${new Date(recordedAt).toLocaleString()}: Payment recorded (${payment.method}${payment.amount ? ` ${payment.amount}` : ""}); status changed to Complete`
           ]
         }
       : order

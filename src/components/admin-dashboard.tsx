@@ -38,10 +38,11 @@ const statusClass: Record<string, string> = {
   "On Site": "status progress",
   "In Progress": "status progress",
   "Waiting Parts": "status waiting",
+  "Awaiting Payment": "status waiting",
   Complete: "status complete"
 };
 
-const statusFilters = ["All", "Requested", "Parts Search", "Accepted", "Estimate Sent", "Scheduled", "En Route", "On Site", "In Progress", "Waiting Parts", "Complete"];
+const statusFilters = ["All", "Requested", "Parts Search", "Accepted", "Estimate Sent", "Scheduled", "En Route", "On Site", "In Progress", "Waiting Parts", "Awaiting Payment", "Complete"];
 export function AdminDashboard() {
   // Admin state: filters, selected records, mirrored customer requests, and editable customer drafts.
   const [statusFilter, setStatusFilter] = useState("All");
@@ -277,7 +278,7 @@ export function AdminDashboard() {
                 <div><span>Request type</span><strong>{selectedOrder.customerPreferences.oneTimeRequest ? "One-time" : "Account follow-up"}</strong></div>
               </div>
               <div className="status-action-grid">
-                {(["Parts Search", "Accepted", "Estimate Sent", "Scheduled", "En Route", "On Site", "In Progress", "Waiting Parts", "Complete"] as const).map((status) => (
+                {(["Parts Search", "Accepted", "Estimate Sent", "Scheduled", "En Route", "On Site", "In Progress", "Waiting Parts", "Awaiting Payment", "Complete"] as const).map((status) => (
                   <button className={selectedOrder.status === status ? "selected" : ""} key={status} onClick={() => changeSelectedStatus(status)}>
                     {status}
                   </button>

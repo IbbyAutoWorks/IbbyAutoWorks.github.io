@@ -7,10 +7,13 @@ import {
   addPrototypePartRequest,
   addPrototypeMileageLog,
   addPrototypeSupplyRequest,
+  paymentMethods,
   PrototypeInspectionItem,
+  PrototypePayment,
   PrototypeServiceMeasurements,
   PrototypeWorkOrder,
   readPrototypeWorkOrders,
+  recordPrototypePayment,
   updatePrototypeInspectionItem,
   updatePrototypePartQuote,
   updatePrototypeWorkOrder,
@@ -21,7 +24,7 @@ import { supplyCatalog, supplyCategories } from "@/lib/supplies";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
 
 // Technician workflow configuration: statuses, step loaders, and fixed inspection checklists.
-const serviceStatuses: PrototypeWorkOrder["status"][] = ["Accepted", "Estimate Sent", "Scheduled", "En Route", "On Site", "In Progress", "Waiting Parts", "Complete"];
+const serviceStatuses: PrototypeWorkOrder["status"][] = ["Accepted", "Estimate Sent", "Scheduled", "En Route", "On Site", "In Progress", "Waiting Parts", "Awaiting Payment", "Complete"];
 const acceptedJobStatuses: PrototypeWorkOrder["status"][] = ["Accepted", "Estimate Sent", "Scheduled"];
 const walkaroundStates: Array<NonNullable<PrototypeInspectionItem["state"]>> = ["green", "yellow", "red"];
 const serviceStepLoaders = ["clipboard", "burnout", "review", "review", "parts", "calendar", "lift", "review", "signature"] as const;
@@ -97,7 +100,7 @@ function serviceStepIndexForStatus(status: PrototypeWorkOrder["status"]) {
   if (status === "On Site") return 3;
   if (status === "Waiting Parts") return 5;
   if (status === "In Progress") return 6;
-  if (status === "Complete") return 8;
+  if (status === "Awaiting Payment" || status === "Complete") return 8;
   return 0;
 }
 
@@ -113,6 +116,9 @@ export function ServicePortal() {
   const [mileageFrom, setMileageFrom] = useState("Shop / starting point");
   const [mileageMiles, setMileageMiles] = useState("");
   const [techNote, setTechNote] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PrototypePayment["method"] | "">("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
 
   useEffect(() => {
@@ -176,6 +182,20 @@ export function ServicePortal() {
     updatePrototypeWorkOrderStatus(selectedOrder.id, status);
     refresh(selectedOrder.id);
     if (typeof nextStep === "number") goToStep(nextStep);
+  }
+
+  function recordPayment() {
+    if (!selectedOrder || !paymentMethod) return;
+    recordPrototypePayment(selectedOrder.id, {
+      method: paymentMethod,
+      amount: paymentAmount.trim(),
+      reference: paymentReference.trim(),
+      source: "manual"
+    });
+    setPaymentMethod("");
+    setPaymentAmount("");
+    setPaymentReference("");
+    refresh(selectedOrder.id);
   }
 
   function selectJob(orderId: string, nextStep = 1) {
@@ -660,7 +680,7 @@ export function ServicePortal() {
           {renderSpecSheet(order)}
           {renderMeasurements(order)}
           {renderTechNotes(order, "Finish-job note")}
-          <button className="primary-button" onClick={() => setStatus("Complete", 8)}><CheckCircle2 size={16} /> Finish job</button>
+          <button className="primary-button" onClick={() => setStatus("Awaiting Payment", 8)}><CheckCircle2 size={16} /> Finish job</button>
         </div>
       );
     }
@@ -672,8 +692,36 @@ export function ServicePortal() {
           <div><FileCheck2 size={18} /><strong>Bill</strong><span>Provide final bill and work report to customer account.</span></div>
           <div><CalendarClock size={18} /><strong>Next appointment</strong><span>Set follow-up reminder or appointment window if needed.</span></div>
         </div>
+        {order.payment ? (
+          <div className="part-request-list">
+            <div className="part-request-row">
+              <CheckCircle2 size={15} />
+              <span>Paid by {order.payment.method}{order.payment.amount ? ` - ${order.payment.amount}` : ""}{order.payment.reference ? ` (ref ${order.payment.reference})` : ""} on {new Date(order.payment.recordedAt).toLocaleString()}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="service-form-grid">
+            <label>
+              <span>Payment method</span>
+              <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PrototypePayment["method"] | "")}>
+                <option value="">Choose how the customer paid</option>
+                {paymentMethods.map((method) => <option key={method} value={method}>{method}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>Amount collected</span>
+              <input value={paymentAmount} onChange={(event) => setPaymentAmount(event.target.value)} placeholder={order.estimate} />
+            </label>
+            <label>
+              <span>Reference (receipt, invoice, or transaction #)</span>
+              <input value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} placeholder="Optional" />
+            </label>
+          </div>
+        )}
         {renderTechNotes(order, "Billing/payment note")}
-        <button className="primary-button" onClick={() => setStatus("Complete", 8)}><CreditCard size={16} /> Payment handled</button>
+        {order.payment ? null : (
+          <button className="primary-button" disabled={!paymentMethod} onClick={recordPayment}><CreditCard size={16} /> Record payment and complete</button>
+        )}
       </div>
     );
   }
