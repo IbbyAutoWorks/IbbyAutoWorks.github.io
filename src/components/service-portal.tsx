@@ -147,8 +147,13 @@ export function ServicePortal() {
   const preInspectComplete = selectedOrder ? completionForLabels(selectedOrder, liftedInspectionChecks.map((item) => item.label)) : 0;
 
   useEffect(() => {
+    // Sync the wizard to the job's status only when the technician switches jobs.
+    // Depending on currentServiceStep here caused status-changing action buttons
+    // (e.g. "Parts picked up", "Start job"), which also call goToStep(nextStep),
+    // to be overridden by the recomputed status step — bouncing the tech backward.
     setActiveWorkflowStep(currentServiceStep);
-  }, [currentServiceStep, selectedOrder?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedOrder?.id]);
 
   function refresh(selectedId?: string) {
     const nextOrders = readPrototypeWorkOrders();
