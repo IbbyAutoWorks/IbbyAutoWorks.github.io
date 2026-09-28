@@ -2112,6 +2112,11 @@ h2 {
   justify-content: center;
 }
 
+.request-step-actions .agreement-error {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
 .request-review-panel {
   grid-column: 1 / -1;
 }

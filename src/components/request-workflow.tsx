@@ -80,6 +80,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [vinStatus, setVinStatus] = useState("");
   const [vinDecoded, setVinDecoded] = useState(false);
   const [agreementError, setAgreementError] = useState("");
+  const [stepError, setStepError] = useState("");
   const [agreementAcceptance, setAgreementAcceptance] = useState(defaultAgreementAcceptance);
   const [customerPreferences, setCustomerPreferences] = useState(defaultCustomerPreferences);
   const [tireConcern, setTireConcern] = useState<(typeof tirePositions)[number]>("Not sure");
@@ -164,6 +165,11 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
           detail: `${businessSchedule.outsideRadiusFee}. Final mileage should be confirmed by map routing before acceptance.`
         };
   }, [form.address, form.town, form.serviceState]);
+
+  // Any edit may resolve the missing-field message, so clear it and re-check on Next.
+  useEffect(() => {
+    setStepError("");
+  }, [form, selectedServices]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -281,9 +287,39 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  // Customer intake must carry enough to act on; admin phone/in-person intake
+  // stays flexible so staff can open a placeholder order and fill it in later.
+  function missingForStep(step: number): string[] {
+    if (isAdminMode) return [];
+    const missing: string[] = [];
+    if (step === 0) {
+      if (!form.firstName.trim()) missing.push("first name");
+      if (!form.phone.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim())) missing.push("a phone number or valid email");
+    }
+    if (step === 1 && !(form.vehicleYear && form.vehicleMake && form.vehicleModel)) {
+      missing.push("vehicle year, make, and model (pick from the list or decode your VIN)");
+    }
+    if (step === 2 && selectedServices.length === 0) missing.push("at least one service");
+    return missing;
+  }
+
+  function stepErrorMessage(step: number, missing: string[]) {
+    return `${requestSteps[step]}: please add ${missing.join(" and ")}.`;
+  }
+
+  function goNext() {
+    const missing = missingForStep(activeStep);
+    if (missing.length) {
+      setStepError(stepErrorMessage(activeStep, missing));
+      return;
+    }
+    changeStep(activeStep + 1);
+  }
+
   function changeStep(nextStep: number) {
     const boundedStep = Math.max(0, Math.min(requestSteps.length - 1, nextStep));
     if (boundedStep === activeStep) return;
+    setStepError("");
 
     window.dispatchEvent(new CustomEvent("ibbys-auto.route-burnout", { detail: { variant: requestStepLoaders[boundedStep] } }));
     window.setTimeout(() => {
@@ -410,6 +446,14 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   }
 
   function submitRequest() {
+    // Step tabs allow jumping ahead, so re-check every step before submitting.
+    const firstIncomplete = requestSteps.findIndex((_, step) => missingForStep(step).length > 0);
+    if (firstIncomplete !== -1) {
+      const message = stepErrorMessage(firstIncomplete, missingForStep(firstIncomplete));
+      changeStep(firstIncomplete);
+      window.setTimeout(() => setStepError(message), 540);
+      return;
+    }
     if (!isAdminMode && !agreementsReady) {
       setAgreementError("Please accept each required authorization before submitting the work request.");
       return;
@@ -836,8 +880,9 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
         </div>
 
         <div className="panel request-step-actions">
+          {stepError ? <div className="agreement-error" role="alert">{stepError}</div> : null}
           <button className="secondary-button" disabled={activeStep === 0} onClick={() => changeStep(activeStep - 1)}>Back</button>
-          <button className="primary-button" disabled={false} onClick={() => activeStep === requestSteps.length - 1 ? submitRequest() : changeStep(activeStep + 1)}>
+          <button className="primary-button" onClick={() => activeStep === requestSteps.length - 1 ? submitRequest() : goNext()}>
             {activeStep === requestSteps.length - 1 ? (isAdminMode ? "Create Work Order" : "Submit Request") : `Next: ${requestSteps[Math.min(activeStep + 1, requestSteps.length - 1)]}`}
           </button>
         </div>
