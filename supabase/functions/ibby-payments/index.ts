@@ -295,6 +295,12 @@ serve(async (req) => {
       return json({ ok: true, checkout_url: session.url, session_id: session.id, plan });
     }
 
+    // Public: customer promo widgets list active offers; admins also get inactive ones.
+    if (action === "list_promotions") {
+      const admin = await isAdmin(req);
+      return json({ ok: true, admin, promotions: await listPromotions(admin), tax_settings: await getTaxSettings() });
+    }
+
     if (!(await isAdmin(req))) return json({ ok: false, error: "Admin credentials required" }, { status: 401 });
 
     if (action === "upsert_plan") {
@@ -332,11 +338,6 @@ serve(async (req) => {
       const { data, error } = await supabase.from("payment_plans").update({ active: false }).eq("slug", slug).select("*").single();
       if (error) throw error;
       return json({ ok: true, archived: true, plan: data });
-    }
-
-    if (action === "list_promotions") {
-      const admin = await isAdmin(req);
-      return json({ ok: true, admin, promotions: await listPromotions(admin), tax_settings: await getTaxSettings() });
     }
 
     if (action === "upsert_promotion") {
