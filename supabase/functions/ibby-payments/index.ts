@@ -42,8 +42,6 @@ function requireEnv(name: string) {
 const supabase = createClient(requireEnv("SUPABASE_URL"), Deno.env.get("IB_SUPABASE_SECRET_KEY") || Deno.env.get("SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
 const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_TEST") || "";
 const adminToken = Deno.env.get("IBBY_ADMIN_API_TOKEN") || "";
-const adminUsername = (Deno.env.get("IBBY_ADMIN_USERNAME") || "IbbyAdmin").toLowerCase();
-const adminEmail = (Deno.env.get("IBBY_ADMIN_EMAIL") || "ibbyadmin@ibbyautoworks.local").toLowerCase();
 
 function bearerToken(req: Request) {
   const value = req.headers.get("authorization") || "";
@@ -61,9 +59,7 @@ async function getSessionUser(req: Request) {
 async function isAdmin(req: Request) {
   if (adminToken && req.headers.get("x-ibby-admin-token") === adminToken) return true;
   const user = await getSessionUser(req);
-  const email = (user?.email || "").toLowerCase();
-  const username = String(user?.user_metadata?.username || user?.user_metadata?.display_name || "").toLowerCase();
-  if (email === adminEmail || username === adminUsername || user?.user_metadata?.role === "admin") return true;
+  // Only admin_profiles is trusted; user_metadata is client-writable at signup.
   if (user?.id) {
     const { data } = await supabase.from("admin_profiles").select("active,role").eq("user_id", user.id).maybeSingle();
     if (data?.active && data?.role === "admin") return true;

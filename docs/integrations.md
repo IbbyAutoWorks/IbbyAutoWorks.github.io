@@ -124,7 +124,7 @@ Current admin sign-in is a Supabase Auth user:
 Local/private operational secrets remain outside git:
 
 - Garden profile env: `/home/ubuntu/.hermes/profiles/ibby/.env`
-- NukeBox app local env: `C:\Users\CAK3D\IbbyAuto-next-web-run\.env.local`
+- NukeBox app local env: `G:\IbbyAutoWorks\app\.env.local`
 - Supabase Edge Function secrets: Supabase dashboard project `cqdlqdzmnylywctlsklp` → Edge Functions/Secrets
 
 Customers can create/sign into normal Supabase accounts. The app hides Admin, Service, and Settings navigation from non-admin sessions, and admin/service pages require the IbbyAdmin session client-side.
