@@ -5395,6 +5395,52 @@ h2 {
   cursor: pointer;
 }
 
+.local-directory summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.directory-card {
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border: 1px solid var(--line, #e1e4e8);
+  border-radius: 8px;
+  font-size: 0.86rem;
+}
+
+.directory-card.highlighted {
+  border-color: var(--red, #c8102e);
+  box-shadow: 0 0 0 1px var(--red, #c8102e) inset;
+}
+
+.directory-card a {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.dealer-parts-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.86rem;
+}
+
+.dealer-parts-row > span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .admin-tabs {
   display: flex;
   gap: 6px;

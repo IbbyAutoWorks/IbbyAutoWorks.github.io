@@ -1,10 +1,11 @@
 import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
+import { dealersForMake, nearestDealerSearchUrl, telLink } from "@/lib/local-directory";
 
 export type PartTier = "low" | "mid" | "high";
 
 export type PartSupplierCandidate = {
   name: string;
-  type: "Local pickup" | "Online" | "Tire";
+  type: "Local pickup" | "Online" | "Tire" | "Dealer";
   url: string;
   priceNote: string;
   imageNote: string;
@@ -536,20 +537,49 @@ function vehicleSearchText(vehicleContext?: string) {
   return String(vehicleContext || "").replace(/\s+/g, " ").trim();
 }
 
-function areaSearchText(areaContext?: string) {
-  return String(areaContext || currentPricingSettings().defaultSearchArea || "").replace(/\s+/g, " ").trim();
+// "2021 Toyota RAV4 2.5L 4-cyl" -> year/make/model for catalog-style URLs.
+function parseVehicleContext(vehicleContext?: string) {
+  const match = vehicleSearchText(vehicleContext).match(/^(\d{4})\s+(\S+)\s+(.+?)(?:\s+\d+(?:\.\d)?L\b.*)?$/i);
+  return match ? { year: match[1], make: match[2], model: match[3] } : null;
 }
 
-function buildSupplierSearchUrl(source: { base: string; type: "Local pickup" | "Online" | "Tire" }, partOrPhrase: string, vehicleContext?: string, areaContext?: string, refined = false) {
+function buildSupplierSearchUrl(source: { name?: string; base: string; type: "Local pickup" | "Online" | "Tire" }, partOrPhrase: string, vehicleContext?: string, _areaContext?: string, refined = false) {
   const queryPart = refined ? partOrPhrase : searchPhraseForPart(partOrPhrase);
   const vehicle = vehicleSearchText(vehicleContext);
-  const area = areaSearchText(areaContext);
-  const query = [
-    vehicle,
-    queryPart,
-    area && source.type !== "Online" ? `near ${area}` : ""
-  ].filter(Boolean).join(" ");
+  // RockAuto's catalog URL opens straight on this vehicle's parts categories.
+  const parsed = parseVehicleContext(vehicleContext);
+  if (source.name === "RockAuto" && parsed) {
+    const slugPart = (value: string) => value.toLowerCase().trim().replace(/\s+/g, "+");
+    return `https://www.rockauto.com/en/catalog/${slugPart(parsed.make)},${parsed.year},${slugPart(parsed.model)}`;
+  }
+  // Store sites search their own selected store; a "near <town>" suffix only confuses them.
+  const query = [vehicle, queryPart].filter(Boolean).join(" ");
   return `${source.base}${encodeURIComponent(query || queryPart)}`;
+}
+
+// Dealer-only / OEM parts: the matching L-A dealer's parts desk as a tap-to-call option.
+export function dealerCandidates(part: string, vehicleContext?: string): PartSupplierCandidate[] {
+  const parsed = parseVehicleContext(vehicleContext);
+  if (!parsed) return [];
+  const dealers = dealersForMake(parsed.make);
+  if (!dealers.length) {
+    return [{
+      name: `${parsed.make} dealer (nearest)`,
+      type: "Dealer",
+      url: nearestDealerSearchUrl(parsed.make),
+      priceNote: "Dealer-only or OEM part - no local dealer listed for this make; find the nearest parts desk",
+      imageNote: "Ask the parts desk for the OEM part number and photo",
+      fulfillment: "Call ahead for stock and price"
+    }];
+  }
+  return dealers.map((dealer) => ({
+    name: `${dealer.name} parts`,
+    type: "Dealer" as const,
+    url: telLink(dealer.phone),
+    priceNote: `OEM ${part.replace(/^[^:]+:\s*/, "")} for ${parsed.year} ${parsed.make} ${parsed.model} - call ${dealer.phone} (${dealer.phoneLabel})${dealer.note ? `; ${dealer.note}` : ""}`,
+    imageNote: "Have the VIN ready; the parts desk matches OEM fitment by VIN",
+    fulfillment: dealer.address
+  }));
 }
 
 export function buildPartSupplierCandidates(part: string, tier: PartTier = "mid", vehicleContext = "", areaContext = ""): PartSupplierCandidate[] {
@@ -559,7 +589,7 @@ export function buildPartSupplierCandidates(part: string, tier: PartTier = "mid"
   const unitPrice = estimatePartPrice(part);
   const tierNote = tier === "low" ? "value" : tier === "mid" ? "recommended" : "premium/OEM";
 
-  return sources.slice(0, isTire ? 9 : 7).map((source) => ({
+  const storeCandidates = sources.slice(0, isTire ? 9 : 8).map((source) => ({
     name: source.name,
     type: source.type,
     url: buildSupplierSearchUrl(source, cleanPart, vehicleContext, areaContext),
@@ -567,6 +597,7 @@ export function buildPartSupplierCandidates(part: string, tier: PartTier = "mid"
     imageNote: "Use supplier/manufacturer image after live lookup; do not rely on placeholder art",
     fulfillment: source.fulfillment
   }));
+  return [...storeCandidates, ...dealerCandidates(cleanPart, vehicleContext)];
 }
 
 function shippingAllowanceForSource(source: { type: "Local pickup" | "Online" | "Tire" }, index: number): PriceRange {

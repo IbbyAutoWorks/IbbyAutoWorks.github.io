@@ -27,6 +27,7 @@ import { DtcLookupPanel } from "@/components/dtc-lookup";
 import { VehiclePicker } from "@/components/vehicle-picker";
 import { VehicleSpecSheet } from "@/components/vehicle-spec-sheet";
 import { VehiclePhotoCard } from "@/components/vehicle-photo";
+import { LocalDirectoryPanel } from "@/components/local-directory";
 import { useAuthRole } from "@/components/auth-gate";
 import { configFromVehicleText, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
 
@@ -696,7 +697,12 @@ export function ServicePortal() {
     }
 
     if (activeWorkflowStep === 4) {
-      return <div className="service-step-page">{renderParts(order)}</div>;
+      return (
+        <div className="service-step-page">
+          {renderParts(order)}
+          <LocalDirectoryPanel make={orderVehicleConfig(order).make} />
+        </div>
+      );
     }
 
     if (activeWorkflowStep === 5) {

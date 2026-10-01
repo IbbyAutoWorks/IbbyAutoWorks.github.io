@@ -11,7 +11,7 @@ import { readPricingSettings, type PricingSettings } from "@/lib/pricing-setting
 import { buildPrototypeInspection, buildPrototypeParts, CUSTOMER_RECORDS_EVENT, defaultCustomerPreferences, defaultServiceMeasurements, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, savePrototypeWorkOrder } from "@/lib/local-store";
 import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/lib/schedule";
 import { fallbackVehicleSpec, findVehicleSpec } from "@/lib/vehicles";
-import { emptyVehicleConfig, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
+import { emptyVehicleConfig, engineLabel, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
 import { VehiclePicker } from "@/components/vehicle-picker";
 import { readPrayerScheduleSettings, prayerBlockLabel, timeToMinutes, effectivePrayerTime, type PrayerScheduleSettings } from "@/lib/prayer-times";
 import { ServiceSelector } from "@/components/service-selector";
@@ -204,7 +204,9 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const selectedDistributorSummary = Object.entries(selectedSupplierChoices).map(([key, supplier]) => `${key}: ${supplier}`).join("; ");
   const customerDisplayName = `${form.firstName} ${form.lastName}`.replace(/\s+/g, " ").trim() || form.name;
   const serviceLocation = `${form.address}${form.town ? `, ${form.town}` : ""}${form.serviceState ? `, ${form.serviceState}` : ""}${form.zip ? ` ${form.zip}` : ""}`.trim();
-  const activeVehicleContext = form.vehicle || `${form.vehicleYear} ${form.vehicleMake} ${form.vehicleModel}`.replace(/\s+/g, " ").trim();
+  // Parts lookups want "year make model engine" (no trim) so fitment searches and
+  // the RockAuto catalog link resolve to the right vehicle.
+  const activeVehicleContext = [vehicleConfig.year, vehicleConfig.make, vehicleConfig.model, engineLabel(vehicleConfig)].filter(Boolean).join(" ") || form.vehicle;
   const activeAreaContext = `${form.town} ${form.serviceState}`.replace(/\s+/g, " ").trim();
   const selectedAppointmentMinutes = appointmentTimeToMinutes(form.appointmentTime, form.appointmentPeriod);
   const activePrayerBlocks = prayerSettings.enabled ? prayerSettings.blocks.filter((block) => block.enabled) : [];
