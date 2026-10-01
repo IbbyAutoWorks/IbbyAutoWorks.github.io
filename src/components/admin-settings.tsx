@@ -21,7 +21,6 @@ import { PaymentSettingsPanel } from "@/components/payment-settings";
 import { IntegrationHub } from "@/components/integration-hub";
 import { PaymentPlanManager } from "@/components/payment-plan-manager";
 import { CouponTaxManager } from "@/components/coupon-tax-manager";
-import { StaffManager } from "@/components/staff-manager";
 
 const brandPalettes = [
   { name: "Ibby Red", colors: ["#b7192a", "#111418", "#ffffff", "#d6a11f"], note: "Default red, white, black, gold" },
@@ -206,7 +205,6 @@ export function AdminSettings() {
 
       <section className="settings-stack">
         <IntegrationHub />
-        <StaffManager />
       <PaymentPlanManager />
       <CouponTaxManager />
       <PaymentSettingsPanel />

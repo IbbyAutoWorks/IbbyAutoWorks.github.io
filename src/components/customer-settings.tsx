@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Bell, Car, ImagePlus, KeyRound, LocateFixed, Save, Star, UserRound } from "lucide-react";
 
+import { compressImage, uploadVehiclePhoto } from "@/lib/vehicle-images";
+
 import {
   CUSTOMER_RECORDS_EVENT,
   customerRecordIdFromContact,
@@ -83,23 +85,25 @@ export function CustomerSettings() {
     }
   }
 
-  function handleProfileImageUpload(file: File | null) {
+  async function handleProfileImageUpload(file: File | null) {
     if (!file) return;
+    // Small square-ish avatar: a full phone photo would bloat the customer record.
+    const blob = await compressImage(file, 400, 0.8);
     const reader = new FileReader();
     reader.onload = () => {
       setCustomerDraft((current) => ({ ...current, profileImage: String(reader.result || "") }));
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(blob);
   }
 
-  function handleVehicleImageUpload(orderId: string, file: File | null) {
+  async function handleVehicleImageUpload(orderId: string, file: File | null) {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      updatePrototypeWorkOrder(orderId, { vehicleImage: String(reader.result || "") });
+    try {
+      updatePrototypeWorkOrder(orderId, { vehicleImage: await uploadVehiclePhoto(file) });
       setOrders(readPrototypeWorkOrders());
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Photo upload failed.");
+    }
   }
 
   function updatePreference(field: keyof PrototypeCustomerPreferences, checked: boolean) {

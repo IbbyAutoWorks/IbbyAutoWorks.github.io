@@ -26,6 +26,8 @@ import { InspectionReferencePanel } from "@/components/inspection-reference";
 import { DtcLookupPanel } from "@/components/dtc-lookup";
 import { VehiclePicker } from "@/components/vehicle-picker";
 import { VehicleSpecSheet } from "@/components/vehicle-spec-sheet";
+import { VehiclePhotoCard } from "@/components/vehicle-photo";
+import { useAuthRole } from "@/components/auth-gate";
 import { configFromVehicleText, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
 
 // Technician workflow configuration: statuses, step loaders, and fixed inspection checklists.
@@ -125,6 +127,7 @@ export function ServicePortal() {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [editingVehicle, setEditingVehicle] = useState(false);
+  const { role } = useAuthRole();
   const [stripeLink, setStripeLink] = useState("");
   const [stripeStatus, setStripeStatus] = useState("");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
@@ -359,6 +362,22 @@ export function ServicePortal() {
     refresh(order.id);
   }
 
+  function renderVehiclePhoto(order: PrototypeWorkOrder) {
+    const config = orderVehicleConfig(order);
+    // Old orders may carry a stock catalog URL; only a real photo of this car counts.
+    const photo = order.vehicleImage && order.vehicleImage !== order.vehicleSpec?.image ? order.vehicleImage : "";
+    return (
+      <VehiclePhotoCard
+        year={config.year}
+        make={config.make}
+        model={config.model}
+        photo={photo}
+        isOwner={role === "admin"}
+        onPhoto={(url) => { updatePrototypeWorkOrder(order.id, { vehicleImage: url }); refresh(order.id); }}
+      />
+    );
+  }
+
   function renderSpecSheet(order: PrototypeWorkOrder) {
     const config = orderVehicleConfig(order);
     return (
@@ -369,6 +388,7 @@ export function ServicePortal() {
           </button>
         </div>
         {editingVehicle ? <div className="panel"><VehiclePicker value={config} onChange={(next) => saveOrderVehicle(order, next)} /></div> : null}
+        {renderVehiclePhoto(order)}
         <VehicleSpecSheet config={config} />
       </>
     );
@@ -647,6 +667,7 @@ export function ServicePortal() {
     if (activeWorkflowStep === 2) {
       return (
         <div className="service-step-page">
+          {renderVehiclePhoto(order)}
           {renderChecklist(order, "Exterior, controls, lighting, tires, and jack points", walkaroundChecks, "Vehicle walkaround")}
           {renderChecklist(order, "Under-hood checks before work starts", underHoodChecks, "Under hood")}
           {renderMeasurements(order)}

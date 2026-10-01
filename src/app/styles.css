@@ -5368,6 +5368,82 @@ h2 {
   flex: 1 1 220px;
 }
 
+.vehicle-photo-card {
+  display: grid;
+  gap: 6px;
+  max-width: 420px;
+}
+
+.vehicle-photo-card img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #eef0f3;
+}
+
+.vehicle-photo-upload {
+  position: relative;
+  cursor: pointer;
+  justify-content: center;
+}
+
+.vehicle-photo-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0 10px;
+  margin-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.admin-tab {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #dde1e6);
+  background: var(--panel, #fff);
+  font-weight: 700;
+  font-size: 0.86rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.admin-tab.active {
+  background: var(--red, #c8102e);
+  border-color: var(--red, #c8102e);
+  color: #fff;
+}
+
+.vehicle-default-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.vehicle-default-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px;
+  align-items: center;
+}
+
+.vehicle-default-card img {
+  grid-column: 1 / -1;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
 .vin-scanner-overlay {
   position: fixed;
   inset: 0;
