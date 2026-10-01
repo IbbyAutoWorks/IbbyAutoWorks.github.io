@@ -67,6 +67,15 @@ async function isAdmin(req: Request) {
   return false;
 }
 
+// Owner or technician: may create a charge for a finished job, nothing financial beyond that.
+async function isStaff(req: Request) {
+  if (adminToken && req.headers.get("x-ibby-admin-token") === adminToken) return true;
+  const user = await getSessionUser(req);
+  if (!user?.id) return false;
+  const { data } = await supabase.from("admin_profiles").select("active,role").eq("user_id", user.id).maybeSingle();
+  return Boolean(data?.active && (data.role === "admin" || data.role === "staff"));
+}
+
 function slugify(input: string) {
   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
 }
@@ -295,6 +304,42 @@ serve(async (req) => {
       return json({ ok: true, checkout_url: session.url, session_id: session.id, plan });
     }
 
+    // Staff charge for a specific job; the Stripe webhook matches the payment back to it.
+    if (action === "checkout_work_order") {
+      if (!(await isStaff(req))) return json({ ok: false, error: "Staff sign-in required" }, { status: 401 });
+      const workOrderId = String(body.work_order_id || "");
+      const amountCents = Number.parseInt(String(body.amount_cents ?? ""), 10);
+      if (!Number.isFinite(amountCents) || amountCents < 50 || amountCents > 5_000_000) {
+        return json({ ok: false, error: "Enter an amount between $0.50 and $50,000" }, { status: 400 });
+      }
+      const { data: order } = await supabase.from("work_orders").select("id,customer_name,email,service_type").eq("id", workOrderId).maybeSingle();
+      if (!order) return json({ ok: false, error: "Work order not found in the shared board" }, { status: 404 });
+      const returnUrl = String(body.return_url || `${url.origin}/functions/v1/ibby-payments`);
+      const params: Record<string, string | number | boolean> = {
+        mode: "payment",
+        success_url: `${returnUrl}${returnUrl.includes("?") ? "&" : "?"}paid=${encodeURIComponent(workOrderId)}`,
+        cancel_url: returnUrl,
+        "line_items[0][quantity]": 1,
+        "line_items[0][price_data][currency]": "usd",
+        "line_items[0][price_data][unit_amount]": amountCents,
+        "line_items[0][price_data][product_data][name]": `Ibby Auto Works work order ${workOrderId}`,
+        "line_items[0][price_data][product_data][description]": String(order.service_type || "Mobile auto repair").slice(0, 250),
+        "metadata[app]": "ibby-auto-works",
+        "metadata[work_order_id]": workOrderId,
+        "payment_intent_data[metadata][app]": "ibby-auto-works",
+        "payment_intent_data[metadata][work_order_id]": workOrderId
+      };
+      if (/^\S+@\S+\.\S+$/.test(String(order.email || ""))) params.customer_email = String(order.email);
+      const session = await stripePost("/checkout/sessions", params);
+      return json({ ok: true, checkout_url: session.url, session_id: session.id });
+    }
+
+    // Public: customer promo widgets list active offers; admins also get inactive ones.
+    if (action === "list_promotions") {
+      const admin = await isAdmin(req);
+      return json({ ok: true, admin, promotions: await listPromotions(admin), tax_settings: await getTaxSettings() });
+    }
+
     if (!(await isAdmin(req))) return json({ ok: false, error: "Admin credentials required" }, { status: 401 });
 
     if (action === "upsert_plan") {
@@ -332,11 +377,6 @@ serve(async (req) => {
       const { data, error } = await supabase.from("payment_plans").update({ active: false }).eq("slug", slug).select("*").single();
       if (error) throw error;
       return json({ ok: true, archived: true, plan: data });
-    }
-
-    if (action === "list_promotions") {
-      const admin = await isAdmin(req);
-      return json({ ok: true, admin, promotions: await listPromotions(admin), tax_settings: await getTaxSettings() });
     }
 
     if (action === "upsert_promotion") {

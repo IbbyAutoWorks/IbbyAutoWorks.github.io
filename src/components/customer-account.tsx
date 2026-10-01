@@ -189,7 +189,7 @@ export function CustomerAccount() {
                   <span>{order.vehicle} - {order.service}</span>
                   {getServiceReminders(order).map((reminder) => <small key={reminder}>{reminder}</small>)}
                 </div>
-                <em>{order.status === "Complete" ? "PDF ready" : order.status}</em>
+                <em>{order.status === "Complete" ? "PDF ready" : order.status === "Awaiting Payment" ? "Payment due" : order.status}</em>
                 <button className="camera-button" aria-label={`Download report ${order.id}`} onClick={() => downloadWorkOrderReport(order)}>
                   <Download size={15} />
                 </button>
@@ -204,7 +204,7 @@ export function CustomerAccount() {
             </div>
             <div className="timeline compact">
               {timeline.map((item, index) => {
-                const doneIndex = selectedOrder.status === "Requested" ? 1 : selectedOrder.status === "Scheduled" ? 3 : selectedOrder.status === "Complete" ? 6 : 4;
+                const doneIndex = selectedOrder.status === "Requested" ? 1 : selectedOrder.status === "Scheduled" ? 3 : selectedOrder.status === "Complete" ? 6 : selectedOrder.status === "Awaiting Payment" ? 5 : 4;
                 return (
                   <div className={index < doneIndex ? "done" : ""} key={item}>
                     <ShieldCheck size={16} />

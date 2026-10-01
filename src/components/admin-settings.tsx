@@ -21,6 +21,7 @@ import { PaymentSettingsPanel } from "@/components/payment-settings";
 import { IntegrationHub } from "@/components/integration-hub";
 import { PaymentPlanManager } from "@/components/payment-plan-manager";
 import { CouponTaxManager } from "@/components/coupon-tax-manager";
+import { StaffManager } from "@/components/staff-manager";
 
 const brandPalettes = [
   { name: "Ibby Red", colors: ["#b7192a", "#111418", "#ffffff", "#d6a11f"], note: "Default red, white, black, gold" },
@@ -49,7 +50,7 @@ export function AdminSettings() {
     "Page background": brandPalettes[0].colors[2],
     "Accent icons": brandPalettes[0].colors[3]
   });
-  const [workflowColumns, setWorkflowColumns] = useState(["Requested", "Scheduled", "In Progress", "Waiting Parts", "Complete"]);
+  const [workflowColumns, setWorkflowColumns] = useState(["Requested", "Scheduled", "In Progress", "Waiting Parts", "Awaiting Payment", "Complete"]);
   const [enabledDays, setEnabledDays] = useState(dayOptions.slice(0, 5));
   const [startTime, setStartTime] = useState("8:00");
   const [startPeriod, setStartPeriod] = useState("AM");
@@ -205,6 +206,7 @@ export function AdminSettings() {
 
       <section className="settings-stack">
         <IntegrationHub />
+        <StaffManager />
       <PaymentPlanManager />
       <CouponTaxManager />
       <PaymentSettingsPanel />

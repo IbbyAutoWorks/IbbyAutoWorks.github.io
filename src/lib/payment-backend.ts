@@ -56,6 +56,18 @@ export async function archivePaymentPlan(slug: string, adminToken: string): Prom
   return data.plan;
 }
 
+// Staff-only: Stripe checkout for a finished job. The webhook marks the order paid.
+export async function createWorkOrderCheckout(workOrderId: string, amountCents: number): Promise<string> {
+  const data = await paymentRequest({
+    action: "checkout_work_order",
+    work_order_id: workOrderId,
+    amount_cents: amountCents,
+    return_url: `${window.location.origin}/account`
+  });
+  if (!data.checkout_url) throw new Error("Checkout URL was not returned");
+  return data.checkout_url;
+}
+
 export async function openCheckoutForPlan(slug: string, workOrderId?: string, customerEmail?: string) {
   const data = await paymentRequest({ action: "checkout", slug, work_order_id: workOrderId, customer_email: customerEmail });
   if (!data.checkout_url) throw new Error("Checkout URL was not returned");

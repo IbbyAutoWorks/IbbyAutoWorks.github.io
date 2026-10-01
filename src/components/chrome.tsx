@@ -5,9 +5,7 @@ import { Menu, Search, Settings, X } from "lucide-react";
 
 import { BRANDING_EVENT, logoSrcForBranding, readSavedBranding } from "@/lib/branding";
 import { nav } from "@/lib/data";
-import { isAdminSession } from "@/lib/auth-roles";
-import { getSupabaseBrowserClient } from "@/lib/supabase-client";
-import type { Session } from "@supabase/supabase-js";
+import { useAuthRole } from "@/components/auth-gate";
 import { BurnoutNavLink } from "@/components/route-burnout-loader";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -15,23 +13,22 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
   // Shell state: controls the mobile sidebar and decides which settings route is active.
   const [menuOpen, setMenuOpen] = useState(false);
   const [brandLogoSrc, setBrandLogoSrc] = useState("/images/ibby-auto-emblem.png");
-  const [session, setSession] = useState<Session | null>(null);
-  const customerSettingsActive = active === "account" || active === "customer-settings";
+  const { session, role } = useAuthRole();
   const serviceSettingsActive = active === "service" || active === "service-settings";
-  const isAdmin = isAdminSession(session);
-  const isSignedInCustomer = Boolean(session) && !isAdmin;
-  const visibleNav = isSignedInCustomer ? nav.filter((item) => item.href === "/account") : isAdmin ? nav : nav.filter((item) => !["/admin", "/service", "/admin/settings"].includes(item.href));
-  const settingsHref = isSignedInCustomer ? "/account/settings" : serviceSettingsActive ? "/service/settings" : "/admin/settings";
-  const settingsLabel = isSignedInCustomer ? "Customer settings" : serviceSettingsActive ? "Service settings" : "Admin settings";
-
-  useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
-    if (supabase) {
-      supabase.auth.getSession().then(({ data }) => setSession(data.session ?? null));
-      const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
-      return () => listener.subscription.unsubscribe();
-    }
-  }, []);
+  // Owner sees everything (including the Service portal for solo jobs); technicians
+  // see the Service portal; signed-in customers see their account.
+  const isOwner = role === "admin";
+  const isTech = role === "staff";
+  const isSignedInCustomer = Boolean(session) && !isOwner && !isTech;
+  const visibleNav = isOwner
+    ? nav
+    : isTech
+      ? nav.filter((item) => !["/admin", "/admin/settings"].includes(item.href))
+      : isSignedInCustomer
+        ? nav.filter((item) => item.href === "/account")
+        : nav.filter((item) => !["/admin", "/service", "/admin/settings"].includes(item.href));
+  const settingsHref = isSignedInCustomer ? "/account/settings" : isTech || serviceSettingsActive ? "/service/settings" : "/admin/settings";
+  const settingsLabel = isSignedInCustomer ? "Customer settings" : isTech || serviceSettingsActive ? "Service settings" : "Admin settings";
 
   useEffect(() => {
     function syncBranding() {

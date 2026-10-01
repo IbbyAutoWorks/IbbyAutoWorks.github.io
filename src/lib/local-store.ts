@@ -2,7 +2,7 @@ import { defaultAgreementAcceptance, type AgreementAcceptance } from "@/lib/agre
 import { buildPartSupplierCandidates, estimateServiceParts, type PartSupplierCandidate, type PriceRange } from "@/lib/parts";
 import { supplyCatalog, supplyVendorCandidates } from "@/lib/supplies";
 import { fallbackVehicleSpec, findVehicleSpec, type VehicleSpec } from "@/lib/vehicles";
-import { syncCustomerRecordToCloud, syncWorkOrderToCloud } from "@/lib/cloud-sync";
+import { fetchCloudWorkOrders, isCloudStaff, syncWorkOrderToCloud } from "@/lib/cloud-sync";
 
 export type PrototypePartQuote = {
   part: string;
@@ -100,6 +100,16 @@ export type PrototypeCustomerRecord = {
   updatedAt: string;
 };
 
+export const paymentMethods = ["Cash", "Card", "PayPal", "Stripe", "Invoice", "Payment plan"] as const;
+
+export type PrototypePayment = {
+  method: (typeof paymentMethods)[number];
+  amount: string;
+  reference: string;
+  recordedAt: string;
+  source: "manual" | "stripe";
+};
+
 export type PrototypeWorkOrder = {
   id: string;
   customer: string;
@@ -117,7 +127,7 @@ export type PrototypeWorkOrder = {
   estimate: string;
   preferredWindow: string;
   symptoms: string;
-  status: "Requested" | "Parts Search" | "Accepted" | "Estimate Sent" | "Scheduled" | "En Route" | "On Site" | "In Progress" | "Waiting Parts" | "Complete";
+  status: "Requested" | "Parts Search" | "Accepted" | "Estimate Sent" | "Scheduled" | "En Route" | "On Site" | "In Progress" | "Waiting Parts" | "Awaiting Payment" | "Complete";
   due: string;
   risk: string;
   createdAt: string;
@@ -136,6 +146,9 @@ export type PrototypeWorkOrder = {
   vehicleSpec: VehicleSpec;
   agreementAcceptance: AgreementAcceptance;
   customerPreferences: PrototypeCustomerPreferences;
+  payment?: PrototypePayment;
+  // Last local edit; the newer copy wins when devices merge through the cloud.
+  updatedAt?: string;
 };
 
 export const WORK_ORDERS_KEY = "ibbys-auto.work-orders";
@@ -197,15 +210,66 @@ export function defaultCustomerPreferences(): PrototypeCustomerPreferences {
   };
 }
 
-export function savePrototypeWorkOrder(order: PrototypeWorkOrder) {
-  const current = readPrototypeWorkOrders();
-  const next = [order, ...current.filter((item) => item.id !== order.id)];
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  upsertCustomerFromWorkOrder(order);
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT, { detail: order }));
+function pushWorkOrder(order: PrototypeWorkOrder) {
   void syncWorkOrderToCloud(order).then((result) => {
     if (!result.ok && !result.skipped) console.warn("Ibby cloud work-order sync failed", result.reason);
   });
+}
+
+// Single write path for the board: stamps edited orders, notifies open pages,
+// and pushes the edited orders so other devices pick them up.
+function writeWorkOrders(next: PrototypeWorkOrder[], changedIds: string[]) {
+  const stamp = new Date().toISOString();
+  const stamped = next.map((order) => (changedIds.includes(order.id) ? { ...order, updatedAt: stamp } : order));
+  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(stamped));
+  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  stamped.filter((order) => changedIds.includes(order.id)).forEach(pushWorkOrder);
+}
+
+export function savePrototypeWorkOrder(order: PrototypeWorkOrder) {
+  const current = readPrototypeWorkOrders();
+  const stamped = { ...order, updatedAt: new Date().toISOString() };
+  const next = [stamped, ...current.filter((item) => item.id !== order.id)];
+  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
+  upsertCustomerFromWorkOrder(stamped);
+  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT, { detail: stamped }));
+  pushWorkOrder(stamped);
+}
+
+function orderStamp(order: PrototypeWorkOrder) {
+  return Date.parse(order.updatedAt ?? order.createdAt) || 0;
+}
+
+// Folds cloud copies into this browser's board, keeping whichever copy was edited last.
+export function mergeCloudWorkOrders(remote: PrototypeWorkOrder[]) {
+  const local = readPrototypeWorkOrders();
+  const byId = new Map(local.map((order) => [order.id, order]));
+  const added: PrototypeWorkOrder[] = [];
+  let changed = false;
+  for (const order of remote) {
+    const existing = byId.get(order.id);
+    if (!existing || orderStamp(order) > orderStamp(existing)) {
+      byId.set(order.id, order);
+      changed = true;
+      if (!existing) added.push(order);
+    }
+  }
+  if (changed) {
+    const merged = [...byId.values()].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+    window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(merged));
+    added.forEach(upsertCustomerFromWorkOrder);
+    window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  }
+  const remoteIds = new Set(remote.map((order) => order.id));
+  return { changed, localOnly: local.filter((order) => !remoteIds.has(order.id)) };
+}
+
+export async function syncWorkOrdersWithCloud() {
+  const remote = await fetchCloudWorkOrders();
+  if (!remote) return;
+  const { localOnly } = mergeCloudWorkOrders(remote);
+  // Staff browsers upload orders that only ever existed locally (pre-sync boards).
+  if (localOnly.length && (await isCloudStaff())) localOnly.forEach(pushWorkOrder);
 }
 
 export function customerRecordIdFromContact(email: string, phone: string, name: string) {
@@ -281,9 +345,11 @@ export function savePrototypeCustomerRecord(record: PrototypeCustomerRecord) {
         }
       : order
   ));
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(patchedOrders));
+  const changedIds = patchedOrders
+    .filter((order, index) => (["customer", "phone", "email", "location"] as const).some((field) => order[field] !== orders[index][field]))
+    .map((order) => order.id);
   window.dispatchEvent(new CustomEvent(CUSTOMER_RECORDS_EVENT, { detail: record }));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(patchedOrders, changedIds);
 }
 
 export function upsertCustomerFromWorkOrder(order: PrototypeWorkOrder) {
@@ -398,8 +464,7 @@ export function updatePrototypeInspectionItem(orderId: string, label: string, pa
         })()
       : order
   ));
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(next, [orderId]);
 }
 
 export function updatePrototypePartQuote(orderId: string, part: string, patch: Partial<PrototypePartQuote>) {
@@ -414,8 +479,7 @@ export function updatePrototypePartQuote(orderId: string, part: string, patch: P
         }
       : order
   ));
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(next, [orderId]);
 }
 
 export function updatePrototypeWorkOrderStatus(orderId: string, status: PrototypeWorkOrder["status"]) {
@@ -425,7 +489,7 @@ export function updatePrototypeWorkOrderStatus(orderId: string, status: Prototyp
       ? {
           ...order,
           status,
-          risk: status === "Complete" ? "PDF ready" : status === "Scheduled" ? "Appointment set" : status === "Accepted" ? "Work accepted" : status === "En Route" ? "Technician en route" : order.risk,
+          risk: status === "Complete" ? "PDF ready" : status === "Awaiting Payment" ? "Bill customer" : status === "Scheduled" ? "Appointment set" : status === "Accepted" ? "Work accepted" : status === "En Route" ? "Technician en route" : order.risk,
           customerContactLog: [
             ...(order.customerContactLog ?? []),
             `${new Date().toLocaleString()}: Status changed to ${status}`
@@ -433,8 +497,29 @@ export function updatePrototypeWorkOrderStatus(orderId: string, status: Prototyp
         }
       : order
   ));
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(next, [orderId]);
+}
+
+// Payment is the only path to "Complete" from billing, so a finished job stays
+// visible as "Awaiting Payment" until someone records how it was paid.
+export function recordPrototypePayment(orderId: string, payment: Omit<PrototypePayment, "recordedAt">) {
+  const recordedAt = new Date().toISOString();
+  const current = readPrototypeWorkOrders();
+  const next = current.map((order) => (
+    order.id === orderId
+      ? {
+          ...order,
+          status: "Complete" as const,
+          risk: "PDF ready",
+          payment: { ...payment, recordedAt },
+          customerContactLog: [
+            ...(order.customerContactLog ?? []),
+            `${new Date(recordedAt).toLocaleString()}: Payment recorded (${payment.method}${payment.amount ? ` ${payment.amount}` : ""}); status changed to Complete`
+          ]
+        }
+      : order
+  ));
+  writeWorkOrders(next, [orderId]);
 }
 
 export function updatePrototypeWorkOrder(orderId: string, patch: Partial<PrototypeWorkOrder>) {
@@ -442,8 +527,7 @@ export function updatePrototypeWorkOrder(orderId: string, patch: Partial<Prototy
   const next = current.map((order) => (
     order.id === orderId ? { ...order, ...patch } : order
   ));
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(next, [orderId]);
 }
 
 export function addPrototypePartRequest(orderId: string, part: string, reason: string) {
@@ -469,8 +553,7 @@ export function addPrototypePartRequest(orderId: string, part: string, reason: s
         }
       : order
   ));
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(next, [orderId]);
 }
 
 export function updatePrototypePartRequest(orderId: string, requestId: string, patch: Partial<PrototypePartRequest>) {
@@ -488,8 +571,7 @@ export function updatePrototypePartRequest(orderId: string, requestId: string, p
         }
       : order
   ));
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(next, [orderId]);
 }
 
 export function addPrototypeSupplyRequest(orderId: string, itemId: string, qty: number, reason: string) {
@@ -519,8 +601,7 @@ export function addPrototypeSupplyRequest(orderId: string, itemId: string, qty: 
         techNotes: [`${new Date().toLocaleString()}: Requested supplies: ${request.qty} ${request.unit} ${request.item}`, ...(order.techNotes ?? [])]
       }
     : order);
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(next, [orderId]);
 }
 
 export function updatePrototypeSupplyRequest(orderId: string, requestId: string, patch: Partial<PrototypeSupplyRequest>) {
@@ -532,8 +613,7 @@ export function updatePrototypeSupplyRequest(orderId: string, requestId: string,
         customerContactLog: patch.status ? [`${new Date().toLocaleString()}: Supply request ${requestId} marked ${patch.status}`, ...(order.customerContactLog ?? [])] : order.customerContactLog
       }
     : order);
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(next, [orderId]);
 }
 
 export function addPrototypeMileageLog(orderId: string, log: Omit<PrototypeMileageLog, "id" | "status">) {
@@ -551,8 +631,7 @@ export function addPrototypeMileageLog(orderId: string, log: Omit<PrototypeMilea
         techNotes: [`${new Date().toLocaleString()}: Logged ${entry.miles} business miles (${entry.purpose})`, ...(order.techNotes ?? [])]
       }
     : order);
-  window.localStorage.setItem(WORK_ORDERS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(WORK_ORDERS_EVENT));
+  writeWorkOrders(next, [orderId]);
 }
 
 export function businessLedgerFromWorkOrders(orders = readPrototypeWorkOrders()) {
