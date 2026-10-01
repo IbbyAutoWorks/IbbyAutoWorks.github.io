@@ -568,11 +568,11 @@ export function estimateServiceParts(service: string, pricingSettings?: Partial<
 
 export type VehicleHint = { displacement?: string; cylinders?: string; fuel?: string };
 
-// optional: small consumable included in the tier's max (removed if not used).
-// separate: bigger "might also need" part, shown but quoted separately if needed.
+// optional: job consumable included in the tier's max, removed from the bill if not used.
+// separate: "might also need" part - not in the customer's price; staff add it if needed.
 export type TierLine = { name: string; qtyMin: number; qtyMax: number; unit: PriceRange; price: PriceRange; optional: boolean; separate: boolean; note?: string };
 
-const smallConsumableLimit = 40;
+const includedRemovablePattern = /drain plug|crush washer|oil drain gasket/i;
 
 export type TierEstimate = {
   tier: PartTier;
@@ -674,17 +674,18 @@ export function estimateServiceTier(service: string, tier: PartTier, pricingSett
       const qtyMax = isOil ? Math.ceil(capacity.max) : part.qty;
       const unit = tierUnitPrice(part.name, tier, vehicle);
       const possible = part.status === "possible";
-      // Decide small-consumable vs quoted-separately from the part's full price band so
-      // the same part is treated the same way in every tier.
-      const bandMax = Math.max(tierUnitPrice(part.name, "high", vehicle).max, 0);
+      // Only a few job consumables (the oil drain plug washer) count toward the top of
+      // the customer's range; every other "possible" part stays out of the price and is
+      // added by staff only if it turns out to be needed.
+      const includedRemovable = includedRemovablePattern.test(part.name);
       return {
         name: isOil ? `Engine oil (${qtyMin === qtyMax ? qtyMin : `${qtyMin}-${qtyMax}`} qt)` : part.name,
         qtyMin,
         qtyMax,
         unit: roundPrice(unit),
         price: roundPrice({ min: unit.min * qtyMin, max: unit.max * qtyMax }),
-        optional: possible && bandMax <= smallConsumableLimit,
-        separate: possible && bandMax > smallConsumableLimit,
+        optional: possible && includedRemovable,
+        separate: possible && !includedRemovable,
         note: isOil ? `Typical capacity for ${capacity.basis}` : undefined
       };
     });

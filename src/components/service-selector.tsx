@@ -175,7 +175,7 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
             <small>
               {selectedServices.length
                 ? isStaff
-                  ? `${selectedServices.length} job(s), ${estimate.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr. Low end = required parts; high end adds small removable items. Bigger "if needed" parts are quoted separately.`
+                  ? `${selectedServices.length} job(s), ${estimate.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr. Prices cover required parts and labor (plus the oil drain washer). Extras marked "add if needed" are not in the price - add them to the order before confirming with the customer.`
                   : "Pick Value, Recommended or Premium for each job below. Your final price is confirmed with you before the appointment, and anything extra we find is only added with your OK."
                 : "Use the job list, quick chips, or the search box above."}
             </small>
@@ -294,7 +294,7 @@ function TierChoice({ tiers, chosen, onChoose, showDetail }: { tiers: Record<Par
             <div className={line.optional || line.separate ? "possible" : "selected"} key={line.name}>
               <span>
                 {line.qtyMin > 1 && line.qtyMin === line.qtyMax ? `${line.qtyMin}x ` : ""}{line.name}
-                <em>{line.separate ? "quote separately if needed" : line.optional ? "removable if not used" : "required"}</em>
+                <em>{line.separate ? "add if needed - not in price" : line.optional ? "removable if not used" : "required"}</em>
                 {line.note ? <small> {line.note}</small> : null}
               </span>
               <strong>{formatPriceRange(line.price)}</strong>
