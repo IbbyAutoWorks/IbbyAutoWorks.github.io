@@ -29,6 +29,7 @@ import { VehicleSpecSheet } from "@/components/vehicle-spec-sheet";
 import { VehiclePhotoCard } from "@/components/vehicle-photo";
 import { LocalDirectoryPanel } from "@/components/local-directory";
 import { useAuthRole } from "@/components/auth-gate";
+import { BurnoutNavLink } from "@/components/route-burnout-loader";
 import { configFromVehicleText, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
 
 // Technician workflow configuration: statuses, step loaders, and fixed inspection checklists.
@@ -820,6 +821,7 @@ export function ServicePortal() {
         </div>
         <div className="admin-actions">
           {selectedOrder ? <a className="primary-button" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedOrder.location)}`} target="_blank" rel="noreferrer"><Map size={16} /> Route</a> : null}
+          <BurnoutNavLink className="secondary-button" href="/service/manual">Technician manual</BurnoutNavLink>
         </div>
       </section>
 
