@@ -6,7 +6,7 @@ import { Bell, CalendarClock, Camera, Car, CheckCircle2, KeyRound, LocateFixed, 
 
 import { agreementSummaries, defaultAgreementAcceptance, hasRequiredAgreementAcceptance, partsReturnOptions, type AgreementId, type PartsReturnPreference } from "@/lib/agreements";
 import { serviceOptions, timeline } from "@/lib/data";
-import { estimateServices, formatPriceRange } from "@/lib/parts";
+import { estimateServices, estimateTieredTotal, formatPriceRange, tierLabels, vehicleHintFromContext, type PartTier } from "@/lib/parts";
 import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 import { buildPrototypeInspection, buildPrototypeParts, CUSTOMER_RECORDS_EVENT, defaultCustomerPreferences, defaultServiceMeasurements, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, savePrototypeWorkOrder } from "@/lib/local-store";
 import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/lib/schedule";
@@ -83,6 +83,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [customerPreferences, setCustomerPreferences] = useState(defaultCustomerPreferences);
   const [tireConcern, setTireConcern] = useState<(typeof tirePositions)[number]>("Not sure");
   const [vehicleConfig, setVehicleConfig] = useState<VehicleConfig>(emptyVehicleConfig);
+  // Customer's price tier per selected job (Value / Recommended / Premium).
+  const [serviceTiers, setServiceTiers] = useState<Record<string, PartTier>>({});
   const [form, setForm] = useState({
     name: "",
     firstName: "",
@@ -208,6 +210,11 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   // the RockAuto catalog link resolve to the right vehicle.
   const activeVehicleContext = [vehicleConfig.year, vehicleConfig.make, vehicleConfig.model, engineLabel(vehicleConfig)].filter(Boolean).join(" ") || form.vehicle;
   const activeAreaContext = `${form.town} ${form.serviceState}`.replace(/\s+/g, " ").trim();
+  const vehicleHint = useMemo(() => {
+    const parsed = vehicleHintFromContext(activeVehicleContext);
+    return { displacement: vehicleConfig.displacement || parsed.displacement, cylinders: vehicleConfig.cylinders || parsed.cylinders, fuel: vehicleConfig.fuel || parsed.fuel };
+  }, [activeVehicleContext, vehicleConfig.displacement, vehicleConfig.cylinders, vehicleConfig.fuel]);
+  const tieredTotal = useMemo(() => estimateTieredTotal(selectedServices, serviceTiers, pricingSettings, vehicleHint), [selectedServices, serviceTiers, pricingSettings, vehicleHint]);
   const selectedAppointmentMinutes = appointmentTimeToMinutes(form.appointmentTime, form.appointmentPeriod);
   const activePrayerBlocks = prayerSettings.enabled ? prayerSettings.blocks.filter((block) => block.enabled) : [];
   const selectedPrayerConflict = activePrayerBlocks.find((block) => {
@@ -242,7 +249,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       rows: [
         ["Services", selectedServices.length ? selectedServices.join(", ") : "None selected"],
         ["Tire position", needsTirePosition ? tireConcern : "Not needed"],
-        ["Draft estimate", selectedServices.length ? formatPriceRange(estimateDetails.total) : "Pending service selection"],
+        ["Draft estimate", selectedServices.length ? formatPriceRange(tieredTotal) : "Pending service selection"],
         ["Distributor choices", selectedDistributorSummary || "Customer can compare/select during parts review"],
         ["Symptoms / notes", form.symptoms || "No symptoms entered"]
       ]
@@ -415,8 +422,9 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       location: serviceLocation || "Address pending",
       service: selectedServices.length ? (needsTirePosition ? `${selectedServices.join(", ")} (${tireConcern} tire)` : selectedServices.join(", ")) : "Service pending",
       services: selectedServices,
-      tier: "mid",
-      estimate: selectedServices.length ? formatPriceRange(estimateDetails.total) : "Pending",
+      tier: serviceTiers[selectedServices[0]] ?? "mid",
+      serviceTiers: Object.fromEntries(selectedServices.map((service) => [service, serviceTiers[service] ?? "mid"])),
+      estimate: selectedServices.length ? formatPriceRange(tieredTotal) : "Pending",
       preferredWindow,
       symptoms: `${form.symptoms || "No symptoms entered"}${needsTirePosition ? ` Tire needing attention: ${tireConcern}.` : ""}`,
       status: isAdminMode ? "Scheduled" : "Requested",
@@ -426,7 +434,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       inspectionExpires: `${form.inspectionMonth} ${form.inspectionYear}`.trim(),
       registrationExpires: `${form.registrationMonth} ${form.registrationYear}`.trim(),
       serviceLocationConfirmed: Boolean(form.address && form.town && form.serviceState),
-      estimateNotes: `IAW draft estimate includes ${estimateDetails.parts.length} part line(s), ${estimateDetails.laborHours.toFixed(1)} labor hour(s) at $${pricingSettings.shopLaborRate}/hr, and estimated labor savings of $${estimateDetails.savings.amount} vs market rate. Distributor choices: ${selectedDistributorSummary || "none selected yet"}. Final estimate requires technician acceptance and live supplier verification.`,
+      estimateNotes: `Tiers: ${selectedServices.map((service) => `${service} = ${tierLabels[serviceTiers[service] ?? "mid"]}`).join("; ")}. IAW draft estimate includes ${estimateDetails.parts.length} part line(s), ${estimateDetails.laborHours.toFixed(1)} labor hour(s) at $${pricingSettings.shopLaborRate}/hr, and estimated labor savings of $${estimateDetails.savings.amount} vs market rate. Distributor choices: ${selectedDistributorSummary || "none selected yet"}. Final estimate requires technician acceptance and live supplier verification.`,
       customerContactLog: [
         `${new Date().toLocaleString()}: ${isAdminMode ? "Admin created work order from intake page" : "Customer submitted service request"}`,
         `${new Date().toLocaleString()}: Preferences - notifications ${customerPreferences.notifications ? "allowed" : "not allowed"}, location ${customerPreferences.location ? "allowed" : "not allowed"}, remember login ${customerPreferences.rememberLogin ? "requested" : "not requested"}`
@@ -469,8 +477,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
         </div>
         <div className="estimate-summary">
           <span>Draft estimate range</span>
-          <strong>{selectedServices.length ? formatPriceRange(estimateDetails.total) : "Pending"}</strong>
-          <small>{selectedServices.length ? `${estimateDetails.parts.length} part lines - ${estimateDetails.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr - saves about $${estimateDetails.savings.amount} labor vs market` : "Select requested services to calculate parts, labor, and draft price range."}</small>
+          <strong>{selectedServices.length ? formatPriceRange(tieredTotal) : "Pending"}</strong>
+          <small>{selectedServices.length ? `${selectedServices.map((service) => `${service}: ${tierLabels[serviceTiers[service] ?? "mid"]}`).join(" - ")}` : "Select requested services to calculate parts, labor, and draft price range."}</small>
         </div>
       </section>
 
@@ -596,7 +604,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <h2>Requested services</h2>
             <Car />
           </div>
-          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} vehicleContext={activeVehicleContext} areaContext={activeAreaContext} />
+          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} vehicleContext={[activeVehicleContext, vehicleHint.fuel === "Diesel" ? "diesel" : ""].filter(Boolean).join(" ")} areaContext={activeAreaContext} audience={isAdminMode ? "staff" : "customer"} serviceTiers={serviceTiers} onTierChange={(service, tier) => setServiceTiers((current) => ({ ...current, [service]: tier }))} />
           {selectedServices.length ? (
             <div className="selected-service-removal-row">
               {selectedServices.map((service) => (
@@ -766,7 +774,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
               </div>
             ))}
           </div>
-          {!isAdminMode ? <CustomerPaymentOptions estimate={selectedServices.length ? formatPriceRange(estimateDetails.total) : "pending service selection"} /> : null}
+          {!isAdminMode ? <CustomerPaymentOptions estimate={selectedServices.length ? formatPriceRange(tieredTotal) : "pending service selection"} /> : null}
           {agreementError ? <div className="agreement-error">{agreementError}</div> : null}
         </div>
 

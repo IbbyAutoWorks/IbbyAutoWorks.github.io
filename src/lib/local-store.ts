@@ -158,6 +158,8 @@ export type PrototypeWorkOrder = {
   diagnosticCodes?: PrototypeDiagnosticCode[];
   // Full year/make/model/engine from the picker or VIN decode (newer orders only).
   vehicleConfig?: VehicleConfig;
+  // Price tier the customer picked for each service (low = Value, mid = Recommended, high = Premium).
+  serviceTiers?: Record<string, "low" | "mid" | "high">;
   // Who worked the job and when, for per-tech stats (set from the Service portal).
   technician?: string;
   workStartedAt?: string;
