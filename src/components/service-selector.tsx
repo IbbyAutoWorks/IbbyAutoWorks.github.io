@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { Calculator, ChevronDown, ExternalLink, PackagePlus, Search, X } from "lucide-react";
+import { Calculator, ChevronDown, ExternalLink, PackagePlus, Phone, Search, X } from "lucide-react";
 
-import { buildRetailerEstimateResults, estimateCategoryPartTotal, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries, quantityForCategoryPart } from "@/lib/parts";
+import { buildRetailerEstimateResults, dealerCandidates, estimateCategoryPartTotal, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries, quantityForCategoryPart } from "@/lib/parts";
 import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 
 
@@ -248,6 +248,16 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                     );
                   })}
                 </div>
+                {vehicleContext ? (
+                  <div className="dealer-parts-row">
+                    <span>Dealer-only or OEM part?</span>
+                    {dealerCandidates(job.service, vehicleContext).map((dealer) => (
+                      <a className="secondary-button" href={dealer.url} key={dealer.name} rel="noreferrer" target={dealer.url.startsWith("tel:") ? undefined : "_blank"} title={dealer.priceNote}>
+                        {dealer.url.startsWith("tel:") ? <Phone size={13} /> : <ExternalLink size={13} />} {dealer.name}{dealer.url.startsWith("tel:") ? ` ${dealer.url.replace("tel:+1", "").replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3")}` : ""}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>

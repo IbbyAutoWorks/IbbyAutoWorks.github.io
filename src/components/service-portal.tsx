@@ -23,6 +23,13 @@ import {
 import { createWorkOrderCheckout } from "@/lib/payment-backend";
 import { supplyCatalog, supplyCategories } from "@/lib/supplies";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
+import { DtcLookupPanel } from "@/components/dtc-lookup";
+import { VehiclePicker } from "@/components/vehicle-picker";
+import { VehicleSpecSheet } from "@/components/vehicle-spec-sheet";
+import { VehiclePhotoCard } from "@/components/vehicle-photo";
+import { LocalDirectoryPanel } from "@/components/local-directory";
+import { useAuthRole } from "@/components/auth-gate";
+import { configFromVehicleText, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
 
 // Technician workflow configuration: statuses, step loaders, and fixed inspection checklists.
 const serviceStatuses: PrototypeWorkOrder["status"][] = ["Accepted", "Estimate Sent", "Scheduled", "En Route", "On Site", "In Progress", "Waiting Parts", "Awaiting Payment", "Complete"];
@@ -120,6 +127,8 @@ export function ServicePortal() {
   const [paymentMethod, setPaymentMethod] = useState<PrototypePayment["method"] | "">("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [editingVehicle, setEditingVehicle] = useState(false);
+  const { role } = useAuthRole();
   const [stripeLink, setStripeLink] = useState("");
   const [stripeStatus, setStripeStatus] = useState("");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
@@ -340,28 +349,49 @@ export function ServicePortal() {
     );
   }
 
-  function renderSpecSheet(order: PrototypeWorkOrder) {
+  function orderVehicleConfig(order: PrototypeWorkOrder) {
+    return order.vehicleConfig ?? configFromVehicleText(order.vehicle, order.vin);
+  }
+
+  function saveOrderVehicle(order: PrototypeWorkOrder, config: VehicleConfig) {
+    updatePrototypeWorkOrder(order.id, {
+      vehicleConfig: config,
+      vehicle: vehicleConfigLabel(config) || order.vehicle,
+      vin: config.vin || order.vin,
+      vehicleSpec: { ...order.vehicleSpec, year: config.year, make: config.make, model: config.model, trim: config.trim, bodyStyle: config.body || order.vehicleSpec.bodyStyle }
+    });
+    refresh(order.id);
+  }
+
+  function renderVehiclePhoto(order: PrototypeWorkOrder) {
+    const config = orderVehicleConfig(order);
+    // Old orders may carry a stock catalog URL; only a real photo of this car counts.
+    const photo = order.vehicleImage && order.vehicleImage !== order.vehicleSpec?.image ? order.vehicleImage : "";
     return (
-      <div className="spec-sheet service-step-spec">
-        <img src={order.vehicleSpec.image} alt={order.vehicle} />
-        <div>
-          <strong>{order.vehicleSpec.year} {order.vehicleSpec.make} {order.vehicleSpec.model}</strong>
-          <span>{order.vehicleSpec.trim} - {order.vehicleSpec.bodyStyle}</span>
+      <VehiclePhotoCard
+        year={config.year}
+        make={config.make}
+        model={config.model}
+        photo={photo}
+        isOwner={role === "admin"}
+        onPhoto={(url) => { updatePrototypeWorkOrder(order.id, { vehicleImage: url }); refresh(order.id); }}
+      />
+    );
+  }
+
+  function renderSpecSheet(order: PrototypeWorkOrder) {
+    const config = orderVehicleConfig(order);
+    return (
+      <>
+        <div className="service-decision-grid">
+          <button className="secondary-button" onClick={() => setEditingVehicle((current) => !current)}>
+            {editingVehicle ? "Done editing vehicle" : "Fix / complete vehicle (VIN, engine, trim)"}
+          </button>
         </div>
-        <div className="spec-grid">
-          <div><span>Wheel torque</span><strong>{order.vehicleSpec.wheelTorque}</strong></div>
-          <div><span>Tire pressure</span><strong>{order.vehicleSpec.tirePressure}</strong></div>
-          <div><span>Engine oil</span><strong>{order.vehicleSpec.engineOil}</strong></div>
-          <div><span>Coolant</span><strong>{order.vehicleSpec.coolant}</strong></div>
-          <div><span>Brake fluid</span><strong>{order.vehicleSpec.brakeFluid}</strong></div>
-          <div><span>Trans fluid</span><strong>{order.vehicleSpec.transmissionFluid}</strong></div>
-          <div><span>Power steering</span><strong>{order.vehicleSpec.powerSteering}</strong></div>
-          <div><span>Source</span><strong>{order.vehicleSpec.source}</strong></div>
-        </div>
-        <div className="spec-notes">
-          {order.vehicleSpec.notes.map((note) => <span key={note}>{note}</span>)}
-        </div>
-      </div>
+        {editingVehicle ? <div className="panel"><VehiclePicker value={config} onChange={(next) => saveOrderVehicle(order, next)} /></div> : null}
+        {renderVehiclePhoto(order)}
+        <VehicleSpecSheet config={config} />
+      </>
     );
   }
 
@@ -638,6 +668,7 @@ export function ServicePortal() {
     if (activeWorkflowStep === 2) {
       return (
         <div className="service-step-page">
+          {renderVehiclePhoto(order)}
           {renderChecklist(order, "Exterior, controls, lighting, tires, and jack points", walkaroundChecks, "Vehicle walkaround")}
           {renderChecklist(order, "Under-hood checks before work starts", underHoodChecks, "Under hood")}
           {renderMeasurements(order)}
@@ -654,13 +685,24 @@ export function ServicePortal() {
         <div className="service-step-page">
           <div className="inspection-progress">Lifted pre-inspection documented: {preInspectComplete}%</div>
           {renderChecklist(order, "Lifted under-vehicle inspection", liftedInspectionChecks, "Pre inspect")}
+          <DtcLookupPanel
+            make={orderVehicleConfig(order).make}
+            vehicleLabel={order.vehicle}
+            savedCodes={order.diagnosticCodes ?? []}
+            onSave={(codes) => { updatePrototypeWorkOrder(order.id, { diagnosticCodes: codes }); refresh(order.id); }}
+          />
           <div className="inspection-reference-panel"><InspectionReferencePanel compact /></div>
         </div>
       );
     }
 
     if (activeWorkflowStep === 4) {
-      return <div className="service-step-page">{renderParts(order)}</div>;
+      return (
+        <div className="service-step-page">
+          {renderParts(order)}
+          <LocalDirectoryPanel make={orderVehicleConfig(order).make} />
+        </div>
+      );
     }
 
     if (activeWorkflowStep === 5) {
