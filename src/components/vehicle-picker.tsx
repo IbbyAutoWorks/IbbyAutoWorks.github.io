@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Car, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Car, Loader2, ScanLine } from "lucide-react";
 
+import { VinScanner } from "@/components/vin-scanner";
+import { isValidVin } from "@/lib/vin";
 import {
   applyEngineOption,
   bestEngineMatch,
@@ -29,6 +31,7 @@ export function VehiclePicker({ value, onChange }: { value: VehicleConfig; onCha
   const [typedModel, setTypedModel] = useState(false);
   const [loading, setLoading] = useState("");
   const [vinStatus, setVinStatus] = useState("");
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     if (!value.year) { setMakes([]); return; }
@@ -73,8 +76,16 @@ export function VehiclePicker({ value, onChange }: { value: VehicleConfig; onCha
     onChange({ ...value, ...patch, source: patch.source ?? (value.source === "vin" ? "vin" : "catalog") });
   }
 
-  async function decode() {
-    const vin = value.vin.trim().toUpperCase();
+  // The scanner keeps one stable callback while its camera runs; route it to the
+  // latest decode so it sees current field values.
+  const decodeRef = useRef<(vin?: string) => Promise<void>>(async () => undefined);
+  const handleScannedVin = useCallback((vin: string) => {
+    setScanning(false);
+    void decodeRef.current(vin);
+  }, []);
+
+  async function decode(scannedVin?: string) {
+    const vin = (scannedVin ?? value.vin).trim().toUpperCase();
     if (vin.length !== 17) { setVinStatus("Enter all 17 VIN characters."); return; }
     try {
       setVinStatus("Decoding VIN with NHTSA...");
@@ -84,20 +95,28 @@ export function VehiclePicker({ value, onChange }: { value: VehicleConfig; onCha
       onChange(decoded);
       setVinStatus(`Decoded: ${[decoded.year, decoded.make, decoded.model, decoded.trim].filter(Boolean).join(" ")}${decoded.displacement ? `, ${decoded.displacement}L` : ""}${decoded.drive ? `, ${decoded.drive}` : ""}. Edit anything below if needed.`);
     } catch (error) {
+      if (scannedVin) onChange({ ...value, vin });
       setVinStatus(`${error instanceof Error ? error.message : "VIN decode failed."} Check the VIN or pick the vehicle below.`);
     }
   }
 
+  decodeRef.current = decode;
+
   return (
     <div className="vehicle-picker">
+      {scanning ? <VinScanner onVin={handleScannedVin} onClose={() => setScanning(false)} /> : null}
       <div className="vin-decode-row">
         <label className={`vin-field ${value.vin.length === 17 ? "ready" : value.vin ? "invalid" : ""}`}>
           <span>VIN</span>
           <input value={value.vin} onChange={(event) => set({ vin: event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 17) })} placeholder="17-character VIN" />
         </label>
-        <button className={value.vin.length === 17 ? "vin-decode-button ready" : "vin-decode-button invalid"} disabled={value.vin.length !== 17} onClick={decode}>
+        <button className="vin-decode-button ready" onClick={() => setScanning(true)}>
+          <ScanLine size={15} /> Scan VIN
+        </button>
+        <button className={value.vin.length === 17 ? "vin-decode-button ready" : "vin-decode-button invalid"} disabled={value.vin.length !== 17} onClick={() => decode()}>
           <Car size={15} /> Decode VIN
         </button>
+        {value.vin.length === 17 && !isValidVin(value.vin) ? <small className="dtc-warning">Check digit doesn&apos;t match - one character may be mistyped.</small> : null}
         <span>{vinStatus || "Decoding fills year, make, model, trim, engine, and drive. You can still change any of it."}</span>
       </div>
 

@@ -184,6 +184,13 @@ export function vehicleSpecKey(config: Pick<VehicleConfig, "year" | "make" | "mo
   return [config.year, normalize(config.make), normalize(config.model), engine || "any"].join("|");
 }
 
+// Orders created before the picker only have "2021 Toyota RAV4 ..." text.
+export function configFromVehicleText(vehicle: string, vin = ""): VehicleConfig {
+  const match = vehicle.trim().match(/^(\d{4})\s+(\S+)\s+(.+)$/);
+  if (!match) return { ...emptyVehicleConfig, vin: /^[A-HJ-NPR-Z0-9]{17}$/.test(vin) ? vin : "" };
+  return { ...emptyVehicleConfig, year: match[1], make: titleCaseMake(match[2]), model: match[3], vin: /^[A-HJ-NPR-Z0-9]{17}$/.test(vin) ? vin : "", source: "manual" };
+}
+
 export function applyEngineOption(config: VehicleConfig, option: EngineOption | null): VehicleConfig {
   if (!option) return { ...config, epaOptionId: undefined };
   return {
