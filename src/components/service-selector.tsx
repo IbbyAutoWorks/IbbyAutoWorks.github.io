@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Calculator, ChevronDown, ExternalLink, PackagePlus, Phone, Search, X } from "lucide-react";
 
-import { buildRetailerEstimateResults, dealerCandidates, estimateCategoryPartTotal, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries, quantityForCategoryPart } from "@/lib/parts";
+import { buildRetailerEstimateResults, dealerCandidates, estimateServiceTiers, estimateTieredTotal, partTiers, vehicleHintFromContext, type PartTier, type TierEstimate, type VehicleHint, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries, quantityForCategoryPart } from "@/lib/parts";
 import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 
 
@@ -15,15 +15,11 @@ type ServiceSelectorProps = {
   onSupplierChoiceChange?: (choiceKey: string, supplierName: string) => void;
   vehicleContext?: string;
   areaContext?: string;
+  // "customer" sees tier choices only; "staff" also sees part detail, suppliers and dealers.
+  audience?: "customer" | "staff";
+  serviceTiers?: Record<string, PartTier>;
+  onTierChange?: (service: string, tier: PartTier) => void;
 };
-
-function addPriceRange(a: { min: number; max: number }, b: { min: number; max: number }) {
-  return { min: a.min + b.min, max: a.max + b.max };
-}
-
-function estimateGroupPartTotal(parts: string[]) {
-  return parts.reduce((total, part) => addPriceRange(total, estimateCategoryPartTotal(part)), { min: 0, max: 0 });
-}
 
 function partsForCategory(category: (typeof estimatePartCategories)[number]) {
   return [
@@ -32,7 +28,9 @@ function partsForCategory(category: (typeof estimatePartCategories)[number]) {
   ];
 }
 
-export function ServiceSelector({ selectedServices, onToggleService, compact = false, selectedSupplierChoices = {}, onSupplierChoiceChange, vehicleContext = "", areaContext = "" }: ServiceSelectorProps) {
+export function ServiceSelector({ selectedServices, onToggleService, compact = false, selectedSupplierChoices = {}, onSupplierChoiceChange, vehicleContext = "", areaContext = "", audience = "staff", serviceTiers = {}, onTierChange }: ServiceSelectorProps) {
+  const isStaff = audience === "staff";
+  const vehicleHint = useMemo(() => vehicleHintFromContext(vehicleContext), [vehicleContext]);
   const [partSearch, setPartSearch] = useState("");
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
   useEffect(() => {
@@ -48,6 +46,7 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
     };
   }, []);
   const estimate = useMemo(() => estimateServices(selectedServices, pricingSettings), [selectedServices, pricingSettings]);
+  const tieredTotal = useMemo(() => estimateTieredTotal(selectedServices, serviceTiers, pricingSettings, vehicleHint), [selectedServices, serviceTiers, pricingSettings, vehicleHint]);
   const selectedSet = useMemo(() => new Set(selectedServices.map((service) => service.toLowerCase())), [selectedServices]);
   const normalizedPartSearch = partSearch.trim();
   const visibleCategories = compact ? estimatePartCategories.slice(0, 8) : estimatePartCategories;
@@ -92,12 +91,12 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                   <details className="estimate-part-group requested-service-subgroup" key={group.label} open={group.parts.some((part) => selectedSet.has(part.toLowerCase()))}>
                     <summary>{group.label}</summary>
                     <div className="service-option-list">
-                      {group.parts.map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} pricingSettings={pricingSettings} />)}
+                      {group.parts.map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} pricingSettings={pricingSettings} vehicleHint={vehicleHint} />)}
                     </div>
                   </details>
                 )) : (
                   <div className="service-option-list">
-                    {(category.parts ?? []).map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} pricingSettings={pricingSettings} />)}
+                    {(category.parts ?? []).map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} pricingSettings={pricingSettings} vehicleHint={vehicleHint} />)}
                   </div>
                 )}
               </details>
@@ -109,12 +108,16 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
       <section className="estimate-builder-panel">
         <div className="panel-title estimate-builder-title">
           <div>
-            <p className="section-label">IAW job estimate builder</p>
-            <h2>Choose full job estimates or add individual parts, then compare distributors.</h2>
+            <p className="section-label">{isStaff ? "IAW job estimate builder" : "Price estimate"}</p>
+            <h2>{isStaff ? "Choose full job estimates or add individual parts, then compare distributors." : "Pick the work you need, then choose a price tier for each job."}</h2>
           </div>
           <Calculator />
         </div>
-        <p className="legal-note">Job estimate buttons are quick “inspect plus parts if needed” planning bundles. Individual parts can still be added one by one. Open each distributor for live fitment, images, stock, and exact local price before ordering.</p>
+        <p className="legal-note">
+          {isStaff
+            ? "Job estimate buttons are quick “inspect plus parts if needed” planning bundles. Individual parts can still be added one by one. Open each distributor for live fitment, images, stock, and exact local price before ordering."
+            : "Prices include parts and labor for your vehicle. Value uses economy parts, Recommended uses quality name-brand parts, Premium uses top-brand or dealer (OEM) parts."}
+        </p>
 
         <div className="part-search-row">
           <Search size={16} />
@@ -143,22 +146,21 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                   <span>{selectedCount}/{categoryParts.length} picked</span>
                 </summary>
                 {category.groups ? category.groups.map((group) => {
-                  const groupTotal = estimateGroupPartTotal(group.parts);
                   const groupPicked = group.parts.filter((part) => selectedSet.has(part.toLowerCase())).length;
                   return (
                     <details className="estimate-part-group requested-service-subgroup" key={group.label} open={groupPicked > 0}>
                       <summary>
                         <strong>{group.label}</strong>
-                        <span>{formatPriceRange(groupTotal)} group parts</span>
+                        <span>{groupPicked ? `${groupPicked} picked of ` : ""}{group.parts.length} options</span>
                       </summary>
                       <div className="estimate-part-button-grid">
-                        {group.parts.map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} pricingSettings={pricingSettings} />)}
+                        {group.parts.map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} pricingSettings={pricingSettings} vehicleHint={vehicleHint} />)}
                       </div>
                     </details>
                   );
                 }) : (
                   <div className="estimate-part-button-grid">
-                    {(category.parts ?? []).map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} pricingSettings={pricingSettings} />)}
+                    {(category.parts ?? []).map((part) => <EstimatePartButton key={part} label={part} selected={selectedSet.has(part.toLowerCase())} onAdd={addEstimateItem} onRemove={removeEstimateItem} pricingSettings={pricingSettings} vehicleHint={vehicleHint} />)}
                   </div>
                 )}
               </details>
@@ -168,17 +170,23 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
 
         <div className="estimate-live-summary">
           <div className="estimate-total-card">
-            <span>Customer-visible draft estimate</span>
-            <strong>{selectedServices.length ? formatPriceRange(estimate.total) : "Pick a service"}</strong>
-            <small>{selectedServices.length ? `${estimate.jobs.length} job estimate(s), ${estimate.parts.length} part line(s), ${estimate.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr. Max includes possible add-ons` : "Use the collapsed job-estimate list, quick chips, category browser, or manual part box."}</small>
+            <span>{isStaff ? "Estimate at the chosen tiers" : "Your estimate"}</span>
+            <strong>{selectedServices.length ? formatPriceRange(tieredTotal) : "Pick a service"}</strong>
+            <small>
+              {selectedServices.length
+                ? isStaff
+                  ? `${selectedServices.length} job(s), ${estimate.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr. Prices cover required parts and labor (plus the oil drain washer). Extras marked "add if needed" are not in the price - add them to the order before confirming with the customer.`
+                  : "Pick Value, Recommended or Premium for each job below. Your final price is confirmed with you before the appointment, and anything extra we find is only added with your OK."
+                : "Use the job list, quick chips, or the search box above."}
+            </small>
           </div>
-          <div className="estimate-total-breakdown">
-            <div><span>Selected parts</span><strong>{formatPriceRange(estimate.selectedParts)}</strong></div>
-            <div><span>Possible add-ons included in max</span><strong>{formatPriceRange(estimate.possibleParts)}</strong></div>
-            <div><span>Ibby labor</span><strong>{formatPriceRange(estimate.labor)}</strong></div>
-            <div><span>Market comparison</span><strong>{formatPriceRange(estimate.marketTotal)}</strong></div>
-            <div><span>Best distributor selected total</span><strong>{bestDistributorTotal ? formatPriceRange(bestDistributorTotal) : "Pending"}</strong></div>
-          </div>
+          {isStaff ? (
+            <div className="estimate-total-breakdown">
+              <div><span>Ibby labor</span><strong>{formatPriceRange(estimate.labor)}</strong></div>
+              <div><span>Market comparison</span><strong>{formatPriceRange(estimate.marketTotal)}</strong></div>
+              <div><span>Best distributor selected total</span><strong>{bestDistributorTotal ? formatPriceRange(bestDistributorTotal) : "Pending"}</strong></div>
+            </div>
+          ) : null}
         </div>
 
         {selectedServices.length ? (
@@ -192,20 +200,13 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                   </div>
                   <button className="icon-button" aria-label={`Remove ${job.service}`} onClick={() => removeEstimateItem(job.service)} type="button"><X size={15} /></button>
                 </div>
-                <div className="estimate-job-totals">
-                  <div><span>Job total</span><strong>{formatPriceRange(job.total)}</strong></div>
-                  <div><span>Parts</span><strong>{formatPriceRange(job.selectedParts)}</strong></div>
-                  <div><span>Labor</span><strong>{formatPriceRange(job.labor)}</strong></div>
-                  <div><span>Not sure</span><strong>{formatPriceRange(job.possibleParts)}</strong></div>
-                </div>
-                <div className="estimate-part-lines">
-                  {job.parts.map((part) => (
-                    <div className={part.status === "possible" ? "possible" : "selected"} key={`${job.service}-${part.name}`}>
-                      <span>{part.qty > 1 ? `${part.qty}x ` : ""}{part.name}<em>{part.status === "possible" ? "not sure / included in max" : "selected"}</em></span>
-                      <strong>{formatPriceRange(part.totalPrice)}</strong>
-                    </div>
-                  ))}
-                </div>
+                <TierChoice
+                  tiers={estimateServiceTiers(job.service, pricingSettings, vehicleHint)}
+                  chosen={serviceTiers[job.service] ?? "mid"}
+                  onChoose={(tier) => onTierChange?.(job.service, tier)}
+                  showDetail={isStaff}
+                />
+                {isStaff ? <>
                 <div className="retailer-result-stack">
                   {(retailerResultsByService[job.service] ?? []).map((retailer, retailerIndex) => {
                     const serviceChoiceKey = job.service;
@@ -258,6 +259,7 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
                     ))}
                   </div>
                 ) : null}
+                </> : null}
               </article>
             ))}
           </div>
@@ -267,7 +269,51 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
   );
 }
 
-function RequestedServiceOption({ serviceName, selected, onToggleService, pricingSettings }: { serviceName: string; selected: boolean; onToggleService: (serviceName: string, checked: boolean) => void; pricingSettings: PricingSettings }) {
+// Three price choices for one job. Staff also see what the chosen tier is made of.
+function TierChoice({ tiers, chosen, onChoose, showDetail }: { tiers: Record<PartTier, TierEstimate>; chosen: PartTier; onChoose: (tier: PartTier) => void; showDetail: boolean }) {
+  const flat = partTiers.every((tier) => tiers[tier].total.min === tiers.low.total.min && tiers[tier].total.max === tiers.low.total.max);
+  const detail = tiers[flat ? "low" : chosen];
+  return (
+    <div className="tier-choice">
+      {flat ? (
+        <div className="tier-card selected"><strong>Price</strong><b>{formatPriceRange(tiers.low.total)}</b><small>Same price whichever parts tier you choose.</small></div>
+      ) : (
+        <div className="tier-card-grid" role="radiogroup" aria-label="Choose a price tier">
+          {partTiers.map((tier) => (
+            <button className={tier === chosen ? "tier-card selected" : "tier-card"} key={tier} onClick={() => onChoose(tier)} role="radio" aria-checked={tier === chosen} type="button">
+              <strong>{tiers[tier].label}</strong>
+              <b>{formatPriceRange(tiers[tier].total)}</b>
+              <small>{tiers[tier].description}</small>
+            </button>
+          ))}
+        </div>
+      )}
+      {showDetail ? (
+        <div className="estimate-part-lines">
+          {detail.lines.map((line) => (
+            <div className={line.optional || line.separate ? "possible" : "selected"} key={line.name}>
+              <span>
+                {line.qtyMin > 1 && line.qtyMin === line.qtyMax ? `${line.qtyMin}x ` : ""}{line.name}
+                <em>{line.separate ? "add if needed - not in price" : line.optional ? "removable if not used" : "required"}</em>
+                {line.note ? <small> {line.note}</small> : null}
+              </span>
+              <strong>{formatPriceRange(line.price)}</strong>
+            </div>
+          ))}
+          <div className="selected"><span>Labor ({detail.laborHours} hr)<em>required</em></span><strong>{formatPriceRange(detail.labor)}</strong></div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// Value-low to Premium-high, the same tier math the job cards use.
+function tierSpan(service: string, pricingSettings: PricingSettings, vehicleHint?: VehicleHint) {
+  const tiers = estimateServiceTiers(service, pricingSettings, vehicleHint);
+  return formatPriceRange({ min: tiers.low.total.min, max: tiers.high.total.max });
+}
+
+function RequestedServiceOption({ serviceName, selected, onToggleService, pricingSettings, vehicleHint }: { serviceName: string; selected: boolean; onToggleService: (serviceName: string, checked: boolean) => void; pricingSettings: PricingSettings; vehicleHint?: VehicleHint }) {
   const serviceEstimate = estimateServiceParts(serviceName, pricingSettings);
   return (
     <label className={selected ? "selected" : ""}>
@@ -275,19 +321,18 @@ function RequestedServiceOption({ serviceName, selected, onToggleService, pricin
       <div>
         <strong>{serviceName}</strong>
         <span>{serviceEstimate.label}</span>
-        <small>{formatPriceRange(serviceEstimate.total)} draft range - {serviceEstimate.parts.length} parts - {serviceEstimate.laborHours} labor hr</small>
+        <small>{tierSpan(serviceName, pricingSettings, vehicleHint)} depending on parts tier</small>
       </div>
     </label>
   );
 }
 
-function EstimatePartButton({ label, selected, onAdd, onRemove, pricingSettings }: { label: string; selected: boolean; onAdd: (label: string) => void; onRemove: (label: string) => void; pricingSettings: PricingSettings }) {
-  const estimate = estimateServiceParts(label, pricingSettings);
+function EstimatePartButton({ label, selected, onAdd, onRemove, pricingSettings, vehicleHint }: { label: string; selected: boolean; onAdd: (label: string) => void; onRemove: (label: string) => void; pricingSettings: PricingSettings; vehicleHint?: VehicleHint }) {
   const qty = quantityForCategoryPart(label);
   return (
     <button className={selected ? "selected" : ""} onClick={() => selected ? onRemove(label) : onAdd(label)} type="button">
-      <span>{label}</span>
-      <small>{formatPriceRange(estimate.total)}{qty > 1 ? ` full part cost (${qty}x)` : " full part cost"}</small>
+      <span>{qty > 1 ? `${label} (${qty}x)` : label}</span>
+      <small>{tierSpan(label, pricingSettings, vehicleHint)} installed</small>
     </button>
   );
 }

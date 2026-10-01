@@ -208,7 +208,7 @@ export function estimateCategoryPartUnitPrice(part: string): PriceRange {
     const quarts = Number(oilQuartMatch[1]) || 5;
     return { min: Math.round(quarts * 6), max: Math.round(quarts * 13) };
   }
-  const bucket = priceCatalog.find((entry) => entry.match.test(part)) ?? { min: 18, max: 96 };
+  const bucket = catalogBand(part);
   return { min: bucket.min, max: bucket.max };
 }
 
@@ -310,6 +310,48 @@ const priceCatalog: Array<{ match: RegExp; min: number; max: number }> = [
   { match: /valve stem/i, min: 3, max: 12 }
 ];
 
+// Small/specific parts checked before priceCatalog, whose broad entries ("caliper",
+// "brake pad", "radiator", "battery", "tire", "bolt|nut") otherwise price a slide pin
+// kit as a caliper, a radiator hose as a radiator, battery terminals as a battery...
+const specificPriceCatalog: Array<{ match: RegExp; min: number; max: number }> = [
+  { match: /slide pin|guide pin/i, min: 7, max: 24 },
+  { match: /pin boot|caliper boot/i, min: 5, max: 18 },
+  { match: /caliper.*bracket.*bolt|caliper.*bolt/i, min: 8, max: 28 },
+  { match: /abutment|pad clip|hardware kit|spring kit/i, min: 8, max: 32 },
+  { match: /brake.*fluid|dot 3|dot 4/i, min: 7, max: 18 },
+  { match: /radiator hose|coolant hose/i, min: 16, max: 72 },
+  { match: /radiator cap/i, min: 8, max: 28 },
+  { match: /tensioner|idler pulley/i, min: 28, max: 118 },
+  { match: /lug nut|lug stud|wheel lock/i, min: 3, max: 38 },
+  { match: /cabin air filter/i, min: 12, max: 42 },
+  { match: /ignition coil boot/i, min: 4, max: 18 },
+  { match: /starter relay|main fuse|relay/i, min: 8, max: 42 },
+  { match: /battery terminal|ground strap/i, min: 8, max: 38 },
+  { match: /terminal protectant/i, min: 4, max: 12 },
+  { match: /tire patch|plug repair|patch plug/i, min: 8, max: 25 },
+  { match: /valve stem/i, min: 3, max: 12 },
+  { match: /tpms/i, min: 28, max: 82 },
+  { match: /wheel speed sensor/i, min: 22, max: 118 },
+  { match: /oil filter housing|filter housing gasket/i, min: 8, max: 38 },
+  { match: /drain plug|crush washer|oil drain gasket/i, min: 2, max: 9 },
+  { match: /oil absorbent|shop towel|funnel/i, min: 4, max: 18 },
+  { match: /transmission pan gasket|transmission drain plug/i, min: 6, max: 34 },
+  { match: /transmission filter/i, min: 18, max: 74 },
+  { match: /exhaust gasket/i, min: 6, max: 28 },
+  { match: /flange bolts|exhaust.*nuts/i, min: 6, max: 24 },
+  { match: /o-?ring|snap ring|cotter pin|thread locker/i, min: 2, max: 18 },
+  { match: /body clips|retainers|push pins|quick connect clips/i, min: 3, max: 22 },
+  { match: /evap purge valve|evap vent valve/i, min: 24, max: 126 },
+  { match: /gas cap/i, min: 8, max: 32 },
+  { match: /power steering fluid/i, min: 7, max: 24 },
+  { match: /differential fluid/i, min: 12, max: 36 },
+  { match: /sway bar link|stabilizer link/i, min: 16, max: 82 }
+];
+
+function catalogBand(part: string) {
+  return specificPriceCatalog.find((entry) => entry.match.test(part)) ?? priceCatalog.find((entry) => entry.match.test(part)) ?? { min: 18, max: 96 };
+}
+
 const servicePartCatalog: Array<{ match: RegExp; label: string; parts: Array<{ name: string; qty: number; status?: "selected" | "possible" }>; laborHours: number }> = [
   { match: /engine oil|oil.*filter|oil change/i, label: "Oil change job", laborHours: 0.5, parts: [
     { name: "5 quart vehicle spec full synthetic engine oil", qty: 1 }, { name: "oil filter", qty: 1 }, { name: "oil drain plug gasket crush washer", qty: 1, status: "possible" }, { name: "shop towel funnel oil absorbent", qty: 1, status: "possible" }
@@ -324,7 +366,8 @@ const servicePartCatalog: Array<{ match: RegExp; label: string; parts: Array<{ n
     { name: "front brake pads", qty: 1 }, { name: "rear brake pads", qty: 1 }, { name: "front brake rotors", qty: 2, status: "possible" }, { name: "rear brake rotors", qty: 2, status: "possible" }, { name: "brake hardware kit", qty: 2, status: "possible" }, { name: "brake fluid", qty: 1, status: "possible" }
   ] },
   { match: /brake inspection/i, label: "Brake inspection", laborHours: 0.5, parts: [{ name: "brake inspection supplies", qty: 1, status: "possible" }] },
-  { match: /single tire repair|puncture|patch|plug/i, label: "Single tire repair", laborHours: 0.5, parts: [{ name: "tire patch plug repair kit", qty: 1 }, { name: "valve stem", qty: 1, status: "possible" }] },
+  { match: /check engine|diagnostic|code|abs light|airbag|srs|misfire|evap leak/i, label: "Detailed diagnostics", laborHours: 0, parts: [{ name: "free code light check", qty: 1 }, { name: "diagnostic trace flat rate", qty: 1 }] },
+  { match: /single tire repair|puncture|tire patch|tire plug|plug repair|flat tire/i, label: "Single tire repair", laborHours: 0.5, parts: [{ name: "tire patch plug repair kit", qty: 1 }, { name: "valve stem", qty: 1, status: "possible" }] },
   { match: /tire replacement|tires|\btire\b/i, label: "Tire replacement", laborHours: 1.0, parts: [{ name: "tire", qty: 4 }, { name: "valve stems", qty: 4 }, { name: "tpms sensor service kit", qty: 4, status: "possible" }] },
   { match: /tire rotation/i, label: "Tire rotation", laborHours: 0.4, parts: [{ name: "lug torque check", qty: 1 }, { name: "tire pressure set", qty: 1 }] },
   { match: /tpms/i, label: "TPMS service", laborHours: 0.6, parts: [{ name: "tpms sensor service kit", qty: 4 }, { name: "valve stems", qty: 4, status: "possible" }] },
@@ -336,7 +379,6 @@ const servicePartCatalog: Array<{ match: RegExp; label: string; parts: Array<{ n
   { match: /engine air filter/i, label: "Engine air filter", laborHours: 0.2, parts: [{ name: "engine air filter", qty: 1 }] },
   { match: /cabin air filter/i, label: "Cabin air filter", laborHours: 0.3, parts: [{ name: "cabin air filter", qty: 1 }] },
   { match: /fuel filter/i, label: "Fuel filter", laborHours: 0.7, parts: [{ name: "fuel filter", qty: 1 }, { name: "fuel line quick connect clips", qty: 1, status: "possible" }] },
-  { match: /check engine|diagnostic|code|abs light|airbag|srs|misfire|evap leak/i, label: "Detailed diagnostics", laborHours: 0, parts: [{ name: "free code light check", qty: 1 }, { name: "diagnostic trace flat rate", qty: 1 }] },
   { match: /coolant|flush|cooling|overheat|radiator/i, label: "Cooling service", laborHours: 1.8, parts: [{ name: "engine coolant antifreeze", qty: 2 }, { name: "thermostat", qty: 1, status: "possible" }, { name: "radiator cap", qty: 1, status: "possible" }, { name: "upper radiator hose", qty: 1, status: "possible" }, { name: "lower radiator hose", qty: 1, status: "possible" }, { name: "water pump", qty: 1, status: "possible" }] },
   { match: /transmission|atf|cvt/i, label: "Transmission service", laborHours: 2.0, parts: [{ name: "6 quart vehicle spec transmission fluid ATF CVT", qty: 1 }, { name: "transmission filter", qty: 1, status: "possible" }, { name: "transmission pan gasket", qty: 1, status: "possible" }, { name: "transmission drain plug gasket", qty: 1, status: "possible" }] },
   { match: /spark|ignition|tune.?up|engine maintenance/i, label: "Engine maintenance", laborHours: 1.5, parts: [{ name: "spark plug", qty: 4 }, { name: "ignition coil", qty: 4, status: "possible" }, { name: "ignition coil boot", qty: 4, status: "possible" }, { name: "pcv valve", qty: 1, status: "possible" }, { name: "serpentine belt", qty: 1, status: "possible" }] },
@@ -382,7 +424,7 @@ export function estimatePartPrice(part: string, index = 0): PriceRange {
     const quarts = Number(oilQuartMatch[1]) || 5;
     return { min: Math.round(quarts * 6), max: Math.round(quarts * 13) };
   }
-  const bucket = priceCatalog.find((entry) => entry.match.test(part)) ?? { min: 18, max: 96 };
+  const bucket = catalogBand(part);
   const offsets = [{ min: 1.02, max: 1.06 }, { min: 0.96, max: 1.02 }, { min: 0.94, max: 0.99 }, { min: 1.08, max: 1.14 }];
   const offset = offsets[index % offsets.length];
   return { min: Math.round(bucket.min * offset.min), max: Math.round(bucket.max * offset.max) };
@@ -436,12 +478,18 @@ export function searchPhraseForPart(part: string) {
   return cleanPart;
 }
 
+// Names that describe work (not a single part) get the full job recipe.
+const serviceWording = /repair|replacement|replace|flush|service|change|diagnos|inspection|check|tune|rotation|install/i;
+
 function catalogForService(service: string) {
   if (isEstimateCategoryPart(service)) {
     const partName = String(service || "Manual parts lookup").trim();
+    const recipe = servicePartCatalog.find((entry) => entry.match.test(partName));
+    if (recipe && serviceWording.test(partName)) return recipe;
+    // A single part still needs someone to fit it: borrow the matching job's labor time.
     return {
       label: `${partName} part lookup`,
-      laborHours: 0,
+      laborHours: recipe?.laborHours ?? defaultBookTime(partName),
       parts: [{ name: partName, qty: quantityForCategoryPart(partName), status: "selected" as const }]
     };
   }
@@ -509,6 +557,167 @@ export function estimateServiceParts(service: string, pricingSettings?: Partial<
     marketTotal,
     savings: { amount: savingsAmount, percent: rates.marketLaborRate > 0 ? Math.max(0, Math.round(((rates.marketLaborRate - rates.shopLaborRate) / rates.marketLaborRate) * 100)) : 0 }
   };
+}
+
+// ---------------------------------------------------------------------------
+// Tiered job pricing (what the customer chooses from).
+// Each tier runs from the minimum required supplies at that tier's low price to
+// the same supplies at the tier's high price plus optional items (e.g. a drain
+// plug washer) that can be removed from the final bill if not needed.
+// ---------------------------------------------------------------------------
+
+export type VehicleHint = { displacement?: string; cylinders?: string; fuel?: string };
+
+// optional: job consumable included in the tier's max, removed from the bill if not used.
+// separate: "might also need" part - not in the customer's price; staff add it if needed.
+export type TierLine = { name: string; qtyMin: number; qtyMax: number; unit: PriceRange; price: PriceRange; optional: boolean; separate: boolean; note?: string };
+
+const includedRemovablePattern = /drain plug|crush washer|oil drain gasket/i;
+
+export type TierEstimate = {
+  tier: PartTier;
+  label: string;
+  description: string;
+  lines: TierLine[];
+  required: PriceRange;
+  optional: PriceRange;
+  labor: PriceRange;
+  laborHours: number;
+  total: PriceRange;
+};
+
+export const tierLabels: Record<PartTier, string> = { low: "Value", mid: "Recommended", high: "Premium" };
+export const partTiers: PartTier[] = ["low", "mid", "high"];
+
+// "2021 Toyota RAV4 2.5L 4-cyl" -> engine hints used for fluid quantities.
+export function vehicleHintFromContext(vehicleContext?: string): VehicleHint {
+  const text = String(vehicleContext || "");
+  return {
+    displacement: text.match(/(\d+(?:\.\d)?)\s*L\b/i)?.[1],
+    cylinders: text.match(/(\d+)\s*-?\s*cyl/i)?.[1] ?? text.match(/\bV(6|8|10|12)\b/i)?.[1],
+    fuel: /diesel|power ?stroke|duramax|cummins|tdi/i.test(text) ? "Diesel" : undefined
+  };
+}
+
+// Typical engine oil capacity (with filter) by engine size; the spec sheet has the exact figure.
+export function oilCapacityQuarts(vehicle?: VehicleHint): PriceRange & { basis: string } {
+  const displacement = Number(vehicle?.displacement) || 0;
+  const cylinders = Number(vehicle?.cylinders) || 0;
+  const diesel = /diesel/i.test(vehicle?.fuel ?? "");
+  if (diesel) {
+    if (displacement >= 6.4) return { min: 12, max: 15, basis: `${displacement}L diesel` };
+    if (displacement >= 4.5) return { min: 9, max: 12, basis: `${displacement}L diesel` };
+    return { min: 6, max: 8, basis: displacement ? `${displacement}L diesel` : "diesel engine" };
+  }
+  if (!displacement && !cylinders) return { min: 4.5, max: 6, basis: "engine not selected - pick the engine for a tighter range" };
+  const label = [displacement ? `${displacement}L` : "", cylinders ? `${cylinders}-cyl` : ""].filter(Boolean).join(" ");
+  if (cylinders >= 8 || displacement >= 4.6) return { min: 6, max: 9, basis: label };
+  if (cylinders === 6 || displacement >= 3.0) return { min: 5, max: 6.5, basis: label };
+  if (displacement > 2.0) return { min: 4.5, max: 5.5, basis: label };
+  return { min: 3.5, max: 4.5, basis: label };
+}
+
+// Per-tier unit prices for common consumables; everything else splits its catalog
+// band into thirds (value / recommended / premium).
+function tierUnitPrice(part: string, tier: PartTier, vehicle?: VehicleHint): PriceRange {
+  const diesel = /diesel/i.test(vehicle?.fuel ?? "");
+  const table: Array<{ match: RegExp; prices: Record<PartTier, PriceRange> }> = [
+    { match: /engine oil|motor oil|synthetic oil/i, prices: diesel
+      ? { low: { min: 4.5, max: 6 }, mid: { min: 6, max: 8 }, high: { min: 8, max: 11 } }
+      : { low: { min: 5.5, max: 7 }, mid: { min: 7, max: 9.5 }, high: { min: 9.5, max: 13 } } },
+    { match: /oil filter(?! housing)/i, prices: diesel
+      ? { low: { min: 12, max: 18 }, mid: { min: 18, max: 28 }, high: { min: 28, max: 45 } }
+      : { low: { min: 5, max: 8 }, mid: { min: 8, max: 13 }, high: { min: 13, max: 22 } } },
+    { match: /drain plug|crush washer/i, prices: { low: { min: 1, max: 2 }, mid: { min: 2, max: 3 }, high: { min: 3, max: 5 } } }
+  ];
+  const special = table.find((entry) => entry.match.test(part));
+  if (special) return special.prices[tier];
+  const band = isEstimateCategoryPart(part) ? estimateCategoryPartUnitPrice(part) : catalogBand(part);
+  if (band.min === band.max) return { min: band.min, max: band.max };
+  const third = (band.max - band.min) / 3;
+  const index = partTiers.indexOf(tier);
+  return { min: band.min + third * index, max: band.min + third * (index + 1) };
+}
+
+const tierDescriptions: Array<{ match: RegExp; text: Record<PartTier, string> }> = [
+  { match: /oil/i, text: {
+    low: "Conventional or synthetic-blend oil that meets your engine's spec, economy filter.",
+    mid: "Full synthetic oil to your engine's spec and a quality name-brand filter.",
+    high: "Top-brand full synthetic (Mobil 1, Castrol Edge or OEM) and a premium or OEM filter."
+  } },
+  { match: /tire/i, text: {
+    low: "Budget brand tires sized for your vehicle.",
+    mid: "Name-brand all-season tires with a solid treadwear warranty.",
+    high: "Premium or performance tires (Michelin, Bridgestone class)."
+  } }
+];
+
+function describeTier(service: string, tier: PartTier) {
+  const match = tierDescriptions.find((entry) => entry.match.test(service));
+  if (match) return match.text[tier];
+  return { low: "Economy aftermarket parts that fit your vehicle.", mid: "Quality name-brand parts - our usual choice.", high: "OEM (dealer) or premium-brand parts." }[tier];
+}
+
+function roundPrice(price: PriceRange): PriceRange {
+  return { min: Math.round(price.min), max: Math.round(price.max) };
+}
+
+export function estimateServiceTier(service: string, tier: PartTier, pricingSettings?: Partial<PricingSettings>, vehicle?: VehicleHint): TierEstimate {
+  const recipe = catalogForService(service);
+  const rates = currentPricingSettings(pricingSettings);
+  const capacity = oilCapacityQuarts(vehicle);
+  const lines: TierLine[] = recipe.parts
+    .filter((part) => !/^(lug torque check|tire pressure set|inspection checklist|brake inspection supplies)$/i.test(part.name))
+    .map((part) => {
+      const isOil = /engine oil|motor oil/i.test(part.name);
+      const qtyMin = isOil ? Math.ceil(capacity.min) : part.qty;
+      const qtyMax = isOil ? Math.ceil(capacity.max) : part.qty;
+      const unit = tierUnitPrice(part.name, tier, vehicle);
+      const possible = part.status === "possible";
+      // Only a few job consumables (the oil drain plug washer) count toward the top of
+      // the customer's range; every other "possible" part stays out of the price and is
+      // added by staff only if it turns out to be needed.
+      const includedRemovable = includedRemovablePattern.test(part.name);
+      return {
+        name: isOil ? `Engine oil (${qtyMin === qtyMax ? qtyMin : `${qtyMin}-${qtyMax}`} qt)` : part.name,
+        qtyMin,
+        qtyMax,
+        unit: roundPrice(unit),
+        price: roundPrice({ min: unit.min * qtyMin, max: unit.max * qtyMax }),
+        optional: possible && includedRemovable,
+        separate: possible && !includedRemovable,
+        note: isOil ? `Typical capacity for ${capacity.basis}` : undefined
+      };
+    });
+  const sum = (items: TierLine[]) => items.reduce((total, line) => addPrice(total, line.price), { min: 0, max: 0 });
+  const required = sum(lines.filter((line) => !line.optional && !line.separate));
+  const optional = sum(lines.filter((line) => line.optional));
+  const laborCost = Math.round(recipe.laborHours * rates.shopLaborRate);
+  const labor = { min: laborCost, max: laborCost };
+  return {
+    tier,
+    label: tierLabels[tier],
+    description: describeTier(service, tier),
+    lines,
+    required,
+    optional,
+    labor,
+    laborHours: recipe.laborHours,
+    total: { min: required.min + labor.min, max: required.max + optional.max + labor.max }
+  };
+}
+
+export function estimateServiceTiers(service: string, pricingSettings?: Partial<PricingSettings>, vehicle?: VehicleHint): Record<PartTier, TierEstimate> {
+  return {
+    low: estimateServiceTier(service, "low", pricingSettings, vehicle),
+    mid: estimateServiceTier(service, "mid", pricingSettings, vehicle),
+    high: estimateServiceTier(service, "high", pricingSettings, vehicle)
+  };
+}
+
+// Sum of each selected service at the tier the customer picked (default Recommended).
+export function estimateTieredTotal(services: string[], tiers: Record<string, PartTier>, pricingSettings?: Partial<PricingSettings>, vehicle?: VehicleHint) {
+  return services.reduce((total, service) => addPrice(total, estimateServiceTier(service, tiers[service] ?? "mid", pricingSettings, vehicle).total), { min: 0, max: 0 });
 }
 
 export function estimateServices(services: string[], pricingSettings?: Partial<PricingSettings>): ServiceEstimate & { jobs: ServiceEstimate[] } {
