@@ -23,6 +23,7 @@ import {
 import { createWorkOrderCheckout } from "@/lib/payment-backend";
 import { supplyCatalog, supplyCategories } from "@/lib/supplies";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
+import { DtcLookupPanel } from "@/components/dtc-lookup";
 
 // Technician workflow configuration: statuses, step loaders, and fixed inspection checklists.
 const serviceStatuses: PrototypeWorkOrder["status"][] = ["Accepted", "Estimate Sent", "Scheduled", "En Route", "On Site", "In Progress", "Waiting Parts", "Awaiting Payment", "Complete"];
@@ -654,6 +655,12 @@ export function ServicePortal() {
         <div className="service-step-page">
           <div className="inspection-progress">Lifted pre-inspection documented: {preInspectComplete}%</div>
           {renderChecklist(order, "Lifted under-vehicle inspection", liftedInspectionChecks, "Pre inspect")}
+          <DtcLookupPanel
+            make={order.vehicleSpec?.make || order.vehicle.split(" ")[1] || ""}
+            vehicleLabel={order.vehicle}
+            savedCodes={order.diagnosticCodes ?? []}
+            onSave={(codes) => { updatePrototypeWorkOrder(order.id, { diagnosticCodes: codes }); refresh(order.id); }}
+          />
           <div className="inspection-reference-panel"><InspectionReferencePanel compact /></div>
         </div>
       );

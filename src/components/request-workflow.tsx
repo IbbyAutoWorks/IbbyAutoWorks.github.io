@@ -10,7 +10,9 @@ import { estimateServices, formatPriceRange } from "@/lib/parts";
 import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 import { buildPrototypeInspection, buildPrototypeParts, CUSTOMER_RECORDS_EVENT, defaultCustomerPreferences, defaultServiceMeasurements, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, savePrototypeWorkOrder } from "@/lib/local-store";
 import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/lib/schedule";
-import { decodeVinWithNhtsa, fallbackVehicleSpec, findVehicleSpec, formatVehicle, vehicleCatalog, type VehicleSpec } from "@/lib/vehicles";
+import { fallbackVehicleSpec, findVehicleSpec } from "@/lib/vehicles";
+import { emptyVehicleConfig, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
+import { VehiclePicker } from "@/components/vehicle-picker";
 import { readPrayerScheduleSettings, prayerBlockLabel, timeToMinutes, effectivePrayerTime, type PrayerScheduleSettings } from "@/lib/prayer-times";
 import { ServiceSelector } from "@/components/service-selector";
 import { CustomerPaymentOptions } from "@/components/customer-payment-options";
@@ -75,15 +77,12 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [submittedOrder, setSubmittedOrder] = useState<PrototypeWorkOrder | null>(null);
   const [savedCustomers, setSavedCustomers] = useState<PrototypeCustomerRecord[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
-  const [vehicleSearch, setVehicleSearch] = useState("");
-  const [selectedVehicleSpec, setSelectedVehicleSpec] = useState<VehicleSpec | null>(null);
-  const [vinStatus, setVinStatus] = useState("");
-  const [vinDecoded, setVinDecoded] = useState(false);
   const [agreementError, setAgreementError] = useState("");
   const [stepError, setStepError] = useState("");
   const [agreementAcceptance, setAgreementAcceptance] = useState(defaultAgreementAcceptance);
   const [customerPreferences, setCustomerPreferences] = useState(defaultCustomerPreferences);
   const [tireConcern, setTireConcern] = useState<(typeof tirePositions)[number]>("Not sure");
+  const [vehicleConfig, setVehicleConfig] = useState<VehicleConfig>(emptyVehicleConfig);
   const [form, setForm] = useState({
     name: "",
     firstName: "",
@@ -117,11 +116,6 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const agreementsReady = isAdminMode || hasRequiredAgreementAcceptance(agreementAcceptance);
   const selectedWindow = findAppointmentWindow(form.preferredWindow);
   const needsTirePosition = selectedServices.includes("Single tire repair");
-  const vehicleQuery = vehicleSearch.trim().toLowerCase();
-  const visibleVehicles = vehicleCatalog.filter((vehicle) => {
-    return vehicleQuery && `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}`.toLowerCase().includes(vehicleQuery);
-  }).slice(0, 6);
-  const vehicleCards = vehicleQuery ? visibleVehicles : selectedVehicleSpec ? [selectedVehicleSpec] : [];
   const selectedAppointmentMonth = appointmentMonths.find((month) => month.label === form.appointmentMonth) ?? appointmentMonths[0];
   const calendarDayCount = new Date(selectedAppointmentMonth.year, selectedAppointmentMonth.month + 1, 0).getDate();
   const appointmentCalendarDays = Array.from({ length: calendarDayCount }, (_, index) => {
@@ -133,16 +127,6 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   });
   const selectedAppointmentDay = appointmentCalendarDays.find((day) => day.date === form.appointmentDate) ?? appointmentCalendarDays[0];
   const preferredWindow = `${selectedAppointmentDay?.label ?? "Day"}, ${form.appointmentMonth} ${selectedAppointmentDay?.day ?? ""} - ${form.appointmentTime} ${form.appointmentPeriod}`.trim();
-  const cleanVin = form.vin.trim().toUpperCase();
-  const vinLengthReady = cleanVin.length === 17;
-  const vinStateClass = !cleanVin ? "" : vinDecoded ? "valid" : vinLengthReady ? "ready" : "invalid";
-  const vehicleYears = Array.from(new Set(vehicleCatalog.map((vehicle) => vehicle.year))).sort((a, b) => Number(b) - Number(a));
-  const vehicleMakes = Array.from(new Set(vehicleCatalog
-    .filter((vehicle) => !form.vehicleYear || vehicle.year === form.vehicleYear)
-    .map((vehicle) => vehicle.make))).sort();
-  const vehicleModels = Array.from(new Set(vehicleCatalog
-    .filter((vehicle) => (!form.vehicleYear || vehicle.year === form.vehicleYear) && (!form.vehicleMake || vehicle.make === form.vehicleMake))
-    .map((vehicle) => vehicle.model))).sort();
   const serviceAreaStatus = useMemo(() => {
     const normalizedAddress = `${form.address} ${form.town} ${form.serviceState}`.toLowerCase();
     if (!normalizedAddress.trim()) {
@@ -332,34 +316,17 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     return activeStep === index ? "workorder-step active" : "workorder-step";
   }
 
-  function updateVin(value: string) {
-    const nextVin = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 17);
-    setVinDecoded(false);
-    setVinStatus(nextVin ? `${nextVin.length}/17 characters entered.` : "");
-    updateForm("vin", nextVin);
-  }
-
-  function chooseVehicle(spec: VehicleSpec) {
-    setSelectedVehicleSpec(spec);
+  // The picker owns the full vehicle; mirror the summary fields the rest of the form reads.
+  function updateVehicleConfig(next: VehicleConfig) {
+    setVehicleConfig(next);
     setForm((current) => ({
       ...current,
-      vehicle: formatVehicle(spec),
-      vehicleYear: spec.year,
-      vehicleMake: spec.make,
-      vehicleModel: spec.model
+      vin: next.vin,
+      vehicleYear: next.year,
+      vehicleMake: next.make,
+      vehicleModel: next.model,
+      vehicle: vehicleConfigLabel(next)
     }));
-  }
-
-  function chooseVehicleField(field: "vehicleYear" | "vehicleMake" | "vehicleModel", value: string) {
-    const next = {
-      ...form,
-      [field]: value,
-      ...(field === "vehicleYear" ? { vehicleMake: "", vehicleModel: "" } : {}),
-      ...(field === "vehicleMake" ? { vehicleModel: "" } : {})
-    };
-    const vehicle = `${next.vehicleYear} ${next.vehicleMake} ${next.vehicleModel}`.trim();
-    setSelectedVehicleSpec(findVehicleSpec(vehicle) ?? null);
-    setForm({ ...next, vehicle });
   }
 
   function chooseSavedCustomer(customerId: string) {
@@ -408,42 +375,6 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   }
 
 
-  async function decodeVin() {
-    if (!vinLengthReady) {
-      setVinDecoded(false);
-      setVinStatus("Enter all 17 VIN characters before decoding.");
-      return;
-    }
-
-    setVinStatus("Decoding VIN with NHTSA...");
-    try {
-      const decoded = await decodeVinWithNhtsa(form.vin);
-      const matchedSpec = findVehicleSpec(decoded.vehicle);
-      setVinDecoded(true);
-      setSelectedVehicleSpec(matchedSpec ?? {
-        ...fallbackVehicleSpec,
-        id: `vin-${form.vin.trim().toUpperCase()}`,
-        year: decoded.year || "Decoded",
-        make: decoded.make || "Vehicle",
-        model: decoded.model || "Pending",
-        trim: decoded.trim || "VIN decoded",
-        bodyStyle: decoded.bodyStyle || "Decoded from VIN",
-        notes: ["VIN decoded by NHTSA vPIC.", "Add OEM-verified torque and fluid specs before relying on this quick reference."],
-        source: "NHTSA vPIC VIN decode plus manual spec fallback"
-      });
-      setForm((current) => ({
-        ...current,
-        vehicle: decoded.vehicle || current.vehicle,
-        vehicleYear: decoded.year || current.vehicleYear,
-        vehicleMake: decoded.make || current.vehicleMake,
-        vehicleModel: decoded.model || current.vehicleModel
-      }));
-      setVinStatus(`Decoded ${decoded.vehicle || "vehicle"}. Specs still need catalog/OEM verification if not matched.`);
-    } catch (error) {
-      setVinDecoded(false);
-      setVinStatus(`${error instanceof Error ? error.message : "VIN decode failed."} Please check the VIN and try again.`);
-    }
-  }
 
   function submitRequest() {
     // Step tabs allow jumping ahead, so re-check every step before submitting.
@@ -474,7 +405,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       phone: form.phone || "No phone entered",
       email: form.email || "No email entered",
       vehicle: form.vehicle || "Vehicle pending",
-      vehicleImage: (selectedVehicleSpec ?? findVehicleSpec(form.vehicle))?.image ?? "",
+      vehicleImage: findVehicleSpec(form.vehicle)?.image ?? "",
+      vehicleConfig,
       vin: form.vin || "VIN pending",
       plate: `${form.plate || "Plate pending"} ${form.plateState}`.trim(),
       mileage: form.mileage || "Mileage pending",
@@ -504,7 +436,10 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       measurements: defaultServiceMeasurements(),
       parts: buildPrototypeParts(selectedServices, "mid", selectedSupplierChoices, activeVehicleContext, activeAreaContext),
       inspection: buildPrototypeInspection(),
-      vehicleSpec: selectedVehicleSpec ?? findVehicleSpec(form.vehicle) ?? fallbackVehicleSpec,
+      vehicleSpec: {
+        ...(findVehicleSpec(form.vehicle) ?? fallbackVehicleSpec),
+        ...(vehicleConfig.make ? { year: vehicleConfig.year, make: vehicleConfig.make, model: vehicleConfig.model, trim: vehicleConfig.trim, bodyStyle: vehicleConfig.body } : {})
+      },
       agreementAcceptance: isAdminMode ? adminAgreementAcceptance : {
         ...agreementAcceptance,
         acceptedAt,
@@ -601,47 +536,15 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <h2>Vehicle details</h2>
             <Car />
           </div>
+          <VehiclePicker value={vehicleConfig} onChange={updateVehicleConfig} />
           <div className="form-grid">
-            <label className={`vin-field ${vinStateClass}`}><span>VIN</span><input value={form.vin} onChange={(event) => updateVin(event.target.value)} placeholder="17-character VIN" /></label>
             <label><span>Plate number</span><input value={form.plate} onChange={(event) => updateForm("plate", event.target.value.toUpperCase())} placeholder="Plate number" /></label>
             <label><span>Plate state</span><select value={form.plateState} onChange={(event) => updateForm("plateState", event.target.value)}>{stateOptions.map((state) => <option key={state}>{state}</option>)}</select></label>
             <label><span>Mileage</span><input value={form.mileage} onChange={(event) => updateForm("mileage", event.target.value)} placeholder="Current mileage" /></label>
-            <label><span>Vehicle year</span><select value={form.vehicleYear} onChange={(event) => chooseVehicleField("vehicleYear", event.target.value)}><option value="">Select year</option>{vehicleYears.map((year) => <option key={year}>{year}</option>)}</select></label>
-            <label><span>Vehicle make</span><select value={form.vehicleMake} onChange={(event) => chooseVehicleField("vehicleMake", event.target.value)}><option value="">Select make</option>{vehicleMakes.map((make) => <option key={make}>{make}</option>)}</select></label>
-            <label><span>Vehicle model</span><select value={form.vehicleModel} onChange={(event) => chooseVehicleField("vehicleModel", event.target.value)}><option value="">Select model</option>{vehicleModels.map((model) => <option key={model}>{model}</option>)}</select></label>
             <label><span>Inspection month</span><select value={form.inspectionMonth} onChange={(event) => updateForm("inspectionMonth", event.target.value)}><option value="">Month</option>{monthOptions.map((month) => <option key={month}>{month}</option>)}</select></label>
             <label><span>Inspection year</span><select value={form.inspectionYear} onChange={(event) => updateForm("inspectionYear", event.target.value)}><option value="">Year</option>{yearOptions.slice(0, 12).map((year) => <option key={year}>{year}</option>)}</select></label>
             <label><span>Registration month</span><select value={form.registrationMonth} onChange={(event) => updateForm("registrationMonth", event.target.value)}><option value="">Month</option>{monthOptions.map((month) => <option key={month}>{month}</option>)}</select></label>
             <label><span>Registration year</span><select value={form.registrationYear} onChange={(event) => updateForm("registrationYear", event.target.value)}><option value="">Year</option>{yearOptions.slice(0, 12).map((year) => <option key={year}>{year}</option>)}</select></label>
-          </div>
-          <div className="vin-decode-row">
-            <button className={vinDecoded ? "vin-decode-button valid" : vinLengthReady ? "vin-decode-button ready" : "vin-decode-button invalid"} disabled={!vinLengthReady} onClick={decodeVin}><Car size={15} /> Decode VIN</button>
-            <span>{vinStatus || "VIN decode uses the free NHTSA vPIC API when online."}</span>
-          </div>
-          <div className="vehicle-catalog">
-            <div className="catalog-head">
-              <div>
-                <p className="section-label">Vehicle picker</p>
-                <h3>Search or decode to show matching vehicle images</h3>
-              </div>
-              <input value={vehicleSearch} onChange={(event) => setVehicleSearch(event.target.value)} placeholder="Search year, make, model" />
-            </div>
-            {vehicleCards.length ? (
-              <div className="vehicle-card-grid">
-                {vehicleCards.map((vehicle) => (
-                  <button className={selectedVehicleSpec?.id === vehicle.id ? "vehicle-card selected" : "vehicle-card"} key={vehicle.id} onClick={() => chooseVehicle(vehicle)}>
-                    <img src={vehicle.image} alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} />
-                    <strong>{formatVehicle(vehicle)}</strong>
-                    <span>{vehicle.trim}</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="vehicle-picker-empty">
-                <Car size={18} />
-                <span>Enter a VIN, type a vehicle search, or manually enter the year/make/model. Matching images appear only after that.</span>
-              </div>
-            )}
           </div>
           <label className="wide-field"><span>Symptoms / request notes</span><textarea value={form.symptoms} onChange={(event) => updateForm("symptoms", event.target.value)} placeholder="What is happening? Any sounds, lights, leaks, or service notes?" /></label>
           </div>

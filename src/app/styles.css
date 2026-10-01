@@ -5345,6 +5345,42 @@ h2 {
   color: var(--muted);
 }
 
+.spin {
+  animation: ibby-spin 0.9s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes ibby-spin {
+  to { transform: rotate(360deg); }
+}
+
+.vehicle-picker .vin-decode-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.vehicle-picker .vin-field {
+  display: grid;
+  gap: 5px;
+  flex: 1 1 220px;
+}
+
+.dtc-result {
+  align-items: flex-start;
+}
+
+.dtc-result p {
+  margin: 4px 0;
+}
+
+.dtc-warning {
+  color: var(--red-dark);
+  font-weight: 700;
+}
+
 .supply-custom-row .wide-field {
   grid-column: auto;
 }

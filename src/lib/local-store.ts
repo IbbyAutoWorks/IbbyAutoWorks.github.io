@@ -2,6 +2,7 @@ import { defaultAgreementAcceptance, type AgreementAcceptance } from "@/lib/agre
 import { buildPartSupplierCandidates, estimateServiceParts, type PartSupplierCandidate, type PriceRange } from "@/lib/parts";
 import { supplyCatalog, supplyVendorCandidates } from "@/lib/supplies";
 import { fallbackVehicleSpec, findVehicleSpec, type VehicleSpec } from "@/lib/vehicles";
+import type { VehicleConfig } from "@/lib/vehicle-data";
 import { fetchCloudWorkOrders, isCloudStaff, syncWorkOrderToCloud } from "@/lib/cloud-sync";
 
 export type PrototypePartQuote = {
@@ -110,6 +111,13 @@ export type PrototypePayment = {
   source: "manual" | "stripe";
 };
 
+export type PrototypeDiagnosticCode = {
+  code: string;
+  meaning: string;
+  source: string;
+  recordedAt: string;
+};
+
 export type PrototypeWorkOrder = {
   id: string;
   customer: string;
@@ -147,6 +155,9 @@ export type PrototypeWorkOrder = {
   agreementAcceptance: AgreementAcceptance;
   customerPreferences: PrototypeCustomerPreferences;
   payment?: PrototypePayment;
+  diagnosticCodes?: PrototypeDiagnosticCode[];
+  // Full year/make/model/engine from the picker or VIN decode (newer orders only).
+  vehicleConfig?: VehicleConfig;
   // Last local edit; the newer copy wins when devices merge through the cloud.
   updatedAt?: string;
 };
