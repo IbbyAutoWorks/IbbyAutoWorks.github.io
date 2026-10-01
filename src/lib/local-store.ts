@@ -158,6 +158,10 @@ export type PrototypeWorkOrder = {
   diagnosticCodes?: PrototypeDiagnosticCode[];
   // Full year/make/model/engine from the picker or VIN decode (newer orders only).
   vehicleConfig?: VehicleConfig;
+  // Who worked the job and when, for per-tech stats (set from the Service portal).
+  technician?: string;
+  workStartedAt?: string;
+  workFinishedAt?: string;
   // Last local edit; the newer copy wins when devices merge through the cloud.
   updatedAt?: string;
 };

@@ -29,6 +29,7 @@ import { VehicleSpecSheet } from "@/components/vehicle-spec-sheet";
 import { VehiclePhotoCard } from "@/components/vehicle-photo";
 import { LocalDirectoryPanel } from "@/components/local-directory";
 import { useAuthRole } from "@/components/auth-gate";
+import { BurnoutNavLink } from "@/components/route-burnout-loader";
 import { configFromVehicleText, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
 
 // Technician workflow configuration: statuses, step loaders, and fixed inspection checklists.
@@ -128,7 +129,7 @@ export function ServicePortal() {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [editingVehicle, setEditingVehicle] = useState(false);
-  const { role } = useAuthRole();
+  const { role, session } = useAuthRole();
   const [stripeLink, setStripeLink] = useState("");
   const [stripeStatus, setStripeStatus] = useState("");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
@@ -191,6 +192,14 @@ export function ServicePortal() {
 
   function setStatus(status: PrototypeWorkOrder["status"], nextStep?: number) {
     if (!selectedOrder) return;
+    // Record who worked the job and when, for per-tech and labor-time stats.
+    const now = new Date().toISOString();
+    const tech = session?.user?.email ?? "";
+    const workPatch: Partial<PrototypeWorkOrder> = {};
+    if (["En Route", "On Site", "In Progress"].includes(status) && !selectedOrder.technician && tech) workPatch.technician = tech;
+    if (status === "In Progress" && !selectedOrder.workStartedAt) workPatch.workStartedAt = now;
+    if (status === "Awaiting Payment" && !selectedOrder.workFinishedAt) workPatch.workFinishedAt = now;
+    if (Object.keys(workPatch).length) updatePrototypeWorkOrder(selectedOrder.id, workPatch);
     updatePrototypeWorkOrderStatus(selectedOrder.id, status);
     refresh(selectedOrder.id);
     if (typeof nextStep === "number") goToStep(nextStep);
@@ -812,6 +821,7 @@ export function ServicePortal() {
         </div>
         <div className="admin-actions">
           {selectedOrder ? <a className="primary-button" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedOrder.location)}`} target="_blank" rel="noreferrer"><Map size={16} /> Route</a> : null}
+          <BurnoutNavLink className="secondary-button" href="/service/manual">Technician manual</BurnoutNavLink>
         </div>
       </section>
 
