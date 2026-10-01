@@ -8,8 +8,11 @@ import { BurnoutNavLink } from "@/components/route-burnout-loader";
 export const adminSections = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/new", label: "New work order" },
+  { href: "/admin/business", label: "Business" },
+  { href: "/admin/taxes", label: "Taxes & books" },
   { href: "/admin/team", label: "Team" },
   { href: "/admin/vehicles", label: "Vehicles" },
+  { href: "/admin/services", label: "Services & accounts" },
   { href: "/admin/settings", label: "Settings" }
 ];
 
