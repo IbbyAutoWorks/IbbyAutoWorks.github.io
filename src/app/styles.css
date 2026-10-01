@@ -5679,6 +5679,22 @@ h2 {
   box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.25);
 }
 
+.vin-candidate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--soft, #f4f5f7);
+}
+
+.vin-candidate strong {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+}
+
 .research-link-row {
   display: flex;
   flex-wrap: wrap;
