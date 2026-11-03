@@ -27,6 +27,15 @@ Each engine or materially different powertrain gets its own file. Hybrid, plug-i
 - `shop-reviewed`: a human at Ibby Auto Works checked the sheet.
 - `conflict`: sources disagree; do not use the disputed fields until resolved.
 
-## Nightly updater
+## Scheduled updater
 
-The Hermes job `Ibby vehicle-spec markdown builder` may add or improve up to three mainstream vehicle/engine sheets per night. It must leave unsupported fields blank, update `catalog.md`, and pass `python scripts/verify-vehicle-spec-markdown.py` before finishing. It does not push or deploy changes automatically.
+The Hermes job `Ibby vehicle-spec markdown builder` runs three times each day and may add or materially improve up to ten exact vehicle/year/engine sheets per run. That permits up to 30 carefully sourced sheets per day when suitable OEM information is available; unsupported fields must remain blank rather than being guessed.
+
+Coverage moves backward in year phases:
+
+1. **2017–current model year:** complete the newest ten model years first.
+2. **2007–2016:** continue through the preceding decade.
+3. **1997–2006:** continue through the next older decade.
+4. **1990–1996:** finish the requested 1990s coverage.
+
+Within the active phase, high-volume vehicles and models appearing in the existing app queue take priority. A run must not jump to an older phase while reasonable mainstream gaps remain in a newer phase. Each run updates `catalog.md` and must pass `python scripts/verify-vehicle-spec-markdown.py` before finishing. The updater does not push or deploy changes automatically.
