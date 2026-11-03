@@ -20,6 +20,10 @@ Vehicle files are stored under:
 
 Each engine or materially different powertrain gets its own file. Hybrid, plug-in hybrid, EV, diesel, high-output, HD, Classic/legacy-body, and other variants must not share a sheet unless the OEM source explicitly gives the same specification.
 
+## Reference-data enrichment
+
+Mechanical specification sheets may also carry carefully separated EPA/NHTSA identity information, NHTSA recall links, manufacturer-communication/TSB summaries, aggregate owner-complaint themes, and license-reviewed Wikimedia Commons image candidates. These are governed by [`REFERENCE_DATA_SOURCES.md`](REFERENCE_DATA_SOURCES.md). Recalls, bulletins, owner reports and mechanical specifications must never be presented as interchangeable evidence.
+
 ## Status values
 
 - `starter`: imported from an OEM-backed seed and still has missing fields.

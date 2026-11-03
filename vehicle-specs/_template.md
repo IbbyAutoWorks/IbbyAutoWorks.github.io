@@ -56,6 +56,14 @@ last_verified: "YYYY-MM-DD"
 
 - Needs research
 
+## Government and reference-data enrichment
+
+- **EPA/NHTSA identity check:** Needs research
+- **NHTSA recalls:** Needs research; keep separate from bulletins and complaints
+- **NHTSA manufacturer communications / TSB summaries:** Needs research
+- **NHTSA owner-complaint patterns:** Needs research; label as unverified owner reports
+- **Wikimedia Commons image candidate:** Needs license and attribution review
+
 ## Sources
 
 1. Needs an exact OEM or government source URL and page/section locator.

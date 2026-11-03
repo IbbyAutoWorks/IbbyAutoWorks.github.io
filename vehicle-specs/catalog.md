@@ -13,6 +13,14 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2021 Nissan Rogue — 2.5L PR25DD inline-4](data/2021/nissan/rogue/2.5l-i4.md) — starter / needs shop review
 - [2021 Hyundai Elantra — 2.0L inline-4](data/2021/hyundai/elantra/2.0l-i4.md) — starter / needs shop review
 
+## Researched sheets
+
+- [2021 Chevrolet Equinox — 1.5L LYX turbo inline-4, 6-speed automatic, FWD](data/2021/chevrolet/equinox/1.5l-turbo-i4-fwd.md) — researched / needs shop review
+- [2021 Chevrolet Equinox — 1.5L LYX turbo inline-4, 6-speed automatic, AWD](data/2021/chevrolet/equinox/1.5l-turbo-i4-awd.md) — researched / needs shop review
+- [2021 Ford F-150 — 3.5L EcoBoost V6, 10-speed automatic, 4x2](data/2021/ford/f-150/3.5l-ecoboost-v6-4x2.md) — researched / needs shop review
+- [2021 Ford F-150 — 5.0L V8, 10-speed automatic, 4x2](data/2021/ford/f-150/5.0l-v8-4x2.md) — researched / needs shop review
+- [2022 Jeep Grand Cherokee WK — 3.6L Pentastar V6, 8-speed automatic, 4x4](data/2022/jeep/grand-cherokee-wk/3.6l-v6-4x4.md) — researched / needs shop review
+
 ## Coverage queue
 
 - Continue mainstream US-market passenger cars, crossovers, SUVs, minivans, vans and light/medium-duty pickups.
