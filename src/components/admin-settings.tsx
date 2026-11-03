@@ -11,11 +11,10 @@ import {
   readSavedBranding,
   saveBranding
 } from "@/lib/branding";
-import { inspectionTemplates } from "@/lib/data";
-import { appointmentWindows, businessSchedule } from "@/lib/schedule";
 import { readSavedTheme, saveTheme, ThemeRoleColors } from "@/lib/theme";
 import { readPricingSettings, savePricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 import { fetchPrayerTimesFromAladhan, prayerBlockLabel, readPrayerScheduleSettings, savePrayerScheduleSettings, type PrayerBlock, type PrayerScheduleSettings } from "@/lib/prayer-times";
+import { isoDate, readScheduleSettings, saveScheduleSettings, SCHEDULE_DAYS, type ScheduleSettings } from "@/lib/schedule";
 import { SHARED_SETTINGS_ERROR_EVENT } from "@/lib/shared-settings";
 import { defaultMarketingSettings, readMarketingSettings, saveMarketingSettings, type MarketingSettings } from "@/lib/marketing-settings";
 import { PaymentSettingsPanel } from "@/components/payment-settings";
@@ -35,9 +34,14 @@ const brandPalettes = [
 ];
 
 const colorRoles = ["Primary buttons", "Sidebar", "Page background", "Accent icons"] as const;
-const dayOptions = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const timeOptions = ["6:00", "6:30", "7:00", "7:30", "8:00", "8:30", "9:00", "9:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "1:00", "1:30", "2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00", "5:30", "6:00", "6:30", "7:00"];
-const calendarDays = Array.from({ length: 30 }, (_, index) => index + 1);
+const clockOptions = Array.from({ length: 48 }, (_, index) => {
+  const hour = Math.floor(index / 2) % 12 || 12;
+  return `${hour}:${index % 2 ? "30" : "00"} ${index < 24 ? "AM" : "PM"}`;
+});
+const calendarMonths = Array.from({ length: 12 }, (_, index) => {
+  const date = new Date(new Date().getFullYear(), new Date().getMonth() + index, 1);
+  return { label: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }), year: date.getFullYear(), month: date.getMonth() };
+});
 
 export function AdminSettings() {
   // Brand settings: controls the browser icon, sidebar logo, and saved logo rotation.
@@ -50,15 +54,8 @@ export function AdminSettings() {
     "Page background": brandPalettes[0].colors[2],
     "Accent icons": brandPalettes[0].colors[3]
   });
-  const [workflowColumns, setWorkflowColumns] = useState(["Requested", "Scheduled", "In Progress", "Waiting Parts", "Awaiting Payment", "Complete"]);
-  const [enabledDays, setEnabledDays] = useState(dayOptions.slice(0, 5));
-  const [startTime, setStartTime] = useState("8:00");
-  const [startPeriod, setStartPeriod] = useState("AM");
-  const [endTime, setEndTime] = useState("5:00");
-  const [endPeriod, setEndPeriod] = useState("PM");
-  const [blockedDays, setBlockedDays] = useState([12, 18]);
-  const [calendarMonth, setCalendarMonth] = useState("June 2026");
-  const [serviceRadius, setServiceRadius] = useState("25");
+  const [schedule, setSchedule] = useState<ScheduleSettings>(() => readScheduleSettings());
+  const [calendarMonth, setCalendarMonth] = useState(calendarMonths[0].label);
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
   const [prayerSettings, setPrayerSettings] = useState<PrayerScheduleSettings>(() => readPrayerScheduleSettings());
   const [marketingSettings, setMarketingSettings] = useState<MarketingSettings>(() => readMarketingSettings());
@@ -84,6 +81,7 @@ export function AdminSettings() {
   }, []);
 
   useEffect(() => {
+    setSchedule(readScheduleSettings());
     setPricingSettings(readPricingSettings());
     setPrayerSettings(readPrayerScheduleSettings());
     setMarketingSettings(readMarketingSettings());
@@ -179,27 +177,25 @@ export function AdminSettings() {
     saveTheme(nextColors);
   }
 
-  function updateWorkflowColumn(index: number, value: string) {
-    setWorkflowColumns((current) => current.map((column, columnIndex) => columnIndex === index ? value : column));
-  }
-
-  function moveWorkflowColumn(index: number, direction: -1 | 1) {
-    setWorkflowColumns((current) => {
-      const nextIndex = index + direction;
-      if (nextIndex < 0 || nextIndex >= current.length) return current;
-      const next = [...current];
-      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
-      return next;
-    });
+  function updateSchedule(patch: Partial<ScheduleSettings>) {
+    const next = { ...schedule, ...patch };
+    setSchedule(next);
+    saveScheduleSettings(next);
   }
 
   function toggleDay(day: string) {
-    setEnabledDays((current) => current.includes(day) ? current.filter((item) => item !== day) : [...current, day]);
+    updateSchedule({ workDays: schedule.workDays.includes(day) ? schedule.workDays.filter((item) => item !== day) : [...schedule.workDays, day] });
   }
 
-  function toggleBlockedDay(day: number) {
-    setBlockedDays((current) => current.includes(day) ? current.filter((item) => item !== day) : [...current, day]);
+  function toggleBlockedDate(iso: string) {
+    updateSchedule({ blockedDates: schedule.blockedDates.includes(iso) ? schedule.blockedDates.filter((item) => item !== iso) : [...schedule.blockedDates, iso] });
   }
+
+  const shownMonth = calendarMonths.find((month) => month.label === calendarMonth) ?? calendarMonths[0];
+  const blockedCalendarDays = Array.from({ length: new Date(shownMonth.year, shownMonth.month + 1, 0).getDate() }, (_, index) => ({
+    day: index + 1,
+    iso: isoDate(new Date(shownMonth.year, shownMonth.month, index + 1))
+  }));
 
   return (
     <div className="settings-workspace">
@@ -208,7 +204,6 @@ export function AdminSettings() {
           <p className="section-label">Configurable admin workspace</p>
           <h1>Settings</h1>
         </div>
-        <button className="primary-button" onClick={() => { saveTheme(roleColors); savePricingSettings(pricingSettings); }}><Save size={16} /> Save draft settings</button>
       </section>
 
       <section className="settings-stack">
@@ -218,7 +213,7 @@ export function AdminSettings() {
       <CouponTaxManager />
       <PaymentSettingsPanel />
 
-        <details className="panel settings-accordion" open>
+        <details className="panel settings-accordion">
           <summary><span><BadgePercent size={16} /> Coupons: on or off, when and where</span><ChevronDown size={16} /></summary>
           <div className="settings-fields marketing-settings-fields">
             <label className="toggle-row wide-field"><input type="checkbox" checked={marketingSettings.couponsEnabled} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponsEnabled: event.target.checked })} /><span><strong>Show coupons to customers</strong> (turning this off hides them everywhere)</span></label>
@@ -240,7 +235,7 @@ export function AdminSettings() {
           </div>
         </details>
 
-        <details className="panel settings-accordion" open>
+        <details className="panel settings-accordion">
           <summary><span><BadgePercent size={16} /> Pop-up details, reviews, and homepage widget</span><ChevronDown size={16} /></summary>
           <div className="settings-fields marketing-settings-fields">
             <label><span>Popup delay seconds</span><input type="number" min="0" max="120" value={marketingSettings.couponPopupDelaySeconds} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupDelaySeconds: Number(event.target.value || 0) })} /></label>
@@ -258,17 +253,7 @@ export function AdminSettings() {
           </div>
         </details>
 
-        <details className="panel settings-accordion" open>
-          <summary><span><Cloud size={16} /> Google Photos, Drive, and Calendar readiness</span><ChevronDown size={16} /></summary>
-          <div className="settings-fields marketing-settings-fields">
-            <label><span>Google Photos work-order album flow</span><select value={marketingSettings.googlePhotosEnabled ? "planned" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, googlePhotosEnabled: event.target.value === "planned" })}><option value="off">Off / not authorized</option><option value="planned">Planned after Google OAuth</option></select></label>
-            <label><span>Google Drive ZIP archive</span><select value={marketingSettings.googleDriveArchiveEnabled ? "planned" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, googleDriveArchiveEnabled: event.target.value === "planned" })}><option value="off">Off / not authorized</option><option value="planned">Planned after Google OAuth</option></select></label>
-            <label><span>Google Calendar booking blocks</span><select value={marketingSettings.googleCalendarBookingEnabled ? "planned" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, googleCalendarBookingEnabled: event.target.value === "planned" })}><option value="off">Off / local blocks only</option><option value="planned">Planned after Calendar OAuth</option></select></label>
-            <p className="legal-note wide-field">Recommended architecture: Supabase remains the app database/storage index; Google Photos stores job-progress albums; Google Drive stores compressed per-work-order ZIP archives; Google Calendar becomes the private source for accepted work-order and prayer booking blocks. Google Contacts should mirror customer names/phone/email once OAuth scopes are approved. Google Sheets/Docs should receive professional year-to-date and year-end reconciliation exports. Production write access needs Google OAuth/server routes first.</p>
-          </div>
-        </details>
-
-        <details className="panel settings-accordion" open>
+        <details className="panel settings-accordion">
           <summary><span><Crown size={16} /> Logo and browser icon</span><ChevronDown size={16} /></summary>
           <div className="branding-settings-grid">
             <div className="brand-preview-card">
@@ -335,7 +320,7 @@ export function AdminSettings() {
           </div>
         </details>
 
-        <details className="panel settings-accordion" open>
+        <details className="panel settings-accordion">
           <summary><span><Palette size={16} /> Brand colors</span><ChevronDown size={16} /></summary>
           <div className="settings-fields">
             <label className="wide-field">
@@ -360,7 +345,7 @@ export function AdminSettings() {
 
 
 
-        <details className="panel settings-accordion" open>
+        <details className="panel settings-accordion">
           <summary><span><Wrench size={16} /> IAW estimate pricing</span><ChevronDown size={16} /></summary>
           <div className="settings-fields">
             <label>
@@ -379,7 +364,7 @@ export function AdminSettings() {
           </div>
         </details>
 
-        <details className="panel settings-accordion" open>
+        <details className="panel settings-accordion">
           <summary><span><Bell size={16} /> Prayer time blocks and reminders</span><ChevronDown size={16} /></summary>
           <div className="settings-fields prayer-settings-fields">
             <label><span>Enable prayer blocking</span><select value={prayerSettings.enabled ? "yes" : "no"} onChange={(event) => updatePrayerSettings({ ...prayerSettings, enabled: event.target.value === "yes" })}><option value="yes">Yes - show as booked windows</option><option value="no">No - keep as reminders only</option></select></label>
@@ -408,129 +393,51 @@ export function AdminSettings() {
           </div>
         </details>
 
-        <details className="panel settings-accordion" open>
-          <summary><span><SlidersHorizontal size={16} /> Workflow columns</span><ChevronDown size={16} /></summary>
-          <div className="workflow-column-editor">
-            {workflowColumns.map((column, index) => (
-              <div className="workflow-column-row" key={`${column}-${index}`}>
-                <strong>Position {index + 1}</strong>
-                <input value={column} onChange={(event) => updateWorkflowColumn(index, event.target.value)} />
-                <button onClick={() => moveWorkflowColumn(index, -1)} disabled={index === 0}>Up</button>
-                <button onClick={() => moveWorkflowColumn(index, 1)} disabled={index === workflowColumns.length - 1}>Down</button>
-              </div>
-            ))}
-          </div>
-        </details>
-
-        <details className="panel settings-accordion" open>
+        <details className="panel settings-accordion">
           <summary><span><MapPinned size={16} /> Service area and radius</span><ChevronDown size={16} /></summary>
-          <div className="service-radius-grid">
-            <div className="radius-map">
-              <div className="radius-ring" style={{ width: `${Number(serviceRadius) * 3}px`, height: `${Number(serviceRadius) * 3}px` }}>
-                <MapPinned size={28} />
-              </div>
-              <span>Auburn / Lewiston base</span>
-            </div>
-            <div className="settings-fields">
-              <label><span>Base location</span><input defaultValue="Auburn, ME" /></label>
-              <label><span>Included radius</span><select value={serviceRadius} onChange={(event) => setServiceRadius(event.target.value)}>
-                {["10", "15", "20", "25", "35", "50"].map((radius) => <option key={radius} value={radius}>{radius} miles</option>)}
-              </select></label>
-              <label><span>Outside-area fee</span><input defaultValue="$2.50 per mile after included radius" /></label>
-              <label><span>Customer message</span><input defaultValue="Outside service area may require an added travel fee." /></label>
-            </div>
+          <div className="settings-fields">
+            <label><span>Base location</span><input value={schedule.baseLocation} onChange={(event) => updateSchedule({ baseLocation: event.target.value })} /></label>
+            <label><span>Included radius (miles)</span><select value={String(schedule.includedRadiusMiles)} onChange={(event) => updateSchedule({ includedRadiusMiles: Number(event.target.value) })}>
+              {["10", "15", "20", "25", "35", "50"].map((radius) => <option key={radius} value={radius}>{radius} miles</option>)}
+            </select></label>
+            <label><span>Outside-area fee</span><input value={schedule.outsideRadiusFee} onChange={(event) => updateSchedule({ outsideRadiusFee: event.target.value })} /></label>
+            <label><span>Area shown to customers</span><input value={schedule.serviceArea} onChange={(event) => updateSchedule({ serviceArea: event.target.value })} /></label>
           </div>
         </details>
 
-        <details className="panel settings-accordion" open>
+        <details className="panel settings-accordion">
           <summary><span><Clock3 size={16} /> Working days and hours</span><ChevronDown size={16} /></summary>
           <div className="day-toggle-row">
-            {dayOptions.map((day) => (
-              <button className={enabledDays.includes(day) ? "toggle-pill selected" : "toggle-pill"} key={day} onClick={() => toggleDay(day)}>
+            {SCHEDULE_DAYS.map((day) => (
+              <button aria-pressed={schedule.workDays.includes(day)} className={schedule.workDays.includes(day) ? "toggle-pill selected" : "toggle-pill"} key={day} onClick={() => toggleDay(day)} type="button">
                 {day}
               </button>
             ))}
           </div>
           <div className="time-editor-grid">
-            <label><span>Open</span><select value={startTime} onChange={(event) => setStartTime(event.target.value)}>{timeOptions.map((time, index) => <option key={`start-${time}-${index}`}>{time}</option>)}</select></label>
-            <label><span>AM / PM</span><select value={startPeriod} onChange={(event) => setStartPeriod(event.target.value)}><option>AM</option><option>PM</option></select></label>
-            <label><span>Close</span><select value={endTime} onChange={(event) => setEndTime(event.target.value)}>{timeOptions.map((time, index) => <option key={`end-${time}-${index}`}>{time}</option>)}</select></label>
-            <label><span>AM / PM</span><select value={endPeriod} onChange={(event) => setEndPeriod(event.target.value)}><option>AM</option><option>PM</option></select></label>
+            <label><span>Open</span><select value={schedule.openTime} onChange={(event) => updateSchedule({ openTime: event.target.value })}>{clockOptions.map((time) => <option key={time}>{time}</option>)}</select></label>
+            <label><span>Close</span><select value={schedule.closeTime} onChange={(event) => updateSchedule({ closeTime: event.target.value })}>{clockOptions.map((time) => <option key={time}>{time}</option>)}</select></label>
           </div>
+          <p className="legal-note">Customers can only pick these days and times. You can still book any time yourself under New work order.</p>
         </details>
 
-        <details className="panel settings-accordion" open>
+        <details className="panel settings-accordion">
           <summary><span><CalendarClock size={16} /> Blocked dates</span><ChevronDown size={16} /></summary>
           <label className="wide-field">
-            <span>Calendar month</span>
+            <span>Month</span>
             <select value={calendarMonth} onChange={(event) => setCalendarMonth(event.target.value)}>
-              {["June 2026", "July 2026", "August 2026", "September 2026"].map((month) => <option key={month}>{month}</option>)}
+              {calendarMonths.map((month) => <option key={month.label}>{month.label}</option>)}
             </select>
           </label>
           <div className="blocked-calendar-grid">
-            {calendarDays.map((day) => (
-              <button className={blockedDays.includes(day) ? "blocked" : ""} key={day} onClick={() => toggleBlockedDay(day)}>
+            {blockedCalendarDays.map(({ day, iso }) => (
+              <button className={schedule.blockedDates.includes(iso) ? "blocked" : ""} key={iso} onClick={() => toggleBlockedDate(iso)} type="button">
                 <strong>{day}</strong>
-                <span>{blockedDays.includes(day) ? "Blocked" : "Open"}</span>
+                <span>{schedule.blockedDates.includes(iso) ? "Blocked" : "Open"}</span>
               </button>
             ))}
           </div>
         </details>
-
-        <div className="panel template-panel">
-          <div className="panel-title">
-            <h2>Inspection templates</h2>
-            <FileText />
-          </div>
-          {inspectionTemplates.map((template) => (
-            <div className="template-row" key={template.name}>
-              <div>
-                <strong>{template.name}</strong>
-                <span>{template.items} items - {template.requiredPhotos} required photos</span>
-              </div>
-              <em>{template.status}</em>
-            </div>
-          ))}
-        </div>
-
-        <div className="panel schedule-config-panel">
-          <div className="panel-title">
-            <div>
-              <p className="section-label">Customer booking rules</p>
-              <h2>Hours and appointment availability</h2>
-            </div>
-            <CalendarClock />
-          </div>
-          <div className="schedule-summary-grid">
-            <div>
-              <span>Work days</span>
-              <strong>{enabledDays.join(", ")}</strong>
-            </div>
-            <div>
-              <span>Hours</span>
-              <strong>{startTime} {startPeriod} - {endTime} {endPeriod}</strong>
-            </div>
-            <div>
-              <span>Service area</span>
-              <strong>{businessSchedule.serviceArea} - {serviceRadius} mile included radius</strong>
-            </div>
-            <div>
-              <span>Google Calendar</span>
-              <strong>{businessSchedule.googleCalendarStatus}</strong>
-            </div>
-          </div>
-          <div className="appointment-window-list">
-            {appointmentWindows.map((window) => (
-              <div className={window.booked ? "appointment-window booked" : "appointment-window"} key={window.label}>
-                <div>
-                  <strong>{window.label}</strong>
-                  <span>{window.reason}</span>
-                </div>
-                <em>{window.booked ? "Blocked" : "Open"}</em>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
     </div>
   );

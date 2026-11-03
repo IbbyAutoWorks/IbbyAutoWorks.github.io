@@ -4,7 +4,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-client";
 // customer and device. This browser keeps a copy so pages can read them instantly.
 // That row is publicly readable: never store anything secret through here.
 
-export type SharedSettingName = "pricing" | "marketing" | "payment" | "theme" | "branding" | "prayer" | "taxBooks";
+export type SharedSettingName = "pricing" | "marketing" | "payment" | "theme" | "branding" | "prayer" | "taxBooks" | "schedule";
 
 export const SHARED_SETTINGS_PULLED_EVENT = "ibbys-auto.shared-settings.pulled";
 export const SHARED_SETTINGS_ERROR_EVENT = "ibbys-auto.shared-settings.error";
@@ -16,7 +16,8 @@ const targets: Record<SharedSettingName, { key: string; event: string }> = {
   theme: { key: "ibbys-auto.theme", event: "ibbys-auto.theme.changed" },
   branding: { key: "ibbys-auto.branding", event: "ibbys-auto.branding.changed" },
   prayer: { key: "ibbys-auto.prayer-schedule-settings", event: "ibbys-auto.prayer-settings.changed" },
-  taxBooks: { key: "ibbys-auto.tax-books", event: "ibbys-auto.tax-books.changed" }
+  taxBooks: { key: "ibbys-auto.tax-books", event: "ibbys-auto.tax-books.changed" },
+  schedule: { key: "ibbys-auto.schedule-settings", event: "ibbys-auto.schedule-settings.changed" }
 };
 
 // Uploaded logos are stored inline; every visitor downloads this row, so keep it small.

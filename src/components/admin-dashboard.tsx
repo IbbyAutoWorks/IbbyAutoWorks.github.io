@@ -13,7 +13,6 @@ import { OpsStatusPanel } from "@/components/ops-status-panel";
 import { AdminPrayerReminder } from "@/components/marketing-widgets";
 import {
   CUSTOMER_RECORDS_EVENT,
-  clearPrototypeWorkOrders,
   getCustomerOrders,
   getServiceReminders,
   PrototypePartQuote,
@@ -227,7 +226,6 @@ export function AdminDashboard() {
                 <strong>{customerOrders.length} customer-submitted request{customerOrders.length === 1 ? "" : "s"}</strong>
                 <span>Loaded from the customer portal prototype store.</span>
               </div>
-              <button onClick={() => { clearPrototypeWorkOrders(); setCustomerOrders([]); setSelectedOrderId(""); }}><RotateCcw size={14} /> Clear demo requests</button>
             </div>
           ) : null}
           <div className="filter-strip">
