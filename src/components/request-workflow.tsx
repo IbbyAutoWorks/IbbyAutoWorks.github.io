@@ -2,19 +2,21 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell, CalendarClock, Camera, Car, CheckCircle2, KeyRound, LocateFixed, MapPin, PackageCheck, Scale, Send, UserRound, X } from "lucide-react";
+import { Bell, CalendarClock, Car, CheckCircle2, KeyRound, LocateFixed, MapPin, PackageCheck, Scale, Send, UserRound, X } from "lucide-react";
 
 import { agreementSummaries, defaultAgreementAcceptance, hasRequiredAgreementAcceptance, partsReturnOptions, type AgreementId, type PartsReturnPreference } from "@/lib/agreements";
 import { serviceOptions, timeline } from "@/lib/data";
-import { estimateServices, estimateTieredTotal, formatPriceRange, tierLabels, vehicleHintFromContext, type PartTier } from "@/lib/parts";
+import { estimateServices, estimateTieredTotal, formatPriceRange, tierLabels, vehicleHintFromContext, type GradeFallback, type PartTier } from "@/lib/parts";
 import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 import { buildPrototypeInspection, buildPrototypeParts, CUSTOMER_RECORDS_EVENT, defaultCustomerPreferences, defaultServiceMeasurements, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, savePrototypeWorkOrder } from "@/lib/local-store";
-import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/lib/schedule";
+import { dayIsOpen, hoursLabel, nextOpenDate, readScheduleSettings, SCHEDULE_SETTINGS_EVENT, timeIsOpen, type ScheduleSettings } from "@/lib/schedule";
 import { fallbackVehicleSpec, findVehicleSpec } from "@/lib/vehicles";
 import { emptyVehicleConfig, engineLabel, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
 import { VehiclePicker } from "@/components/vehicle-picker";
 import { readPrayerScheduleSettings, prayerBlockLabel, timeToMinutes, effectivePrayerTime, type PrayerScheduleSettings } from "@/lib/prayer-times";
 import { ServiceSelector } from "@/components/service-selector";
+import { LegalText } from "@/components/legal-text";
+import { legalDocument } from "@/lib/legal-documents";
 import { CustomerPaymentOptions } from "@/components/customer-payment-options";
 import { CustomerPromoOffers } from "@/components/customer-promo-offers";
 
@@ -33,16 +35,7 @@ const monthOptions = ["January", "February", "March", "April", "May", "June", "J
 const yearOptions = Array.from({ length: 37 }, (_, index) => String(new Date().getFullYear() + 6 - index));
 const today = new Date();
 const todayIsoDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-const appointmentDays = [
-  { day: 8, label: "Mon", date: "2026-06-08", booked: false },
-  { day: 9, label: "Tue", date: "2026-06-09", booked: false },
-  { day: 10, label: "Wed", date: "2026-06-10", booked: true },
-  { day: 11, label: "Thu", date: "2026-06-11", booked: false },
-  { day: 12, label: "Fri", date: "2026-06-12", booked: true },
-  { day: 13, label: "Sat", date: "2026-06-13", booked: false },
-  { day: 14, label: "Sun", date: "2026-06-14", booked: true }
-];
-const appointmentTimes = ["8:00", "8:30", "9:00", "9:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "1:00", "1:30", "2:00", "2:30", "3:00", "3:30", "4:00", "4:30"];
+const appointmentTimes = ["12:00", "12:30", ...Array.from({ length: 11 }, (_, index) => [`${index + 1}:00`, `${index + 1}:30`]).flat()];
 function appointmentTimeToMinutes(time: string, period: string) {
   const [hourText, minuteText] = time.split(":");
   let hour = Number(hourText) || 0;
@@ -74,6 +67,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [selectedSupplierChoices, setSelectedSupplierChoices] = useState<Record<string, string>>({});
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
   const [prayerSettings, setPrayerSettings] = useState<PrayerScheduleSettings>(() => readPrayerScheduleSettings());
+  const [schedule, setSchedule] = useState<ScheduleSettings>(() => readScheduleSettings());
+  const [firstOpenDate] = useState(() => nextOpenDate(readScheduleSettings()));
   const [submittedOrder, setSubmittedOrder] = useState<PrototypeWorkOrder | null>(null);
   const [savedCustomers, setSavedCustomers] = useState<PrototypeCustomerRecord[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
@@ -85,6 +80,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [vehicleConfig, setVehicleConfig] = useState<VehicleConfig>(emptyVehicleConfig);
   // Customer's price tier per selected job (Value / Recommended / Premium).
   const [serviceTiers, setServiceTiers] = useState<Record<string, PartTier>>({});
+  const [gradeFallback, setGradeFallback] = useState<GradeFallback>("call");
+  const [viewingAgreement, setViewingAgreement] = useState("");
   const [form, setForm] = useState({
     name: "",
     firstName: "",
@@ -107,16 +104,14 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     inspectionYear: "",
     registrationMonth: "",
     registrationYear: "",
-    appointmentMonth: appointmentMonths[0].label,
-    appointmentDay: String(today.getDate()),
-    appointmentDate: todayIsoDate,
+    appointmentMonth: new Date(`${firstOpenDate}T12:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    appointmentDay: String(Number(firstOpenDate.slice(8))),
+    appointmentDate: firstOpenDate,
     appointmentTime: "8:00",
     appointmentPeriod: "AM",
-    preferredWindow: appointmentWindows.find((window) => !window.booked)?.label ?? appointmentWindows[0]?.label ?? "",
     symptoms: ""
   });
   const agreementsReady = isAdminMode || hasRequiredAgreementAcceptance(agreementAcceptance);
-  const selectedWindow = findAppointmentWindow(form.preferredWindow);
   const needsTirePosition = selectedServices.includes("Single tire repair");
   const selectedAppointmentMonth = appointmentMonths.find((month) => month.label === form.appointmentMonth) ?? appointmentMonths[0];
   const calendarDayCount = new Date(selectedAppointmentMonth.year, selectedAppointmentMonth.month + 1, 0).getDate();
@@ -124,7 +119,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
     const day = index + 1;
     const date = new Date(selectedAppointmentMonth.year, selectedAppointmentMonth.month, day);
     const isoDate = `${selectedAppointmentMonth.year}-${String(selectedAppointmentMonth.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const booked = appointmentDays.some((item) => item.date === isoDate && item.booked);
+    const booked = !isAdminMode && !dayIsOpen(schedule, isoDate);
     return { day, date: isoDate, label: date.toLocaleDateString("en-US", { weekday: "short" }), booked };
   });
   const selectedAppointmentDay = appointmentCalendarDays.find((day) => day.date === form.appointmentDate) ?? appointmentCalendarDays[0];
@@ -135,7 +130,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       return {
         className: "service-area-card",
         label: "Enter service address",
-        detail: `Included mobile radius starts from ${businessSchedule.baseLocation}.`
+        detail: `Included mobile radius starts from ${schedule.baseLocation}.`
       };
     }
     const townMatch = includedServiceTowns.find((town) => normalizedAddress.includes(town));
@@ -143,12 +138,12 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       ? {
           className: "service-area-card in-range",
           label: "Inside mobile service radius",
-          detail: `${townMatch.replace(/\b\w/g, (letter) => letter.toUpperCase())} is treated as inside the ${businessSchedule.includedRadiusMiles}-mile included radius.`
+          detail: `${townMatch.replace(/\b\w/g, (letter) => letter.toUpperCase())} is treated as inside the ${schedule.includedRadiusMiles}-mile included radius.`
         }
       : {
           className: "service-area-card out-range",
           label: "May be outside included radius",
-          detail: `${businessSchedule.outsideRadiusFee}. Final mileage should be confirmed by map routing before acceptance.`
+          detail: `${schedule.outsideRadiusFee}. Final mileage should be confirmed by map routing before acceptance.`
         };
   }, [form.address, form.town, form.serviceState]);
 
@@ -164,6 +159,23 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
 
     return () => window.clearTimeout(timeout);
   }, []);
+
+  // Settings can arrive after the page opens; keep the chosen day on one that's open.
+  useEffect(() => {
+    function syncSchedule() {
+      const next = readScheduleSettings();
+      setSchedule(next);
+      if (isAdminMode) return;
+      setForm((current) => {
+        if (dayIsOpen(next, current.appointmentDate)) return current;
+        const date = nextOpenDate(next);
+        return { ...current, appointmentDate: date, appointmentDay: String(Number(date.slice(8))), appointmentMonth: new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" }) };
+      });
+    }
+    syncSchedule();
+    window.addEventListener(SCHEDULE_SETTINGS_EVENT, syncSchedule);
+    return () => window.removeEventListener(SCHEDULE_SETTINGS_EVENT, syncSchedule);
+  }, [isAdminMode]);
 
   useEffect(() => {
     function syncPricingSettings() {
@@ -217,6 +229,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const tieredTotal = useMemo(() => estimateTieredTotal(selectedServices, serviceTiers, pricingSettings, vehicleHint), [selectedServices, serviceTiers, pricingSettings, vehicleHint]);
   const selectedAppointmentMinutes = appointmentTimeToMinutes(form.appointmentTime, form.appointmentPeriod);
   const activePrayerBlocks = prayerSettings.enabled ? prayerSettings.blocks.filter((block) => block.enabled) : [];
+  const selectedTimeClosed = !isAdminMode && !timeIsOpen(schedule, `${form.appointmentTime} ${form.appointmentPeriod}`);
   const selectedPrayerConflict = activePrayerBlocks.find((block) => {
     const start = timeToMinutes(effectivePrayerTime(block));
     const end = start + block.durationMinutes;
@@ -249,7 +262,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       rows: [
         ["Services", selectedServices.length ? selectedServices.join(", ") : "None selected"],
         ["Tire position", needsTirePosition ? tireConcern : "Not needed"],
-        ["Draft estimate", selectedServices.length ? formatPriceRange(tieredTotal) : "Pending service selection"],
+        ["Estimate", selectedServices.length ? formatPriceRange(tieredTotal) : "Pending service selection"],
         ["Distributor choices", selectedDistributorSummary || "Customer can compare/select during parts review"],
         ["Symptoms / notes", form.symptoms || "No symptoms entered"]
       ]
@@ -258,9 +271,8 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       title: "Appointment",
       rows: [
         ["Preferred window", preferredWindow],
-        ["Availability", selectedPrayerConflict ? `Prayer block: ${selectedPrayerConflict.name}` : selectedAppointmentDay?.booked ? "Booked" : "Open"],
-        ["Business hours", businessSchedule.hours],
-        ["Google Calendar", businessSchedule.googleCalendarStatus]
+        ["Availability", selectedPrayerConflict ? `Prayer block: ${selectedPrayerConflict.name}` : selectedAppointmentDay?.booked ? "Closed" : selectedTimeClosed ? "Outside business hours" : "Open"],
+        ["Business hours", hoursLabel(schedule)]
       ]
     },
     {
@@ -285,6 +297,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   function missingForStep(step: number): string[] {
     if (isAdminMode) return [];
     const missing: string[] = [];
+    if (step === 3 && (selectedAppointmentDay?.booked || selectedTimeClosed || selectedPrayerConflict)) missing.push("a day and time we're open");
     if (step === 0) {
       if (!form.firstName.trim()) missing.push("first name");
       if (!form.phone.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim())) missing.push("a phone number or valid email");
@@ -423,9 +436,11 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       service: selectedServices.length ? (needsTirePosition ? `${selectedServices.join(", ")} (${tireConcern} tire)` : selectedServices.join(", ")) : "Service pending",
       services: selectedServices,
       tier: serviceTiers[selectedServices[0]] ?? "mid",
+      gradeFallback,
       serviceTiers: Object.fromEntries(selectedServices.map((service) => [service, serviceTiers[service] ?? "mid"])),
       estimate: selectedServices.length ? formatPriceRange(tieredTotal) : "Pending",
       preferredWindow,
+      appointmentDate: form.appointmentDate,
       symptoms: `${form.symptoms || "No symptoms entered"}${needsTirePosition ? ` Tire needing attention: ${tireConcern}.` : ""}`,
       status: isAdminMode ? "Scheduled" : "Requested",
       due: preferredWindow || "Needs scheduling",
@@ -464,21 +479,33 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
 
   return (
     <div className="request-workflow">
+      {viewingAgreement ? (
+        <div className="vin-scanner-overlay" role="dialog" aria-label={legalDocument(viewingAgreement)?.title}>
+          <div className="vin-scanner agreement-reader">
+            <div className="panel-title">
+              <h2>{legalDocument(viewingAgreement)?.title}</h2>
+              <button className="icon-button" aria-label="Close agreement" onClick={() => setViewingAgreement("")} type="button"><X size={18} /></button>
+            </div>
+            <div className="agreement-reader-body"><LegalText text={legalDocument(viewingAgreement)?.text ?? ""} /></div>
+            <button className="primary-button" onClick={() => setViewingAgreement("")} type="button">Back to the form</button>
+          </div>
+        </div>
+      ) : null}
       {/* Request overview: explains the intake flow and shows the live draft estimate. */}
       <section className="request-overview">
         <div>
           <p className="section-label">Customer work request</p>
-          <h1>{isAdminMode ? "Admin intake for a customer work order." : "Build a work order with vehicle, service, appointment, photos, and contact details."}</h1>
+          <h1>{isAdminMode ? "New work order" : "Request service"}</h1>
           <p>
             {isAdminMode
               ? "Use the same intake flow for phone, in-person, or admin-entered requests. Customer-only authorization prompts are skipped here."
-              : "This request saves to the work-order board and syncs to Supabase when you are signed in; local storage remains the offline fallback."}
+              : "Tell us what you need. You'll see a price range before anything's booked, and we'll confirm the time with you."}
           </p>
         </div>
         <div className="estimate-summary">
-          <span>Draft estimate range</span>
+          <span>Estimated price range</span>
           <strong>{selectedServices.length ? formatPriceRange(tieredTotal) : "Pending"}</strong>
-          <small>{selectedServices.length ? `${selectedServices.map((service) => `${service}: ${tierLabels[serviceTiers[service] ?? "mid"]}`).join(" - ")}` : "Select requested services to calculate parts, labor, and draft price range."}</small>
+          <small>{selectedServices.length ? `${selectedServices.map((service) => `${service}: ${tierLabels[serviceTiers[service] ?? "mid"]}`).join(" - ")}` : "Pick your services to see a price range for parts and labor."}</small>
         </div>
       </section>
 
@@ -604,7 +631,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <h2>Requested services</h2>
             <Car />
           </div>
-          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} vehicleContext={[activeVehicleContext, vehicleHint.fuel === "Diesel" ? "diesel" : ""].filter(Boolean).join(" ")} areaContext={activeAreaContext} audience={isAdminMode ? "staff" : "customer"} serviceTiers={serviceTiers} onTierChange={(service, tier) => setServiceTiers((current) => ({ ...current, [service]: tier }))} />
+          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} vehicleContext={[activeVehicleContext, vehicleHint.fuel === "Diesel" ? "diesel" : ""].filter(Boolean).join(" ")} areaContext={activeAreaContext} audience={isAdminMode ? "staff" : "customer"} serviceTiers={serviceTiers} onTierChange={(service, tier) => setServiceTiers((current) => ({ ...current, [service]: tier }))} gradeFallback={gradeFallback} onGradeFallbackChange={setGradeFallback} />
           {selectedServices.length ? (
             <div className="selected-service-removal-row">
               {selectedServices.map((service) => (
@@ -645,14 +672,14 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
                 const day = event.target.value;
                 updateForm("appointmentDay", day);
                 updateForm("appointmentDate", `${selectedAppointmentMonth.year}-${String(selectedAppointmentMonth.month + 1).padStart(2, "0")}-${String(Number(day)).padStart(2, "0")}`);
-              }}>{appointmentCalendarDays.map((day) => <option disabled={day.booked} key={day.date} value={String(day.day)}>{day.day} - {day.booked ? "Booked" : "Open"}</option>)}</select></label>
+              }}>{appointmentCalendarDays.map((day) => <option disabled={day.booked} key={day.date} value={String(day.day)}>{day.day} - {day.booked ? "Closed" : "Open"}</option>)}</select></label>
             </div>
             <div className="request-calendar-grid full-calendar-grid">
               {appointmentCalendarDays.map((day) => (
                 <button className={form.appointmentDate === day.date ? "selected" : day.booked ? "booked" : ""} disabled={day.booked} key={day.date} onClick={() => setForm((current) => ({ ...current, appointmentDate: day.date, appointmentDay: String(day.day) }))}>
                   <span>{day.label}</span>
                   <strong>{day.day}</strong>
-                  <small>{day.booked ? "Booked" : "Open"}</small>
+                  <small>{day.booked ? "Closed" : "Open"}</small>
                 </button>
               ))}
             </div>
@@ -660,21 +687,21 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
               <label><span>Time</span><select value={form.appointmentTime} onChange={(event) => updateForm("appointmentTime", event.target.value)}>{appointmentTimes.map((time) => {
                 const minutes = appointmentTimeToMinutes(time, form.appointmentPeriod);
                 const blockedByPrayer = activePrayerBlocks.find((block) => minutes >= timeToMinutes(effectivePrayerTime(block)) && minutes < timeToMinutes(effectivePrayerTime(block)) + block.durationMinutes);
-                return <option disabled={Boolean(blockedByPrayer)} key={time}>{time}{blockedByPrayer ? ` - Prayer block (${blockedByPrayer.name})` : ""}</option>;
+                const closed = !isAdminMode && !timeIsOpen(schedule, `${time} ${form.appointmentPeriod}`);
+                return <option disabled={Boolean(blockedByPrayer) || closed} key={time}>{time}{blockedByPrayer ? ` - Prayer block (${blockedByPrayer.name})` : closed ? " - Closed" : ""}</option>;
               })}</select></label>
               <label><span>AM / PM</span><select value={form.appointmentPeriod} onChange={(event) => updateForm("appointmentPeriod", event.target.value)}><option>AM</option><option>PM</option></select></label>
             </div>
-            <div className={selectedPrayerConflict || selectedAppointmentDay?.booked ? "availability-card booked" : "availability-card"}>
-              <strong>{selectedPrayerConflict ? `Blocked for ${selectedPrayerConflict.name}` : selectedAppointmentDay?.booked ? "Booked" : "Available"}</strong>
-              <span>{preferredWindow} - Hours: {businessSchedule.hours}</span>
-              <small>{selectedPrayerConflict ? prayerBlockLabel(selectedPrayerConflict) : `Google Calendar: ${businessSchedule.googleCalendarStatus}`}</small>
+            <div className={selectedPrayerConflict || selectedAppointmentDay?.booked || selectedTimeClosed ? "availability-card booked" : "availability-card"}>
+              <strong>{selectedPrayerConflict ? `Blocked for ${selectedPrayerConflict.name}` : selectedAppointmentDay?.booked ? "Closed that day" : selectedTimeClosed ? "Outside business hours" : "Open"}</strong>
+              <span>{preferredWindow} - Hours: {hoursLabel(schedule)}</span>
+              <small>{selectedPrayerConflict ? prayerBlockLabel(selectedPrayerConflict) : "This is your preferred time. We'll confirm it with you."}</small>
             </div>
             {activePrayerBlocks.length ? (
               <div className="prayer-window-strip">
                 {activePrayerBlocks.map((block) => <span key={block.name}>{prayerBlockLabel(block)} · reminder {block.reminderMinutes} min before</span>)}
               </div>
             ) : null}
-            <button className="secondary-button"><Camera size={15} /> Add photos of issue or vehicle</button>
           </div>
         </div>
         </div>
@@ -704,7 +731,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
                 <div>
                   <strong>{agreement.title}</strong>
                   <span>{agreement.summary}</span>
-                  <small><a href={agreement.url} target="_blank" rel="noreferrer">View agreement file</a></small>
+                  <small><button className="link-button" onClick={(event) => { event.preventDefault(); setViewingAgreement(agreement.slug); }} type="button">Read the full agreement</button></small>
                 </div>
               </label>
             ))}
@@ -760,7 +787,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <FileReviewIcon />
           </div>
           <p className="legal-note">Review each section before submitting. The admin dashboard will receive this as a new work order and link it to matching customer history when the contact and vehicle details match.</p>
-          {!isAdminMode ? <CustomerPromoOffers /> : null}
+          {!isAdminMode ? <CustomerPromoOffers place="request" /> : null}
           <div className="request-review-grid">
             {reviewGroups.map((group) => (
               <div className="request-review-card" key={group.title}>

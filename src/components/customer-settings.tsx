@@ -136,7 +136,7 @@ export function CustomerSettings() {
       <section className="admin-header">
         <div>
           <p className="section-label">Customer settings</p>
-          <h1>Profile, review, web app preferences, and saved contact details.</h1>
+          <h1>Your profile and preferences</h1>
         </div>
         <button className="primary-button" onClick={saveCustomerSettings}><Save size={16} /> Save customer settings</button>
       </section>

@@ -67,22 +67,27 @@ const supplierSearchBases = [
   { name: "Advance Auto Parts", type: "Local pickup" as const, color: "#f2a600", base: "https://shop.advanceautoparts.com/web/SearchResults?searchTerm=", fulfillment: "Local pickup or ship-to-home" },
   { name: "NAPA Auto Parts", type: "Local pickup" as const, color: "#145bd7", base: "https://www.napaonline.com/en/search?text=", fulfillment: "Local store pickup or PROLink when connected" },
   { name: "AutoZone", type: "Local pickup" as const, color: "#dc2b26", base: "https://www.autozone.com/searchresult?searchText=", fulfillment: "Local pickup or AutoZonePro when connected" },
-  { name: "Pep Boys", type: "Local pickup" as const, color: "#d8272f", base: "https://www.pepboys.com/search?text=", fulfillment: "Local pickup/service options where available" },
   { name: "Walmart Auto", type: "Local pickup" as const, color: "#0071ce", base: "https://www.walmart.com/search?q=", fulfillment: "Local pickup or ship-to-home for common maintenance items" },
   { name: "1A Auto", type: "Online" as const, color: "#234f9b", base: "https://www.1aauto.com/search?q=", fulfillment: "Online order, how-to supported fitment check" },
   { name: "RockAuto", type: "Online" as const, color: "#7f1d1d", base: "https://www.rockauto.com/en/partsearch/?partnum=", fulfillment: "Online order, shipping time required" }
 ];
 
+// A saved part number finds the exact part, which a vehicle-and-words search can't promise.
+export function partNumberLinks(partNumber: string) {
+  const number = partNumber.trim();
+  if (!number) return [];
+  return supplierSearchBases
+    .filter((source) => ["O'Reilly Auto Parts", "NAPA Auto Parts", "AutoZone", "Advance Auto Parts", "RockAuto"].includes(source.name))
+    .map((source) => ({ name: source.name, url: `${source.base}${encodeURIComponent(number)}` }));
+}
+
 const tireSearchBases = [
   { name: "VIP Tires & Service", type: "Tire" as const, color: "#2f6fbd", base: "https://www.vipauto.com/tires/search?query=", fulfillment: "Regional tire/service lookup, local install confirmation required" },
   { name: "Sullivan Tire", type: "Tire" as const, color: "#b6202b", base: "https://www.sullivantire.com/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" },
-  { name: "NTW", type: "Tire" as const, color: "#4c5b6b", base: "https://www.ntw.com/search?query=", fulfillment: "Wholesale tire source, account/availability confirmation required" },
-  { name: "Max Finkelstein", type: "Tire" as const, color: "#6c4f9b", base: "https://www.maxfinkelstein.com/search?query=", fulfillment: "Wholesale/local distributor lookup when account access is connected" },
   { name: "Tire Rack", type: "Tire" as const, color: "#cc2530", base: "https://www.tirerack.com/tires/tires.jsp?keyword=", fulfillment: "Online tire order, installer/pickup planning required" },
   { name: "Discount Tire", type: "Tire" as const, color: "#d71920", base: "https://www.discounttire.com/search?q=", fulfillment: "Online/local tire lookup where available" },
   { name: "Mavis Discount Tire", type: "Tire" as const, color: "#1168b3", base: "https://www.mavis.com/search?q=", fulfillment: "Regional tire/service lookup" },
   { name: "Town Fair Tire", type: "Tire" as const, color: "#1f4b8f", base: "https://www.townfairtire.com/search?q=", fulfillment: "Regional tire/service lookup" },
-  { name: "Tire Warehouse", type: "Tire" as const, color: "#344256", base: "https://www.tirewarehouse.net/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" }
 ];
 
 
@@ -174,10 +179,6 @@ export const estimatePartCategories: EstimatePartCategory[] = [
     { label: "Electrical hardware", parts: ["electrical connector clips", "battery terminal bolts", "ground strap bolts", "wire loom clips", "fuse assortment"] },
     { label: "General shop hardware", parts: ["metric bolt assortment", "metric nut assortment", "washer assortment", "cotter pins", "thread locker"] }
   ] }
-];
-
-export const popularEstimateQueries = [
-  "front brake pads", "rear brake pads", "oil change", "front wiper blades", "low beam bulb", "battery", "single tire repair", "tire replacement", "check engine light diagnostic", "cooling", "transmission", "suspension", "exhaust", "hardware"
 ];
 
 export function flatEstimateCategoryParts() {
@@ -586,7 +587,14 @@ export type TierEstimate = {
   total: PriceRange;
 };
 
-export const tierLabels: Record<PartTier, string> = { low: "Value", mid: "Recommended", high: "Premium" };
+export type GradeFallback = "call" | "closest" | "reschedule";
+export const gradeFallbackOptions: Array<{ value: GradeFallback; label: string }> = [
+  { value: "call", label: "Call me and we'll decide together" },
+  { value: "closest", label: "Use the closest grade in stock and keep my appointment" },
+  { value: "reschedule", label: "Reschedule so I get the grade I picked" }
+];
+
+export const tierLabels: Record<PartTier, string> = { low: "Regular", mid: "Midgrade", high: "Performance" };
 export const partTiers: PartTier[] = ["low", "mid", "high"];
 
 // "2021 Toyota RAV4 2.5L 4-cyl" -> engine hints used for fluid quantities.
@@ -639,23 +647,22 @@ function tierUnitPrice(part: string, tier: PartTier, vehicle?: VehicleHint): Pri
   return { min: band.min + third * index, max: band.min + third * (index + 1) };
 }
 
+// What each grade means for this kind of part, in plain language.
 const tierDescriptions: Array<{ match: RegExp; text: Record<PartTier, string> }> = [
-  { match: /oil/i, text: {
-    low: "Conventional or synthetic-blend oil that meets your engine's spec, economy filter.",
-    mid: "Full synthetic oil to your engine's spec and a quality name-brand filter.",
-    high: "Top-brand full synthetic (Mobil 1, Castrol Edge or OEM) and a premium or OEM filter."
-  } },
-  { match: /tire/i, text: {
-    low: "Budget brand tires sized for your vehicle.",
-    mid: "Name-brand all-season tires with a solid treadwear warranty.",
-    high: "Premium or performance tires (Michelin, Bridgestone class)."
-  } }
+  { match: /oil/i, text: { low: "Conventional or synthetic-blend oil that meets your engine's spec, standard filter.", mid: "Full synthetic oil to your engine's spec and a quality name-brand filter.", high: "Top-brand full synthetic (Mobil 1, Castrol Edge or OEM) and a premium or OEM filter." } },
+  { match: /brake|pads?|rotor/i, text: { low: "Standard pads and rotors for everyday driving.", mid: "Quiet, low-dust ceramic pads and coated rotors.", high: "Premium or performance pads and rotors for heavier use, towing or spirited driving." } },
+  { match: /tire/i, text: { low: "Budget-brand tires sized for your vehicle.", mid: "Name-brand all-season tires with a solid treadwear warranty.", high: "Premium or performance tires (Michelin or Bridgestone class)." } },
+  { match: /battery/i, text: { low: "Standard flooded battery with a shorter warranty.", mid: "Longer-warranty battery with more cold-cranking power.", high: "Premium AGM battery where your vehicle supports it." } },
+  { match: /spark plug/i, text: { low: "Copper or standard plugs where your engine allows them.", mid: "Platinum plugs with a longer service life.", high: "Iridium or OEM plugs with the longest service life." } },
+  { match: /wiper/i, text: { low: "Standard frame blades.", mid: "Beam blades for better contact and winter use.", high: "Premium or hybrid silicone blades." } },
+  { match: /strut|shock/i, text: { low: "Standard replacement ride quality.", mid: "Name-brand assemblies matching original ride.", high: "Heavy-duty or OEM units for load or firmer handling." } },
+  { match: /fluid|coolant|antifreeze|atf|cvt/i, text: { low: "Fluid that meets your vehicle's spec.", mid: "Name-brand fluid that meets your vehicle's spec.", high: "OEM (dealer) fluid." } }
 ];
 
 function describeTier(service: string, tier: PartTier) {
   const match = tierDescriptions.find((entry) => entry.match.test(service));
   if (match) return match.text[tier];
-  return { low: "Economy aftermarket parts that fit your vehicle.", mid: "Quality name-brand parts - our usual choice.", high: "OEM (dealer) or premium-brand parts." }[tier];
+  return { low: "Standard aftermarket part that fits your vehicle.", mid: "Quality name-brand part.", high: "OEM (dealer) or performance part." }[tier];
 }
 
 function roundPrice(price: PriceRange): PriceRange {
@@ -871,6 +878,6 @@ export function buildRetailerEstimateResults(service: string, options: { vehicle
 
 export const partsIntegrationNotes = [
   { title: "Estimate engine", detail: "Parts now use the IAW price catalog, job-part recipes, book-time labor, and market-rate comparison from the NukeBox parts finder." },
-  { title: "Supplier lookup", detail: "O'Reilly, Advance, NAPA, AutoZone, Pep Boys, Walmart, 1A Auto, RockAuto, and tire-specific links generate from the calculated part query." },
+  { title: "Supplier lookup", detail: "O'Reilly, Advance, NAPA, AutoZone, Walmart, 1A Auto, RockAuto, and tire-specific links generate from the calculated part query." },
   { title: "Final quote rule", detail: "Displayed ranges are draft planning numbers. Admin still verifies live fitment, supplier image, price, stock, and customer approval before ordering." }
 ];

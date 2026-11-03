@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpen, ExternalLink, Pencil, Save, ShieldAlert } from "lucide-react";
+import { BookOpen, ExternalLink, Pencil, Save, Search, ShieldAlert } from "lucide-react";
 
+import { lookupSpec, type SpecAnswer } from "@/lib/integrations";
+import { partNumberLinks } from "@/lib/parts";
 import { engineLabel, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
 import { fetchRecalls, loadSpecSheet, researchLinks, saveSpecValue, specFields, specQuery, type Recall, type SpecSheet } from "@/lib/vehicle-specs";
 
@@ -16,6 +18,10 @@ export function VehicleSpecSheet({ config }: { config: VehicleConfig }) {
   const [editing, setEditing] = useState("");
   const [draft, setDraft] = useState({ value: "", source: "", sourceUrl: "" });
   const [status, setStatus] = useState("");
+  const [question, setQuestion] = useState("");
+  const [answers, setAnswers] = useState<SpecAnswer[]>([]);
+  const [lookupStatus, setLookupStatus] = useState("");
+  const [saveTo, setSaveTo] = useState(specFields[0].id);
   const ready = Boolean(config.year && config.make && config.model);
 
   useEffect(() => {
@@ -35,6 +41,26 @@ export function VehicleSpecSheet({ config }: { config: VehicleConfig }) {
     const existing = sheet[fieldId];
     setEditing(fieldId);
     setDraft({ value: existing?.value ?? "", source: existing?.source ?? "", sourceUrl: existing?.sourceUrl ?? "" });
+  }
+
+  async function runLookup() {
+    setAnswers([]);
+    setLookupStatus("Searching...");
+    try {
+      const vehicle = [vehicleConfigLabel(config), engineLabel(config)].filter(Boolean).join(" ");
+      const result = await lookupSpec(vehicle, question);
+      if (result.needsSetup) return setLookupStatus(result.error ?? "");
+      setAnswers(result.answers ?? []);
+      setLookupStatus(result.answers?.length ? "Check that each answer matches this exact engine and trim before saving it." : "Nothing found with a clear source. Try other wording, or use a factory source.");
+    } catch (error) {
+      setLookupStatus(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  // Nothing is saved until the tech has read it and tapped Save.
+  function useAnswer(answer: SpecAnswer) {
+    setEditing(saveTo);
+    setDraft({ value: answer.value, source: new URL(answer.url).hostname.replace(/^www\./, ""), sourceUrl: answer.url });
   }
 
   async function save() {
@@ -64,6 +90,28 @@ export function VehicleSpecSheet({ config }: { config: VehicleConfig }) {
         {researchLinks(config).map((link) => (
           <a className="secondary-button" href={link.url} key={link.label} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} /> {link.label}</a>
         ))}
+        <a className="secondary-button" href="https://partstech.com/" target="_blank" rel="noopener noreferrer"><ExternalLink size={13} /> PartsTech (live local stock)</a>
+      </div>
+
+      <div className="spec-lookup">
+        <label className="wide-field"><span>Look up a spec</span>
+          <input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="e.g. rear caliper bracket bolt torque" />
+        </label>
+        <button className="secondary-button" disabled={question.trim().length < 3} onClick={runLookup} type="button"><Search size={14} /> Search trusted sites</button>
+        {lookupStatus ? <p className="legal-note">{lookupStatus}</p> : null}
+        {answers.length ? (
+          <>
+            <label><span>Save to</span><select value={saveTo} onChange={(event) => setSaveTo(event.target.value)}>{specFields.map((field) => <option key={field.id} value={field.id}>{field.label}</option>)}</select></label>
+            {answers.map((answer) => (
+              <div className="spec-answer" key={answer.url + answer.value}>
+                <strong>{answer.value}</strong>{answer.appliesTo ? <small> for {answer.appliesTo}</small> : null}
+                <blockquote>{answer.quote}</blockquote>
+                <a href={answer.url} rel="noopener noreferrer" target="_blank"><ExternalLink size={13} /> {answer.title || answer.url}</a>
+                <button className="mini-button" onClick={() => useAnswer(answer)} type="button">Use this</button>
+              </div>
+            ))}
+          </>
+        ) : null}
       </div>
 
       {recalls.length ? (
@@ -92,6 +140,9 @@ export function VehicleSpecSheet({ config }: { config: VehicleConfig }) {
                       <small> - {entry.sourceUrl ? <a href={entry.sourceUrl} target="_blank" rel="noopener noreferrer">{entry.source || "source"}</a> : entry.source || "no source"}{entry.by ? `, ${entry.by}` : ""}{entry.at ? `, ${new Date(entry.at).toLocaleDateString()}` : ""}</small>
                     </span>
                   ) : <span className="spec-missing">Not in library yet</span>}
+                  {entry?.value && field.label.includes("#") ? (
+                    <small className="spec-part-links">Find this number: {partNumberLinks(entry.value.split(/[\s,/]+/)[0]).map((link) => <a href={link.url} key={link.name} rel="noopener noreferrer" target="_blank">{link.name}</a>)}</small>
+                  ) : null}
                 </div>
                 <div className="spec-row-actions">
                   <a href={`https://www.google.com/search?q=${encodeURIComponent(specQuery(config, field))}`} target="_blank" rel="noopener noreferrer" aria-label={`Research ${field.label}`}><ExternalLink size={14} /></a>

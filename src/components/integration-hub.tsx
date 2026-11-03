@@ -23,11 +23,11 @@ export function IntegrationHub() {
       <div className="panel-title">
         <div>
           <p className="section-label">Integration hub</p>
-          <h2>Quick links for credentials, provider settings, products, and dashboards.</h2>
+          <h2>Quick links to your accounts</h2>
         </div>
         <Link2 />
       </div>
-      <p className="legal-note"><KeyRound size={14} /> Provider secrets still live in each provider dashboard and private server env. Update credentials there, then save app-facing settings here when labels or payment plan structure changes.</p>
+      <p className="legal-note"><KeyRound size={14} /> Logins for these live on each company's site. Keys the app itself uses go under Connections.</p>
       <div className="integration-link-grid">
         {links.map((link) => (
           <a key={link.href} href={link.href} target="_blank" rel="noreferrer">

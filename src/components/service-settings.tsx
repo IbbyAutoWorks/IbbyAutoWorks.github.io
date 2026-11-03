@@ -1,42 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { Save, SlidersHorizontal, Wrench } from "lucide-react";
+import { BookOpen, LifeBuoy, ShieldCheck, Wrench } from "lucide-react";
 
-const defaultFlow = ["Accept job", "En route", "Walkaround", "Pre-inspect", "Parts", "Start job", "Finish job", "Billing"];
+import { BurnoutNavLink } from "@/components/route-burnout-loader";
 
+// The technician's reference shelf. Shop-wide settings belong to the owner.
 export function ServiceSettings() {
-  const [steps, setSteps] = useState(defaultFlow);
-  const [saved, setSaved] = useState(false);
-
-  function updateStep(index: number, value: string) {
-    setSteps((current) => current.map((step, stepIndex) => stepIndex === index ? value : step));
-    setSaved(false);
-  }
-
   return (
     <div className="settings-workspace service-settings-page">
       <section className="admin-header">
         <div>
           <p className="section-label">Service settings</p>
-          <h1>Edit service flow, technician operations, and field workflow labels.</h1>
+          <h1>Service settings</h1>
         </div>
-        <button className="primary-button" onClick={() => setSaved(true)}><Save size={16} /> Save service draft</button>
       </section>
       <section className="settings-stack">
-        <details className="panel settings-accordion" open>
-          <summary><span><SlidersHorizontal size={16} /> Service flow steps</span><Wrench size={16} /></summary>
-          <p className="legal-note">This is the editable service-ops surface. Next pass can wire these labels into the live service wizard and Supabase business settings.</p>
-          <div className="settings-fields">
-            {steps.map((step, index) => (
-              <label key={index}><span>Step {index + 1}</span><input value={step} onChange={(event) => updateStep(index, event.target.value)} /></label>
-            ))}
-          </div>
-          {saved ? <p className="legal-note">Service settings draft saved for this prototype session.</p> : null}
-        </details>
         <div className="panel">
-          <div className="panel-title"><div><p className="section-label">Support links</p><h2>Issues and feature requests stay available here.</h2></div><Wrench /></div>
-          <p className="legal-note">Use the footer links below for service portal bugs and service-flow requests.</p>
+          <div className="panel-title"><div><p className="section-label">References</p><h2>Manuals</h2></div><BookOpen /></div>
+          <div className="research-link-row">
+            <BurnoutNavLink className="secondary-button" href="/service/manual"><Wrench size={15} /> Technician manual</BurnoutNavLink>
+            <BurnoutNavLink className="secondary-button" href="/service/manual#safety"><ShieldCheck size={15} /> Safety and PPE</BurnoutNavLink>
+            <BurnoutNavLink className="secondary-button" href="/service/manual#basics"><BookOpen size={15} /> Jacking and shop basics</BurnoutNavLink>
+          </div>
+        </div>
+        <div className="panel">
+          <div className="panel-title"><div><p className="section-label">Support</p><h2>Something wrong or missing?</h2></div><LifeBuoy /></div>
+          <p className="legal-note">Your name, phone and photo are under Account. Hours, prices and the rest of the shop&apos;s settings are managed by the owner.</p>
+          <div className="research-link-row">
+            <BurnoutNavLink className="secondary-button" href="/feedback">Report a problem</BurnoutNavLink>
+            <BurnoutNavLink className="secondary-button" href="/feedback?type=feature">Request a feature</BurnoutNavLink>
+          </div>
         </div>
       </section>
     </div>

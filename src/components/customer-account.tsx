@@ -7,6 +7,7 @@ import { CalendarClock, Car, Download, FileText, Plus, ShieldCheck } from "lucid
 import { agreementSummaries, partsReturnOptions } from "@/lib/agreements";
 import { timeline } from "@/lib/data";
 import { AuthPanel } from "@/components/auth-panel";
+import { CustomerPromoOffers } from "@/components/customer-promo-offers";
 import { CUSTOMER_RECORDS_EVENT, customerRecordIdFromContact, getServiceReminders, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, readPrototypeWorkOrders, WORK_ORDERS_EVENT } from "@/lib/local-store";
 
 export function CustomerAccount() {
@@ -101,6 +102,13 @@ export function CustomerAccount() {
     <div class="box"><strong>Status</strong>${escapeHtml(order.status)}</div>
     <div class="box"><strong>Preferred window</strong>${escapeHtml(order.preferredWindow)}</div>
   </div>
+  ${order.bill ? `<h2>Bill</h2>
+  <div class="grid">
+    <div class="box"><strong>Parts and shop supplies</strong>$${(order.bill.partsCents / 100).toFixed(2)}</div>
+    <div class="box"><strong>Labor</strong>$${(order.bill.laborCents / 100).toFixed(2)}</div>
+    <div class="box"><strong>Maine sales tax</strong>$${(order.bill.taxCents / 100).toFixed(2)}</div>
+    <div class="box"><strong>Total</strong>$${((order.bill.partsCents + order.bill.laborCents + order.bill.taxCents) / 100).toFixed(2)}</div>
+  </div>` : ""}
   <h2>Customer Notes</h2>
   <p>${escapeHtml(order.symptoms)}</p>
   <h2>Authorizations</h2>
@@ -124,11 +132,12 @@ export function CustomerAccount() {
     <div className="account-page">
       <AuthPanel />
 
+      <CustomerPromoOffers place="account" />
       <section className="account-header">
         {selectedCustomer?.profileImage ? <img className="profile-image-preview account-profile-image" src={selectedCustomer.profileImage} alt={`${selectedCustomer.name} profile`} /> : null}
         <div>
           <p className="section-label">Customer account</p>
-          <h1>Vehicles, work orders, reports, reminders, and payment links in one customer record.</h1>
+          <h1>Your vehicles and work orders</h1>
         </div>
         <Link href="/request" className="primary-button"><Car size={16} /> Add request</Link>
       </section>
@@ -137,7 +146,7 @@ export function CustomerAccount() {
         <section className="panel empty-state-panel">
           <Car size={28} />
           <h2>No customer records yet</h2>
-          <p>Submit a one-time service request or save account details in customer settings. Vehicles, work orders, notification choices, and reports will appear from the same prototype store the admin dashboard reads.</p>
+          <p>Submit a one-time service request or save account details in customer settings. Your vehicles, work orders and reports will appear here.</p>
           <div className="hero-actions">
             <Link href="/request" className="primary-button">Create first request</Link>
             <Link href="/account/settings" className="secondary-button"><Plus size={15} /> Customer settings</Link>

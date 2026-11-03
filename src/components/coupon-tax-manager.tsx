@@ -37,57 +37,28 @@ const defaultTax: MaineTaxSettings = {
   sales_tax_rate: 0.055,
   local_tax_rate: 0,
   parts_taxable: true,
-  labor_taxable: true,
-  diagnostic_taxable: true,
+  labor_taxable: false,
+  diagnostic_taxable: false,
   shop_supplies_taxable: true,
   tire_fees_note: "Track tire/disposal/environmental fees separately from sales tax when charged.",
   disclaimer: "Maine generally uses a 5.5% sales tax with no local sales tax. Auto parts and repair/installation services may be taxable; verify final filing treatment with Maine Revenue Services or a tax professional."
 };
 
 export function CouponTaxManager() {
-  const [adminToken, setAdminToken] = useState("");
   const [promotions, setPromotions] = useState<ManagedPromotionOffer[]>([]);
   const [draft, setDraft] = useState<ManagedPromotionOffer>(emptyPromotion);
   const [tax, setTax] = useState<MaineTaxSettings>(defaultTax);
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
-  const [expenses, setExpenses] = useState<BusinessExpenseRecord[]>([]);
-  const [expenseDraft, setExpenseDraft] = useState<BusinessExpenseRecord>(emptyExpense);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const amountDollars = useMemo(() => (draft.discount_cents / 100).toFixed(2), [draft.discount_cents]);
-  const [localLedger, setLocalLedger] = useState(() => businessLedgerFromWorkOrders([]));
-  const localSupplyTotal = useMemo(() => localLedger.supplyExpenses.reduce((sum, item) => sum + item.amount, 0), [localLedger]);
-  const localMileageTotal = useMemo(() => localLedger.mileageExpenses.reduce((sum, item) => sum + item.amount, 0), [localLedger]);
-  const localRevenueTotal = useMemo(() => localLedger.revenue.reduce((sum, item) => sum + item.estimate, 0), [localLedger]);
-  const localNetTotal = localRevenueTotal - localSupplyTotal - localMileageTotal;
-
   useEffect(() => {
-    const saved = window.sessionStorage.getItem("ibby-admin-payment-token") || "";
-    setAdminToken(saved);
-    void refresh(saved);
+    void refresh();
   }, []);
 
-  useEffect(() => {
-    function syncLedger() { setLocalLedger(businessLedgerFromWorkOrders(readPrototypeWorkOrders())); }
-    syncLedger();
-    window.addEventListener(WORK_ORDERS_EVENT, syncLedger);
-    window.addEventListener("storage", syncLedger);
-    return () => {
-      window.removeEventListener(WORK_ORDERS_EVENT, syncLedger);
-      window.removeEventListener("storage", syncLedger);
-    };
-  }, []);
-
-  function rememberToken(value: string) {
-    setAdminToken(value);
-    window.sessionStorage.setItem("ibby-admin-payment-token", value);
-  }
-
-  async function refresh(token = adminToken) {
+  async function refresh() {
     try {
       setBusy(true);
-      const data = await listPromotionOffers(token || undefined);
+      const data = await listPromotionOffers();
       setPromotions(data.promotions);
       if (data.tax_settings) setTax(data.tax_settings);
       setStatus(`Loaded ${data.promotions.length} promotion offer${data.promotions.length === 1 ? "" : "s"}.`);
@@ -99,12 +70,11 @@ export function CouponTaxManager() {
   }
 
   async function saveDraft() {
-    if (!adminToken) return setStatus("Enter the admin payment token first.");
     try {
       setBusy(true);
-      const saved = await savePromotionOffer(draft, adminToken);
+      const saved = await savePromotionOffer(draft, "");
       setDraft(saved);
-      await refresh(adminToken);
+      await refresh();
       setStatus(`Saved coupon/promo ${saved.title}.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error));
@@ -114,11 +84,10 @@ export function CouponTaxManager() {
   }
 
   async function archive(slug: string) {
-    if (!adminToken) return setStatus("Enter the admin payment token first.");
     try {
       setBusy(true);
-      await archivePromotionOffer(slug, adminToken);
-      await refresh(adminToken);
+      await archivePromotionOffer(slug, "");
+      await refresh();
       setStatus(`Archived ${slug}.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error));
@@ -128,10 +97,9 @@ export function CouponTaxManager() {
   }
 
   async function saveTax() {
-    if (!adminToken) return setStatus("Enter the admin payment token first.");
     try {
       setBusy(true);
-      const saved = await saveMaineTaxSettings(tax, adminToken);
+      const saved = await saveMaineTaxSettings(tax, "");
       setTax(saved);
       setStatus("Saved Maine tax settings.");
     } catch (error) {
@@ -141,40 +109,12 @@ export function CouponTaxManager() {
     }
   }
 
-  async function loadYearEnd() {
-    if (!adminToken) return setStatus("Enter the admin payment token first.");
-    try {
-      setBusy(true);
-      const next = await getYearEndSummary(year, adminToken);
-      setSummary(next);
-      setExpenses(await listExpenses(year, adminToken));
-      setStatus(`Loaded ${year} income/expense summary.`);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : String(error));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function syncStripeCoupons() {
-    if (!adminToken) return setStatus("Enter the admin payment token first.");
     try {
       setBusy(true);
-      const synced = await syncAllPromotions(adminToken);
+      const synced = await syncAllPromotions("");
       setPromotions(synced);
       setStatus(`Synced ${synced.length} coupons into Stripe Coupons/Promotion Codes.`);
-    } catch (error) { setStatus(error instanceof Error ? error.message : String(error)); }
-    finally { setBusy(false); }
-  }
-
-  async function saveExpenseDraft() {
-    if (!adminToken) return setStatus("Enter the admin payment token first.");
-    try {
-      setBusy(true);
-      await saveExpense(expenseDraft, adminToken);
-      setExpenses(await listExpenses(year, adminToken));
-      setExpenseDraft({ ...emptyExpense, expense_date: new Date().toISOString().slice(0, 10) });
-      setStatus("Saved business expense record.");
     } catch (error) { setStatus(error instanceof Error ? error.message : String(error)); }
     finally { setBusy(false); }
   }
@@ -183,14 +123,13 @@ export function CouponTaxManager() {
     <section className="panel coupon-tax-manager-panel">
       <div className="panel-title">
         <div>
-          <p className="section-label">Coupons, Maine tax, year-end books</p>
-          <h2>Manage promos and keep the tax/export checklist simple.</h2>
+          <p className="section-label">Coupons and sales tax</p>
+          <h2>Your coupons and Maine sales tax setup</h2>
         </div>
         <BadgeDollarSign />
       </div>
-      <p className="legal-note">Default Maine setup: 5.5% state sales tax, no local tax, parts/labor/diagnostics marked taxable for repair/install work. This is an operating default, not legal tax advice.</p>
+      <p className="legal-note">Maine setup: 5.5% state sales tax, no local tax. Parts and shop supplies are taxed; labor listed separately on the bill is not. Your books and year-end exports are under Taxes &amp; books.</p>
       <div className="admin-token-row">
-        <label><span>Admin payment token</span><input type="password" value={adminToken} onChange={(event) => rememberToken(event.target.value)} placeholder="Paste private admin token" /></label>
         <button className="secondary-button" disabled={busy} onClick={() => refresh()}><RefreshCcw size={15} /> Refresh promos</button>
         <button className="secondary-button" disabled={busy} onClick={syncStripeCoupons}><BadgePercent size={15} /> Sync Stripe coupons</button>
       </div>
@@ -228,57 +167,6 @@ export function CouponTaxManager() {
           {(["parts_taxable", "labor_taxable", "diagnostic_taxable", "shop_supplies_taxable"] as const).map((key) => <label className="toggle-row" key={key}><input type="checkbox" checked={Boolean(tax[key])} onChange={(event) => setTax({ ...tax, [key]: event.target.checked })} /><span>{key.replaceAll("_", " ")}</span></label>)}
           <label><span>Tire/fee note</span><textarea value={tax.tire_fees_note} onChange={(event) => setTax({ ...tax, tire_fees_note: event.target.value })} /></label>
           <button className="primary-button" disabled={busy} onClick={saveTax}><Save size={15} /> Save Maine tax settings</button>
-        </div>
-        <div className="payment-manager-form">
-          <h3>Year-end snapshot</h3>
-          <label><span>Tax year</span><input type="number" value={year} onChange={(event) => setYear(Number(event.target.value || new Date().getFullYear()))} /></label>
-          <button className="secondary-button" disabled={busy} onClick={loadYearEnd}><FileSpreadsheet size={15} /> Load income/expense summary</button>
-          <ul className="year-end-checklist">
-            <li>Stripe/payment income total</li>
-            <li>Cash/Square/PayPal manual receipts</li>
-            <li>Parts, tires, tools, supplies, fuel, software, fees</li>
-            <li>Sales tax collected and owed</li>
-            <li>Coupons/discounts applied before tax</li>
-            <li>Receipt links and notes for every expense</li>
-          </ul>
-          {summary ? <pre className="summary-json">{JSON.stringify(summary, null, 2)}</pre> : null}
-        </div>
-      </div>
-      <div className="business-reconciliation-panel">
-        <div className="panel-title">
-          <div>
-            <p className="section-label">Work-order reconciliation</p>
-            <h2>Year-to-date job revenue, supplies, mileage, and estimated in-pocket totals.</h2>
-          </div>
-          <FileSpreadsheet />
-        </div>
-        <div className="reconciliation-metrics">
-          <div><span>Estimated revenue</span><strong>${localRevenueTotal.toFixed(2)}</strong></div>
-          <div><span>Supplies/tools</span><strong>${localSupplyTotal.toFixed(2)}</strong></div>
-          <div><span>Mileage deduction est.</span><strong>${localMileageTotal.toFixed(2)}</strong></div>
-          <div><span>Estimated net before tax</span><strong>${localNetTotal.toFixed(2)}</strong></div>
-        </div>
-        <p className="legal-note">Mileage uses a placeholder $0.70/mi planning rate until the official yearly IRS/Maine business mileage rate is configured. Google Sheets/Docs export should be the production reporting layer once Google OAuth is connected.</p>
-        <div className="reconciliation-table">
-          {[...localLedger.supplyExpenses, ...localLedger.mileageExpenses].slice(0, 12).map((item) => (
-            <small key={`${item.workOrderId}-${item.date}-${item.description}`}>#{item.workOrderId} · {item.date} · {item.category} · ${item.amount.toFixed(2)} · {item.description}</small>
-          ))}
-        </div>
-      </div>
-      <div className="payment-manager-form expense-entry-form">
-        <h3>Expense tracker</h3>
-        <div className="expense-entry-grid">
-          <label><span>Date</span><input type="date" value={expenseDraft.expense_date} onChange={(event) => setExpenseDraft({ ...expenseDraft, expense_date: event.target.value })} /></label>
-          <label><span>Vendor</span><input value={expenseDraft.vendor} onChange={(event) => setExpenseDraft({ ...expenseDraft, vendor: event.target.value })} /></label>
-          <label><span>Category</span><select value={expenseDraft.category} onChange={(event) => setExpenseDraft({ ...expenseDraft, category: event.target.value })}><option>parts</option><option>tires</option><option>tools</option><option>supplies</option><option>shop rags / cleanup</option><option>chemicals</option><option>mileage</option><option>fuel</option><option>software</option><option>fees</option><option>insurance</option><option>marketing</option><option>google workspace</option><option>other</option></select></label>
-          <label><span>Amount</span><input type="number" step="0.01" min="0" value={(expenseDraft.amount_cents / 100).toFixed(2)} onChange={(event) => setExpenseDraft({ ...expenseDraft, amount_cents: Math.round(Number(event.target.value || 0) * 100) })} /></label>
-          <label><span>Payment method</span><input value={expenseDraft.payment_method} onChange={(event) => setExpenseDraft({ ...expenseDraft, payment_method: event.target.value })} /></label>
-          <label><span>Receipt URL</span><input value={expenseDraft.receipt_url || ""} onChange={(event) => setExpenseDraft({ ...expenseDraft, receipt_url: event.target.value })} /></label>
-        </div>
-        <label><span>Description</span><textarea value={expenseDraft.description} onChange={(event) => setExpenseDraft({ ...expenseDraft, description: event.target.value })} /></label>
-        <button className="primary-button" disabled={busy} onClick={saveExpenseDraft}><Save size={15} /> Save expense</button>
-        <div className="expense-list">
-          {expenses.slice(0, 8).map((expense) => <small key={expense.id || `${expense.expense_date}-${expense.vendor}`}>{expense.expense_date} - {expense.vendor} - {expense.category} - ${(expense.amount_cents / 100).toFixed(2)}</small>)}
         </div>
       </div>
       {status ? <p className="legal-note">{status}</p> : null}

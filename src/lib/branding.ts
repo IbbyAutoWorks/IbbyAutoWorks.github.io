@@ -1,3 +1,5 @@
+import { shareSetting } from "@/lib/shared-settings";
+
 export const BRANDING_STORAGE_KEY = "ibbys-auto.branding";
 export const BRANDING_EVENT = "ibbys-auto.branding.changed";
 
@@ -18,7 +20,7 @@ export type BrandingSettings = {
   savedLogos: SavedBrandLogo[];
 };
 
-export const EMBLEM_LOGO_SRC = "/images/ibby-auto-emblem.png";
+export const EMBLEM_LOGO_SRC = "/images/ibby-auto-emblem-256.png";
 
 export const CROWN_LOGO_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
@@ -69,6 +71,7 @@ export function saveBranding(settings: BrandingSettings) {
   if (typeof localStorage === "undefined") return;
   localStorage.setItem(BRANDING_STORAGE_KEY, JSON.stringify(settings));
   window.dispatchEvent(new CustomEvent(BRANDING_EVENT, { detail: settings }));
+  shareSetting("branding", settings);
 }
 
 export function applySavedBranding() {

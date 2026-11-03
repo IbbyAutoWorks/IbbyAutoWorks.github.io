@@ -1,6 +1,6 @@
 export type AgreementId = "inspection" | "partsReturn" | "preRepair" | "billing" | "safety" | "damage" | "repair";
 
-export type PartsReturnPreference = "return" | "dispose" | "core";
+export type PartsReturnPreference = "not-sure" | "return" | "dispose" | "core";
 
 export type AgreementAcceptance = {
   accepted: Record<AgreementId, boolean>;
@@ -9,10 +9,10 @@ export type AgreementAcceptance = {
   acceptedBy: string;
 };
 
-// Agreement documents live in the app repo's root as Markdown files. Build the
-// links from one base so they can't drift to a stale/wrong repo, and keep the
-// ".md" extension so the GitHub blob URLs actually resolve.
-const AGREEMENT_DOC_BASE = "https://github.com/IbbyAutoWorks/IbbyAutoWorks.github.io/blob/main";
+// Full agreement text lives in the app (see legal-documents.ts) under these slugs.
+const agreementSlugs: Record<string, string> = {
+  inspection: "inspection", partsReturn: "parts-return", preRepair: "pre-repair", billing: "billing", safety: "safety", damage: "damage", repair: "repair"
+};
 
 const agreementDocs: Array<{ id: AgreementId; title: string; source: string; summary: string }> = [
   {
@@ -59,8 +59,8 @@ const agreementDocs: Array<{ id: AgreementId; title: string; source: string; sum
   }
 ];
 
-export const agreementSummaries: Array<{ id: AgreementId; title: string; source: string; url: string; summary: string }> =
-  agreementDocs.map((doc) => ({ ...doc, url: `${AGREEMENT_DOC_BASE}/${doc.source}.md` }));
+export const agreementSummaries: Array<{ id: AgreementId; title: string; source: string; slug: string; summary: string }> =
+  agreementDocs.map((doc) => ({ ...doc, slug: agreementSlugs[doc.id] }));
 
 export const partsReturnOptions: Array<{ value: PartsReturnPreference; label: string; detail: string }> = [
   { value: "dispose", label: "Dispose replaced parts", detail: "Customer waives return and authorizes disposal unless core/warranty rules apply." },
@@ -79,7 +79,7 @@ export function defaultAgreementAcceptance(): AgreementAcceptance {
       damage: false,
       repair: false
     },
-    partsReturnPreference: "dispose",
+    partsReturnPreference: "not-sure",
     acceptedAt: "",
     acceptedBy: ""
   };

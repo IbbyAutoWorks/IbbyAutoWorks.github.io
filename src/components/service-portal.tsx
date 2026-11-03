@@ -20,7 +20,9 @@ import {
   updatePrototypeWorkOrderStatus,
   WORK_ORDERS_EVENT
 } from "@/lib/local-store";
-import { createWorkOrderCheckout } from "@/lib/payment-backend";
+import { gradeFallbackOptions, tierLabels } from "@/lib/parts";
+import { createWorkOrderCheckout, listPromotionOffers } from "@/lib/payment-backend";
+import { billFromParts, MAINE_TAX_RULES, taxRulesFrom, type TaxRules } from "@/lib/tax-rules";
 import { supplyCatalog, supplyCategories } from "@/lib/supplies";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
 import { DtcLookupPanel } from "@/components/dtc-lookup";
@@ -113,10 +115,23 @@ function serviceStepIndexForStatus(status: PrototypeWorkOrder["status"]) {
   return 0;
 }
 
+function onMyWayText(order: PrototypeWorkOrder) {
+  return `Hi ${order.customer.split(" ")[0]}, this is Ibby Auto Works. I'm on my way to work on your ${order.vehicle}. See you soon!`;
+}
+
+function moneyToCents(value: string) {
+  return Math.round((Number.parseFloat(value.replace(/[^0-9.]/g, "")) || 0) * 100);
+}
+
 export function ServicePortal() {
   // Job state: mirrors prototype work orders and tracks the selected technician workflow step.
   const [orders, setOrders] = useState<PrototypeWorkOrder[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  // Top-bar search links here with ?order=<id>.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("order");
+    if (requested) setSelectedOrderId(requested);
+  }, []);
   const [partName, setPartName] = useState("");
   const [partReason, setPartReason] = useState("");
   const [supplyItemId, setSupplyItemId] = useState(supplyCatalog[0]?.id ?? "");
@@ -128,6 +143,9 @@ export function ServicePortal() {
   const [paymentMethod, setPaymentMethod] = useState<PrototypePayment["method"] | "">("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [billParts, setBillParts] = useState("");
+  const [billLabor, setBillLabor] = useState("");
+  const [taxRules, setTaxRules] = useState<TaxRules>(MAINE_TAX_RULES);
   const [editingVehicle, setEditingVehicle] = useState(false);
   const { role, session } = useAuthRole();
   const [stripeLink, setStripeLink] = useState("");
@@ -152,7 +170,8 @@ export function ServicePortal() {
   }, []);
 
   const serviceOrders = useMemo(
-    () => orders.filter((order) => serviceStatuses.includes(order.status) || order.status === "Requested" || order.status === "Parts Search"),
+    // Techs work accepted jobs only; new requests wait for the owner on the Dashboard.
+    () => orders.filter((order) => serviceStatuses.includes(order.status) && order.status !== "Complete"),
     [orders]
   );
   const acceptedJobs = useMemo(
@@ -205,8 +224,31 @@ export function ServicePortal() {
     if (typeof nextStep === "number") goToStep(nextStep);
   }
 
+  useEffect(() => {
+    listPromotionOffers().then((data) => setTaxRules(taxRulesFrom(data.tax_settings))).catch(() => setTaxRules(MAINE_TAX_RULES));
+  }, []);
+
+  function enteredBill() {
+    if (!billParts.trim() && !billLabor.trim()) return null;
+    return billFromParts(moneyToCents(billParts), moneyToCents(billLabor), taxRules);
+  }
+
+  function updateBill(parts: string, labor: string) {
+    setBillParts(parts);
+    setBillLabor(labor);
+    const bill = billFromParts(moneyToCents(parts), moneyToCents(labor), taxRules);
+    const total = bill.partsCents + bill.laborCents + bill.taxCents;
+    setPaymentAmount(total ? (total / 100).toFixed(2) : "");
+  }
+
+  function saveEnteredBill(orderId: string) {
+    const bill = enteredBill();
+    if (bill) updatePrototypeWorkOrder(orderId, { bill });
+  }
+
   function recordPayment() {
     if (!selectedOrder || !paymentMethod) return;
+    saveEnteredBill(selectedOrder.id);
     recordPrototypePayment(selectedOrder.id, {
       method: paymentMethod,
       amount: paymentAmount.trim(),
@@ -216,6 +258,8 @@ export function ServicePortal() {
     setPaymentMethod("");
     setPaymentAmount("");
     setPaymentReference("");
+    setBillParts("");
+    setBillLabor("");
     refresh(selectedOrder.id);
   }
 
@@ -228,6 +272,7 @@ export function ServicePortal() {
     }
     try {
       setStripeStatus("Creating Stripe checkout...");
+      saveEnteredBill(selectedOrder.id);
       const url = await createWorkOrderCheckout(selectedOrder.id, cents);
       setStripeLink(url);
       setStripeStatus("Send this link to the customer or open it on this device. The job completes automatically when Stripe confirms payment.");
@@ -354,6 +399,8 @@ export function ServicePortal() {
         <div><span>Phone</span><strong>{order.phone}</strong></div>
         <div><span>Services</span><strong>{(order.services?.length ? order.services : [order.service]).join(", ")}</strong></div>
         <div><span>Location</span><strong>{order.location}</strong></div>
+        <div><span>Part grades</span><strong>{Object.entries(order.serviceTiers ?? {}).map(([service, tier]) => `${service}: ${tierLabels[tier]}`).join(", ") || "Not recorded"}</strong></div>
+        <div><span>If a grade can&apos;t arrive in time</span><strong>{gradeFallbackOptions.find((option) => option.value === (order.gradeFallback ?? "call"))?.label}</strong></div>
       </div>
     );
   }
@@ -657,6 +704,8 @@ export function ServicePortal() {
           />
           <div className="service-decision-grid">
             <a href={`tel:${order.phone}`}><Phone size={16} /> Call customer</a>
+            <a href={`sms:${order.phone}?&body=${encodeURIComponent(onMyWayText(order))}`}>Text customer</a>
+            <button onClick={() => void navigator.clipboard?.writeText(onMyWayText(order))} type="button">Copy text for Google Voice</button>
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(order.location)}`} target="_blank" rel="noreferrer"><Map size={16} /> Open route</a>
             <button onClick={notifyEnRoute}>Notify customer on my way</button>
           </div>
@@ -775,6 +824,15 @@ export function ServicePortal() {
         ) : (
           <div className="service-form-grid">
             <label>
+              <span>Parts and shop supplies ($)</span>
+              <input inputMode="decimal" value={billParts} onChange={(event) => updateBill(event.target.value, billLabor)} placeholder="0.00" />
+            </label>
+            <label>
+              <span>Labor ($)</span>
+              <input inputMode="decimal" value={billLabor} onChange={(event) => updateBill(billParts, event.target.value)} placeholder="0.00" />
+            </label>
+            {enteredBill() ? <p className="legal-note wide-field">Maine sales tax: ${((enteredBill()?.taxCents ?? 0) / 100).toFixed(2)} ({(taxRules.rate * 100).toFixed(2)}% on taxable items). Keep parts and labor separate on the bill so labor stays untaxed.</p> : null}
+            <label>
               <span>Payment method</span>
               <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PrototypePayment["method"] | "")}>
                 <option value="">Choose how the customer paid</option>
@@ -816,8 +874,8 @@ export function ServicePortal() {
       {/* Technician header: page purpose and quick route action for the selected job. */}
       <section className="admin-header">
         <div>
-          <p className="section-label">Technician workspace</p>
-          <h1>Work one job step at a time, document the vehicle, and send parts issues back to admin.</h1>
+          <p className="section-label">Service</p>
+          <h1>Your jobs</h1>
         </div>
         <div className="admin-actions">
           {selectedOrder ? <a className="primary-button" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedOrder.location)}`} target="_blank" rel="noreferrer"><Map size={16} /> Route</a> : null}
@@ -840,7 +898,7 @@ export function ServicePortal() {
               <strong>No service jobs yet</strong>
               <span>Admin accepted jobs will appear here for the technician.</span>
             </div>
-          ) : serviceOrders.map((order) => (
+          ) : <div className="service-queue-list">{serviceOrders.map((order) => (
             <button className={order.id === selectedOrder?.id ? "work-row selected" : "work-row"} key={order.id} onClick={() => setSelectedOrderId(order.id)}>
               <div className="order-id">#{order.id}</div>
               <div>
@@ -851,7 +909,7 @@ export function ServicePortal() {
               <span>{order.due}</span>
               <small>{order.risk}</small>
             </button>
-          ))}
+          ))}</div>}
         </div>
 
         <div className="panel service-wizard-panel">

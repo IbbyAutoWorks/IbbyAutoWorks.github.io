@@ -1,6 +1,8 @@
 // The job book: owner and technician manuals for this app. Each section says what
 // a screen or feature is for, when to use it, and the exact steps, with links to it.
 
+import { basicsManual, safetyManual } from "@/lib/manual-safety";
+
 export type ManualLink = { label: string; href: string };
 export type ManualSection = {
   id: string;
@@ -34,7 +36,8 @@ const jobWorkflow: ManualSection[] = [
     steps: [
       "Tap Call customer if you need to confirm the location.",
       "Tap Open route for Google Maps turn-by-turn.",
-      "Tap Notify customer on my way - this sets the job to En Route and logs it.",
+      "Tap Notify customer on my way - this sets the job to En Route and logs it. If they asked for notifications and Gmail is connected, they also get an email.",
+      "To text them, tap Text customer, or Copy text for Google Voice and paste it there. The app can't send through Google Voice for you.",
       "Enter the trip miles and tap Log trip. Every trip logged here becomes a mileage deduction on Taxes & books."
     ]
   },
@@ -109,7 +112,8 @@ const jobWorkflow: ManualSection[] = [
     title: "Step 9 - Billing",
     what: "Collect payment and close the job.",
     steps: [
-      "Card payment: enter the amount, tap Charge card with Stripe, then Open checkout on your phone or Copy link for customer. When Stripe confirms the payment the job completes automatically on every device.",
+      "Enter Parts and shop supplies, then Labor. The app adds Maine sales tax on the parts and fills in the total. Keep them separate: labor listed on its own isn't taxed, and the customer's report shows each line.",
+      "Card payment: check the amount, tap Charge card with Stripe, then Open checkout on your phone or Copy link for customer. When Stripe confirms the payment the job completes automatically on every device.",
       "Cash, check, PayPal, invoice or payment plan: choose the method, enter amount and reference, tap Record payment and complete.",
       "The payment shows as \"Paid by ...\" and the job moves to Complete."
     ]
@@ -195,6 +199,8 @@ export const techManual: ManualChapter[] = [
   },
   { id: "workflow", title: "The 9-step job workflow", sections: jobWorkflow },
   { id: "vehicle", title: "Vehicles, specs, codes and photos", sections: vehicleSections },
+  safetyManual,
+  basicsManual,
   {
     id: "help",
     title: "When something doesn't work",
@@ -295,7 +301,8 @@ export const ownerManual: ManualChapter[] = [
       {
         id: "plans-promos",
         title: "Payment plans, promotions and tax settings",
-        what: "Managed in Settings: Stripe payment plans, promotion codes, and the Maine sales tax settings used by the tax estimate.",
+        what: "Managed in Settings: Stripe payment plans, coupons and their codes, and the Maine sales tax setup. Under Coupons: on or off, when and where, you can turn every coupon off at once, set start and end dates, and choose the places they appear.",
+        tips: ["Which coupons exist is one setting and where they show is another. A coupon must be Active and allowed in that place to appear.", "Only text coupons to customers who agreed to promotional texts."],
         links: [{ label: "Settings", href: "/admin/settings" }]
       }
     ]
@@ -320,15 +327,16 @@ export const ownerManual: ManualChapter[] = [
       {
         id: "taxes",
         title: "Taxes & books",
-        what: "The year's income, expenses, quarterly estimate table, sales tax estimate, Stripe total, receipts and exports.",
-        when: "Log expenses as they happen; review quarterly (estimated tax dates are listed); export in January.",
+        what: "Your year at a glance: gross receipts, expenses, net profit, a self-employment tax estimate, Maine sales tax, the next estimated payment date, a Schedule C summary, and anything to check before filing.",
+        when: "Log expenses as they happen; look at it before each estimated payment date; clear the flags and export in January.",
         steps: [
           "Log every business purchase under Log an expense and attach the receipt photo or PDF (stored privately).",
-          "Approved supply requests, mileage logs and Services & accounts costs are added automatically.",
-          "Set the IRS mileage rate for the year.",
-          "In January: Export income + expenses (CSV), download Stripe's 1099-K, and work through the year-end checklist."
+          "Supply requests once ordered, mileage logs and Services & accounts costs are added automatically.",
+          "Choose standard mileage or actual vehicle costs for the year. The IRS rate for each trip's date is built in; 2026 changes on July 1.",
+          "Clear everything under Check before filing, like jobs missing their parts and labor split, or a logged receipt that matches a supply request.",
+          "In January: tap Export for your accountant, log Stripe's fees, and work through the year-end checklist."
         ],
-        tips: ["The sales tax line assumes everything collected was taxable. Confirm the parts/labor split with Maine Revenue Services or your accountant."],
+        tips: ["In Maine, parts and shop supplies are taxed, and labor listed separately on the bill isn't. A single bundled price is taxed in full, so always enter parts and labor separately in Billing.", "These are estimates to help you and your accountant. Income tax depends on your whole household and isn't included."],
         links: [{ label: "Taxes & books", href: "/admin/taxes" }]
       },
       {
@@ -356,13 +364,28 @@ export const ownerManual: ManualChapter[] = [
         links: [{ label: "Vehicles", href: "/admin/vehicles" }]
       },
       {
+        id: "connections",
+        title: "Connections: email, spec lookup and API keys",
+        what: "Where you enter keys for outside services. Keys stay on the server and can't be read back. Each card has the steps, and the page lists free and paid parts and data services with prices.",
+        steps: [
+          "Customer emails: connect your Gmail with the three Google keys, then tap Send me a test email.",
+          "Spec lookup: add the free Tavily and Gemini keys to turn on Search trusted sites on the spec sheet.",
+          "Problem reports: add a GitHub token so messages become issues. They're always saved under Feedback either way.",
+          "Parts: make a free PartsTech account for live local price and stock."
+        ],
+        tips: ["Changing your Google password can end the Gmail connection. The page shows the problem, and a new refresh token fixes it."],
+        links: [{ label: "Connections", href: "/admin/connections" }]
+      },
+      {
         id: "settings",
         title: "Settings",
-        what: "Logo and colors, estimate pricing and labor rate, working days and hours, blocked dates, service area and radius, prayer time blocks, popups and reviews, inspection templates, workflow columns, payment plans, promotions and tax settings.",
+        what: "Each section opens with a tap and saves as you change it, and changes reach every customer's device. Logo and colors, estimate pricing and labor rate, working days and hours, blocked dates (customers can't choose closed times), service area and radius, prayer time blocks, popups and reviews, payment plans, promotions and tax settings.",
         links: [{ label: "Settings", href: "/admin/settings" }]
       }
     ]
   },
+  safetyManual,
+  basicsManual,
   {
     id: "help",
     title: "Troubleshooting and upkeep",

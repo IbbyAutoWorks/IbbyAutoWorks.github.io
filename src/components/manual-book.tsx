@@ -57,7 +57,9 @@ export function ManualBook({ title, intro, chapters }: { title: string; intro: s
               {section.tips?.length ? <ul className="manual-tips">{section.tips.map((tip) => <li key={tip}>{tip}</li>)}</ul> : null}
               {section.links?.length ? (
                 <div className="research-link-row">
-                  {section.links.map((link) => <BurnoutNavLink className="secondary-button" href={link.href} key={link.href + link.label}>{link.label}</BurnoutNavLink>)}
+                  {section.links.map((link) => link.href.startsWith("http")
+                    ? <a className="secondary-button" href={link.href} key={link.href + link.label} rel="noopener noreferrer" target="_blank">{link.label}</a>
+                    : <BurnoutNavLink className="secondary-button" href={link.href} key={link.href + link.label}>{link.label}</BurnoutNavLink>)}
                 </div>
               ) : null}
             </article>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Calculator, ChevronDown, ExternalLink, PackagePlus, Phone, Search, X } from "lucide-react";
 
-import { buildRetailerEstimateResults, dealerCandidates, estimateServiceTiers, estimateTieredTotal, partTiers, vehicleHintFromContext, type PartTier, type TierEstimate, type VehicleHint, estimatePartCategories, estimateServiceParts, estimateServices, formatPriceRange, popularEstimateQueries, quantityForCategoryPart } from "@/lib/parts";
+import { buildRetailerEstimateResults, dealerCandidates, estimateServiceTiers, estimateTieredTotal, partTiers, vehicleHintFromContext, gradeFallbackOptions, type GradeFallback, type PartTier, type TierEstimate, type VehicleHint, estimatePartCategories, flatEstimateCategoryParts, estimateServices, formatPriceRange, quantityForCategoryPart } from "@/lib/parts";
 import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 
 
@@ -19,6 +19,8 @@ type ServiceSelectorProps = {
   audience?: "customer" | "staff";
   serviceTiers?: Record<string, PartTier>;
   onTierChange?: (service: string, tier: PartTier) => void;
+  gradeFallback?: GradeFallback;
+  onGradeFallbackChange?: (value: GradeFallback) => void;
 };
 
 function partsForCategory(category: (typeof estimatePartCategories)[number]) {
@@ -28,7 +30,7 @@ function partsForCategory(category: (typeof estimatePartCategories)[number]) {
   ];
 }
 
-export function ServiceSelector({ selectedServices, onToggleService, compact = false, selectedSupplierChoices = {}, onSupplierChoiceChange, vehicleContext = "", areaContext = "", audience = "staff", serviceTiers = {}, onTierChange }: ServiceSelectorProps) {
+export function ServiceSelector({ selectedServices, onToggleService, compact = false, selectedSupplierChoices = {}, onSupplierChoiceChange, vehicleContext = "", areaContext = "", audience = "staff", serviceTiers = {}, onTierChange, gradeFallback = "call", onGradeFallbackChange }: ServiceSelectorProps) {
   const isStaff = audience === "staff";
   const vehicleHint = useMemo(() => vehicleHintFromContext(vehicleContext), [vehicleContext]);
   const [partSearch, setPartSearch] = useState("");
@@ -49,6 +51,12 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
   const tieredTotal = useMemo(() => estimateTieredTotal(selectedServices, serviceTiers, pricingSettings, vehicleHint), [selectedServices, serviceTiers, pricingSettings, vehicleHint]);
   const selectedSet = useMemo(() => new Set(selectedServices.map((service) => service.toLowerCase())), [selectedServices]);
   const normalizedPartSearch = partSearch.trim();
+  // Every word typed must appear, so "front pads" finds "front brake pads".
+  const searchMatches = useMemo(() => {
+    const words = normalizedPartSearch.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) return [];
+    return [...new Set(flatEstimateCategoryParts())].filter((part) => !selectedSet.has(part.toLowerCase()) && words.every((word) => part.toLowerCase().includes(word))).slice(0, 8);
+  }, [normalizedPartSearch, selectedSet]);
   const visibleCategories = compact ? estimatePartCategories.slice(0, 8) : estimatePartCategories;
   const retailerResultsByService = useMemo(() => Object.fromEntries(selectedServices.map((service) => [service, buildRetailerEstimateResults(service, { vehicleContext, areaContext, pricingSettings })])), [selectedServices, vehicleContext, areaContext, pricingSettings]);
   const bestDistributorTotal = selectedServices.length
@@ -71,69 +79,38 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
 
   return (
     <div className={compact ? "multi-service-picker compact-service-picker" : "multi-service-picker"}>
-      <details className="requested-services-shell">
-        <summary>
-          <span>{selectedServices.length} job estimate{selectedServices.length === 1 ? "" : "s"} selected</span>
-          <small>Click to expand IAW job estimate categories</small>
-          <ChevronDown size={16} />
-        </summary>
-        <div className="service-category-list">
-          {visibleCategories.map((category) => {
-            const categoryParts = partsForCategory(category);
-            const selectedCount = categoryParts.filter((part) => selectedSet.has(part.toLowerCase())).length;
-            return (
-              <details className="service-category" key={category.label} open={selectedCount > 0}>
-                <summary>
-                  <strong>{category.label}</strong>
-                  <span>{selectedCount}/{categoryParts.length} selected</span>
-                </summary>
-                {category.groups ? category.groups.map((group) => (
-                  <details className="estimate-part-group requested-service-subgroup" key={group.label} open={group.parts.some((part) => selectedSet.has(part.toLowerCase()))}>
-                    <summary>{group.label}</summary>
-                    <div className="service-option-list">
-                      {group.parts.map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} pricingSettings={pricingSettings} vehicleHint={vehicleHint} />)}
-                    </div>
-                  </details>
-                )) : (
-                  <div className="service-option-list">
-                    {(category.parts ?? []).map((service) => <RequestedServiceOption key={service} serviceName={service} selected={selectedSet.has(service.toLowerCase())} onToggleService={onToggleService} pricingSettings={pricingSettings} vehicleHint={vehicleHint} />)}
-                  </div>
-                )}
-              </details>
-            );
-          })}
-        </div>
-      </details>
-
       <section className="estimate-builder-panel">
         <div className="panel-title estimate-builder-title">
           <div>
             <p className="section-label">{isStaff ? "IAW job estimate builder" : "Price estimate"}</p>
-            <h2>{isStaff ? "Choose full job estimates or add individual parts, then compare distributors." : "Pick the work you need, then choose a price tier for each job."}</h2>
+            <h2>{isStaff ? "Choose full job estimates or add individual parts, then compare distributors." : "What does your vehicle need?"}</h2>
           </div>
           <Calculator />
         </div>
         <p className="legal-note">
           {isStaff
             ? "Job estimate buttons are quick “inspect plus parts if needed” planning bundles. Individual parts can still be added one by one. Open each distributor for live fitment, images, stock, and exact local price before ordering."
-            : "Prices include parts and labor for your vehicle. Value uses economy parts, Recommended uses quality name-brand parts, Premium uses top-brand or dealer (OEM) parts."}
+            : "Search or browse below. For each item you can choose Regular, Midgrade or Performance parts. Prices include parts and labor for your vehicle. Maine sales tax on parts is added on your final bill."}
         </p>
 
         <div className="part-search-row">
           <Search size={16} />
-          <input value={partSearch} onChange={(event) => setPartSearch(event.target.value)} placeholder="Add an individual part or job estimate: rear struts, wipers, alternator, exhaust leak..." />
+          <input value={partSearch} onChange={(event) => setPartSearch(event.target.value)} placeholder="Search anything: oil change, brake pads, alternator, wiper blades..." />
           <button className="secondary-button" disabled={!normalizedPartSearch || selectedSet.has(normalizedPartSearch.toLowerCase())} onClick={() => addEstimateItem(normalizedPartSearch)} type="button">
             <PackagePlus size={15} /> Add
           </button>
         </div>
 
-        <div className="quick-part-chips">
-          {popularEstimateQueries.map((query) => (
-            <button disabled={selectedSet.has(query.toLowerCase())} key={query} onClick={() => addEstimateItem(query)} type="button">
-              {query}
-            </button>
-          ))}
-        </div>
+        {searchMatches.length ? (
+          <div className="part-search-results" role="listbox" aria-label="Matching items">
+            {searchMatches.map((part) => (
+              <button key={part} onClick={() => addEstimateItem(part)} type="button" role="option" aria-selected={selectedSet.has(part.toLowerCase())}>
+                <span>{part}</span>
+                <small>{tierSpan(part, pricingSettings, vehicleHint)}</small>
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className="estimate-category-browser">
           {visibleCategories.map((category) => {
@@ -176,8 +153,8 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
               {selectedServices.length
                 ? isStaff
                   ? `${selectedServices.length} job(s), ${estimate.laborHours.toFixed(1)} labor hr at $${pricingSettings.shopLaborRate}/hr. Prices cover required parts and labor (plus the oil drain washer). Extras marked "add if needed" are not in the price - add them to the order before confirming with the customer.`
-                  : "Pick Value, Recommended or Premium for each job below. Your final price is confirmed with you before the appointment, and anything extra we find is only added with your OK."
-                : "Use the job list, quick chips, or the search box above."}
+                  : "Choose Regular, Midgrade or Performance for each item below. Your final price is confirmed with you before the appointment, and anything extra we find is only added with your OK."
+                : "Search or browse above to add what you need."}
             </small>
           </div>
           {isStaff ? (
@@ -264,6 +241,15 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
             ))}
           </div>
         ) : null}
+
+        {selectedServices.length ? (
+          <label className="wide-field grade-fallback">
+            <span>If a part in the grade you picked can&apos;t get here in time</span>
+            <select value={gradeFallback} onChange={(event) => onGradeFallbackChange?.(event.target.value as GradeFallback)}>
+              {gradeFallbackOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+        ) : null}
       </section>
     </div>
   );
@@ -276,9 +262,9 @@ function TierChoice({ tiers, chosen, onChoose, showDetail }: { tiers: Record<Par
   return (
     <div className="tier-choice">
       {flat ? (
-        <div className="tier-card selected"><strong>Price</strong><b>{formatPriceRange(tiers.low.total)}</b><small>Same price whichever parts tier you choose.</small></div>
+        <div className="tier-card selected"><strong>Price</strong><b>{formatPriceRange(tiers.low.total)}</b><small>This is a set price - there are no part grades to choose.</small></div>
       ) : (
-        <div className="tier-card-grid" role="radiogroup" aria-label="Choose a price tier">
+        <div className="tier-card-grid" role="radiogroup" aria-label="Choose a part grade">
           {partTiers.map((tier) => (
             <button className={tier === chosen ? "tier-card selected" : "tier-card"} key={tier} onClick={() => onChoose(tier)} role="radio" aria-checked={tier === chosen} type="button">
               <strong>{tiers[tier].label}</strong>
@@ -311,20 +297,6 @@ function TierChoice({ tiers, chosen, onChoose, showDetail }: { tiers: Record<Par
 function tierSpan(service: string, pricingSettings: PricingSettings, vehicleHint?: VehicleHint) {
   const tiers = estimateServiceTiers(service, pricingSettings, vehicleHint);
   return formatPriceRange({ min: tiers.low.total.min, max: tiers.high.total.max });
-}
-
-function RequestedServiceOption({ serviceName, selected, onToggleService, pricingSettings, vehicleHint }: { serviceName: string; selected: boolean; onToggleService: (serviceName: string, checked: boolean) => void; pricingSettings: PricingSettings; vehicleHint?: VehicleHint }) {
-  const serviceEstimate = estimateServiceParts(serviceName, pricingSettings);
-  return (
-    <label className={selected ? "selected" : ""}>
-      <input checked={selected} onChange={(event) => onToggleService(serviceName, event.target.checked)} type="checkbox" />
-      <div>
-        <strong>{serviceName}</strong>
-        <span>{serviceEstimate.label}</span>
-        <small>{tierSpan(serviceName, pricingSettings, vehicleHint)} depending on parts tier</small>
-      </div>
-    </label>
-  );
 }
 
 function EstimatePartButton({ label, selected, onAdd, onRemove, pricingSettings, vehicleHint }: { label: string; selected: boolean; onAdd: (label: string) => void; onRemove: (label: string) => void; pricingSettings: PricingSettings; vehicleHint?: VehicleHint }) {

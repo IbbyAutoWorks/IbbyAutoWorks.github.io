@@ -14,7 +14,7 @@ export function parseMoneyCents(value: string | undefined | null): number {
 }
 
 export function dollars(cents: number) {
-  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${cents < 0 ? "-" : ""}$${(Math.abs(cents) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function paidAt(order: PrototypeWorkOrder) {

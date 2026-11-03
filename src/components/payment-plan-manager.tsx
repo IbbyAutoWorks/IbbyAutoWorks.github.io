@@ -19,7 +19,6 @@ const emptyPlan: ManagedPaymentPlan = {
 };
 
 export function PaymentPlanManager() {
-  const [adminToken, setAdminToken] = useState("");
   const [plans, setPlans] = useState<ManagedPaymentPlan[]>([]);
   const [draft, setDraft] = useState<ManagedPaymentPlan>(emptyPlan);
   const [status, setStatus] = useState("");
@@ -27,21 +26,16 @@ export function PaymentPlanManager() {
   const configured = isPaymentBackendConfigured();
 
   useEffect(() => {
-    const saved = window.sessionStorage.getItem("ibby-admin-payment-token") || "";
-    setAdminToken(saved);
-  }, []);
-
-  useEffect(() => {
     if (configured) void refresh();
   }, [configured]);
 
   const amountDollars = useMemo(() => (draft.amount_cents / 100).toFixed(2), [draft.amount_cents]);
 
-  async function refresh(token = adminToken) {
+  async function refresh() {
     try {
       setBusy(true);
       setStatus("Loading payment plans...");
-      const nextPlans = await listPaymentPlans(token || undefined);
+      const nextPlans = await listPaymentPlans();
       setPlans(nextPlans);
       setStatus(`Loaded ${nextPlans.length} payment plan${nextPlans.length === 1 ? "" : "s"}.`);
     } catch (error) {
@@ -51,18 +45,12 @@ export function PaymentPlanManager() {
     }
   }
 
-  function rememberToken(value: string) {
-    setAdminToken(value);
-    window.sessionStorage.setItem("ibby-admin-payment-token", value);
-  }
-
   async function saveDraft() {
-    if (!adminToken) return setStatus("Enter the admin payment token first.");
     try {
       setBusy(true);
-      const saved = await savePaymentPlan(draft, adminToken);
+      const saved = await savePaymentPlan(draft, "");
       setDraft(saved);
-      await refresh(adminToken);
+      await refresh();
       setStatus(`Saved ${saved.title} and synced Stripe product/price/link.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error));
@@ -72,11 +60,10 @@ export function PaymentPlanManager() {
   }
 
   async function archive(slug: string) {
-    if (!adminToken) return setStatus("Enter the admin payment token first.");
     try {
       setBusy(true);
-      await archivePaymentPlan(slug, adminToken);
-      await refresh(adminToken);
+      await archivePaymentPlan(slug, "");
+      await refresh();
       setStatus(`Archived ${slug}. Stripe product/price disabled and the plan is hidden from customers.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error));
@@ -93,14 +80,13 @@ export function PaymentPlanManager() {
     <section className="panel payment-plan-manager-panel">
       <div className="panel-title">
         <div>
-          <p className="section-label">Stripe + Supabase plan manager</p>
-          <h2>Create, edit, archive, and open checkout plans from the admin portal.</h2>
+          <p className="section-label">Payment plans</p>
+          <h2>Plans customers can buy through Stripe</h2>
         </div>
         <CreditCard />
       </div>
-      {!configured ? <p className="legal-note">Supabase URL is not configured in this static build, so live plan management is disabled.</p> : null}
+      {!configured ? <p className="legal-note">Payment plans aren't available in this copy of the app.</p> : null}
       <div className="admin-token-row">
-        <label><span>Admin payment token</span><input type="password" value={adminToken} onChange={(event) => rememberToken(event.target.value)} placeholder="Paste private admin token" /></label>
         <button className="secondary-button" disabled={busy || !configured} onClick={() => refresh()}><RefreshCcw size={15} /> Refresh</button>
       </div>
       <div className="payment-manager-grid">

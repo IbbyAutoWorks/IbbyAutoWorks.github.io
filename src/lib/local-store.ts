@@ -1,3 +1,4 @@
+import type { WorkOrderBill } from "@/lib/tax-rules";
 import { defaultAgreementAcceptance, type AgreementAcceptance } from "@/lib/agreements";
 import { buildPartSupplierCandidates, estimateServiceParts, type PartSupplierCandidate, type PriceRange } from "@/lib/parts";
 import { supplyCatalog, supplyVendorCandidates } from "@/lib/supplies";
@@ -134,6 +135,7 @@ export type PrototypeWorkOrder = {
   tier: "low" | "mid" | "high";
   estimate: string;
   preferredWindow: string;
+  appointmentDate?: string;
   symptoms: string;
   status: "Requested" | "Parts Search" | "Accepted" | "Estimate Sent" | "Scheduled" | "En Route" | "On Site" | "In Progress" | "Waiting Parts" | "Awaiting Payment" | "Complete";
   due: string;
@@ -155,11 +157,15 @@ export type PrototypeWorkOrder = {
   agreementAcceptance: AgreementAcceptance;
   customerPreferences: PrototypeCustomerPreferences;
   payment?: PrototypePayment;
+  // Final bill, kept apart from the payment so a Stripe confirmation can't overwrite it.
+  bill?: WorkOrderBill;
   diagnosticCodes?: PrototypeDiagnosticCode[];
   // Full year/make/model/engine from the picker or VIN decode (newer orders only).
   vehicleConfig?: VehicleConfig;
   // Price tier the customer picked for each service (low = Value, mid = Recommended, high = Premium).
   serviceTiers?: Record<string, "low" | "mid" | "high">;
+  // What to do if the chosen grade can't arrive in time (see gradeFallbackOptions).
+  gradeFallback?: "call" | "closest" | "reschedule";
   // Who worked the job and when, for per-tech stats (set from the Service portal).
   technician?: string;
   workStartedAt?: string;
@@ -289,8 +295,17 @@ export async function syncWorkOrdersWithCloud() {
   if (localOnly.length && (await isCloudStaff())) localOnly.forEach(pushWorkOrder);
 }
 
+// Orders store placeholders like "No email entered"; those must never identify anyone,
+// or every customer without an email collapses into one record.
+function usableContact(value: string) {
+  const clean = String(value || "").trim();
+  return /^(not entered|no email entered|no phone entered)$/i.test(clean) ? "" : clean;
+}
+
 export function customerRecordIdFromContact(email: string, phone: string, name: string) {
-  const stable = (email || phone || name || "guest").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const usablePhone = usableContact(phone);
+  // A phone can be shared (couples, a family), so it only identifies someone with their name.
+  const stable = (usableContact(email) || (usablePhone ? `${usablePhone} ${name}` : name) || "guest").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return stable || "guest";
 }
 
@@ -310,10 +325,11 @@ function isSameCustomerWorkOrder(order: PrototypeWorkOrder, customer: PrototypeC
   const orderName = normalizeMatchValue(order.customer);
   const customerName = normalizeMatchValue(customer.name);
 
+  // Same email, or same phone AND same name. Neither a shared phone nor a common
+  // name alone proves two orders belong to one person.
   return (
     Boolean(isUsableMatchValue(orderEmail) && isUsableMatchValue(customerEmail) && orderEmail === customerEmail) ||
-    Boolean(isUsableMatchValue(orderPhone) && isUsableMatchValue(customerPhone) && orderPhone === customerPhone) ||
-    Boolean(isUsableMatchValue(orderName) && isUsableMatchValue(customerName) && orderName === customerName)
+    Boolean(isUsableMatchValue(orderPhone) && isUsableMatchValue(customerPhone) && orderPhone === customerPhone && isUsableMatchValue(orderName) && orderName === customerName)
   );
 }
 
@@ -342,17 +358,24 @@ export function readPrototypeCustomerRecords(): PrototypeCustomerRecord[] {
   }
 }
 
-export function savePrototypeCustomerRecord(record: PrototypeCustomerRecord) {
+function writeCustomerRecord(record: PrototypeCustomerRecord) {
   const current = readPrototypeCustomerRecords();
+  const previous = current.find((item) => item.id === record.id);
   const next = [
     { ...record, updatedAt: new Date().toISOString() },
     ...current.filter((item) => item.id !== record.id)
   ];
   window.localStorage.setItem(CUSTOMER_RECORDS_KEY, JSON.stringify(next));
+  return previous;
+}
 
+// An explicit edit of a customer's details: their orders pick up the change. Matching
+// uses the details as they were before the edit, so a rename still finds their orders.
+export function savePrototypeCustomerRecord(record: PrototypeCustomerRecord) {
+  const previous = writeCustomerRecord(record);
   const orders = readPrototypeWorkOrders();
   const patchedOrders = orders.map((order) => (
-    isSameCustomerWorkOrder(order, record) || customerRecordIdFromContact(order.email, order.phone, order.customer) === record.id
+    isSameCustomerWorkOrder(order, previous ?? record)
       ? {
           ...order,
           customer: record.name || order.customer,
@@ -379,7 +402,8 @@ export function upsertCustomerFromWorkOrder(order: PrototypeWorkOrder) {
   const matchedCustomer = findMatchingCustomerForWorkOrder(current, orders, order);
   const id = matchedCustomer?.id ?? customerRecordIdFromContact(order.email, order.phone, order.customer);
   const existing = matchedCustomer;
-  savePrototypeCustomerRecord({
+  // Only files the customer record; a new or synced order never rewrites other orders.
+  writeCustomerRecord({
     id,
     name: order.customer,
     phone: order.phone,
@@ -390,6 +414,7 @@ export function upsertCustomerFromWorkOrder(order: PrototypeWorkOrder) {
     reviewRating: existing?.reviewRating ?? 5,
     updatedAt: existing?.updatedAt ?? new Date().toISOString()
   });
+  window.dispatchEvent(new CustomEvent(CUSTOMER_RECORDS_EVENT));
 }
 
 export function getCustomerOrders(customer: PrototypeCustomerRecord, orders = readPrototypeWorkOrders()) {
