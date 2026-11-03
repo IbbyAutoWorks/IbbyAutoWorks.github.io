@@ -135,6 +135,7 @@ export type PrototypeWorkOrder = {
   tier: "low" | "mid" | "high";
   estimate: string;
   preferredWindow: string;
+  appointmentDate?: string;
   symptoms: string;
   status: "Requested" | "Parts Search" | "Accepted" | "Estimate Sent" | "Scheduled" | "En Route" | "On Site" | "In Progress" | "Waiting Parts" | "Awaiting Payment" | "Complete";
   due: string;

@@ -1,12 +1,11 @@
 // In-app "Report a problem" / "Request a feature". Stores every submission, then files
-// it as a GitHub issue when GITHUB_ISSUES_TOKEN is set (fine-grained token with Issues
-// read/write on the repo below). Public endpoint, so input is bounded and rate limited.
+// it as a GitHub issue when the owner has saved a token on the Connections page (fine-grained,
+// Issues read/write on the repo below). Public endpoint, so input is bounded and rate limited.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const repo = Deno.env.get("GITHUB_ISSUES_REPO") || "IbbyAutoWorks/IbbyAutoWorks";
-const token = Deno.env.get("GITHUB_ISSUES_TOKEN") || "";
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("IB_SUPABASE_SECRET_KEY") || Deno.env.get("SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
@@ -43,6 +42,8 @@ serve(async (req) => {
   if (error) return reply(500, { ok: false, error: "That didn't save. Please try again." });
 
   let issueUrl = "";
+  const { data: saved } = await supabase.from("integration_keys").select("value").eq("name", "github_issues_token").maybeSingle();
+  const token = saved?.value || Deno.env.get("GITHUB_ISSUES_TOKEN") || "";
   if (token) {
     // The repo is public, so contact details stay in the app and never go on the issue.
     const response = await fetch(`https://api.github.com/repos/${repo}/issues`, {

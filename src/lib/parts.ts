@@ -67,22 +67,27 @@ const supplierSearchBases = [
   { name: "Advance Auto Parts", type: "Local pickup" as const, color: "#f2a600", base: "https://shop.advanceautoparts.com/web/SearchResults?searchTerm=", fulfillment: "Local pickup or ship-to-home" },
   { name: "NAPA Auto Parts", type: "Local pickup" as const, color: "#145bd7", base: "https://www.napaonline.com/en/search?text=", fulfillment: "Local store pickup or PROLink when connected" },
   { name: "AutoZone", type: "Local pickup" as const, color: "#dc2b26", base: "https://www.autozone.com/searchresult?searchText=", fulfillment: "Local pickup or AutoZonePro when connected" },
-  { name: "Pep Boys", type: "Local pickup" as const, color: "#d8272f", base: "https://www.pepboys.com/search?text=", fulfillment: "Local pickup/service options where available" },
   { name: "Walmart Auto", type: "Local pickup" as const, color: "#0071ce", base: "https://www.walmart.com/search?q=", fulfillment: "Local pickup or ship-to-home for common maintenance items" },
   { name: "1A Auto", type: "Online" as const, color: "#234f9b", base: "https://www.1aauto.com/search?q=", fulfillment: "Online order, how-to supported fitment check" },
   { name: "RockAuto", type: "Online" as const, color: "#7f1d1d", base: "https://www.rockauto.com/en/partsearch/?partnum=", fulfillment: "Online order, shipping time required" }
 ];
 
+// A saved part number finds the exact part, which a vehicle-and-words search can't promise.
+export function partNumberLinks(partNumber: string) {
+  const number = partNumber.trim();
+  if (!number) return [];
+  return supplierSearchBases
+    .filter((source) => ["O'Reilly Auto Parts", "NAPA Auto Parts", "AutoZone", "Advance Auto Parts", "RockAuto"].includes(source.name))
+    .map((source) => ({ name: source.name, url: `${source.base}${encodeURIComponent(number)}` }));
+}
+
 const tireSearchBases = [
   { name: "VIP Tires & Service", type: "Tire" as const, color: "#2f6fbd", base: "https://www.vipauto.com/tires/search?query=", fulfillment: "Regional tire/service lookup, local install confirmation required" },
   { name: "Sullivan Tire", type: "Tire" as const, color: "#b6202b", base: "https://www.sullivantire.com/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" },
-  { name: "NTW", type: "Tire" as const, color: "#4c5b6b", base: "https://www.ntw.com/search?query=", fulfillment: "Wholesale tire source, account/availability confirmation required" },
-  { name: "Max Finkelstein", type: "Tire" as const, color: "#6c4f9b", base: "https://www.maxfinkelstein.com/search?query=", fulfillment: "Wholesale/local distributor lookup when account access is connected" },
   { name: "Tire Rack", type: "Tire" as const, color: "#cc2530", base: "https://www.tirerack.com/tires/tires.jsp?keyword=", fulfillment: "Online tire order, installer/pickup planning required" },
   { name: "Discount Tire", type: "Tire" as const, color: "#d71920", base: "https://www.discounttire.com/search?q=", fulfillment: "Online/local tire lookup where available" },
   { name: "Mavis Discount Tire", type: "Tire" as const, color: "#1168b3", base: "https://www.mavis.com/search?q=", fulfillment: "Regional tire/service lookup" },
   { name: "Town Fair Tire", type: "Tire" as const, color: "#1f4b8f", base: "https://www.townfairtire.com/search?q=", fulfillment: "Regional tire/service lookup" },
-  { name: "Tire Warehouse", type: "Tire" as const, color: "#344256", base: "https://www.tirewarehouse.net/search?query=", fulfillment: "Regional tire source, pickup/service confirmation required" }
 ];
 
 
@@ -873,6 +878,6 @@ export function buildRetailerEstimateResults(service: string, options: { vehicle
 
 export const partsIntegrationNotes = [
   { title: "Estimate engine", detail: "Parts now use the IAW price catalog, job-part recipes, book-time labor, and market-rate comparison from the NukeBox parts finder." },
-  { title: "Supplier lookup", detail: "O'Reilly, Advance, NAPA, AutoZone, Pep Boys, Walmart, 1A Auto, RockAuto, and tire-specific links generate from the calculated part query." },
+  { title: "Supplier lookup", detail: "O'Reilly, Advance, NAPA, AutoZone, Walmart, 1A Auto, RockAuto, and tire-specific links generate from the calculated part query." },
   { title: "Final quote rule", detail: "Displayed ranges are draft planning numbers. Admin still verifies live fitment, supplier image, price, stock, and customer approval before ordering." }
 ];

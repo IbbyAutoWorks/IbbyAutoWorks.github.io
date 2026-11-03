@@ -14,6 +14,8 @@ export const adminSections = [
   { href: "/admin/vehicles", label: "Vehicles" },
   { href: "/admin/services", label: "Services & accounts" },
   { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/connections", label: "Connections" },
+  { href: "/admin/feedback", label: "Feedback" },
   { href: "/admin/manual", label: "Owner manual" }
 ];
 

@@ -115,6 +115,10 @@ function serviceStepIndexForStatus(status: PrototypeWorkOrder["status"]) {
   return 0;
 }
 
+function onMyWayText(order: PrototypeWorkOrder) {
+  return `Hi ${order.customer.split(" ")[0]}, this is Ibby Auto Works. I'm on my way to work on your ${order.vehicle}. See you soon!`;
+}
+
 function moneyToCents(value: string) {
   return Math.round((Number.parseFloat(value.replace(/[^0-9.]/g, "")) || 0) * 100);
 }
@@ -700,6 +704,8 @@ export function ServicePortal() {
           />
           <div className="service-decision-grid">
             <a href={`tel:${order.phone}`}><Phone size={16} /> Call customer</a>
+            <a href={`sms:${order.phone}?&body=${encodeURIComponent(onMyWayText(order))}`}>Text customer</a>
+            <button onClick={() => void navigator.clipboard?.writeText(onMyWayText(order))} type="button">Copy text for Google Voice</button>
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(order.location)}`} target="_blank" rel="noreferrer"><Map size={16} /> Open route</a>
             <button onClick={notifyEnRoute}>Notify customer on my way</button>
           </div>

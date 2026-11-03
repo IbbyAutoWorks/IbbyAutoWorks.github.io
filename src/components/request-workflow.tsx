@@ -440,6 +440,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       serviceTiers: Object.fromEntries(selectedServices.map((service) => [service, serviceTiers[service] ?? "mid"])),
       estimate: selectedServices.length ? formatPriceRange(tieredTotal) : "Pending",
       preferredWindow,
+      appointmentDate: form.appointmentDate,
       symptoms: `${form.symptoms || "No symptoms entered"}${needsTirePosition ? ` Tire needing attention: ${tireConcern}.` : ""}`,
       status: isAdminMode ? "Scheduled" : "Requested",
       due: preferredWindow || "Needs scheduling",

@@ -6179,3 +6179,150 @@ html {
   height: 1px;
   opacity: 0;
 }
+
+
+/* Help icon, tap-to-explain and walkthroughs */
+.help-button {
+  position: fixed;
+  left: max(14px, env(safe-area-inset-left));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 95;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--red);
+  box-shadow: 0 6px 18px rgba(17, 20, 24, 0.22);
+  cursor: pointer;
+}
+
+.help-button.active {
+  background: var(--red);
+  color: #fff;
+}
+
+.help-card {
+  position: fixed;
+  left: max(14px, env(safe-area-inset-left));
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 58px);
+  z-index: 96;
+  display: grid;
+  gap: 8px;
+  width: min(380px, calc(100vw - 28px));
+  max-height: min(60vh, 460px);
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 12px 32px rgba(17, 20, 24, 0.28);
+}
+
+.help-card strong {
+  font-size: 1.02rem;
+}
+
+.help-card p,
+.help-card ul {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.help-card ul {
+  padding-left: 18px;
+}
+
+.help-card small {
+  color: var(--muted, #66717d);
+}
+
+.help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.help-actions button {
+  min-height: 44px;
+}
+
+.help-picking main,
+.help-picking main * {
+  cursor: help !important;
+}
+
+.help-highlight {
+  outline: 3px solid var(--red);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media print {
+  .help-layer {
+    display: none;
+  }
+}
+
+
+/* Connections page and spec lookup */
+.connection-steps {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}
+
+.connection-fields {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.connection-field label {
+  display: grid;
+  gap: 4px;
+}
+
+.connection-field em {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-style: normal;
+  color: var(--green, #14964d);
+}
+
+.connection-field .help-actions {
+  margin-top: 6px;
+}
+
+.spec-lookup {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.spec-answer {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.spec-answer blockquote {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--line);
+}
+
+.spec-part-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}

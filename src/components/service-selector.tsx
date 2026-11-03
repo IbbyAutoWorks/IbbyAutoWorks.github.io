@@ -90,7 +90,7 @@ export function ServiceSelector({ selectedServices, onToggleService, compact = f
         <p className="legal-note">
           {isStaff
             ? "Job estimate buttons are quick “inspect plus parts if needed” planning bundles. Individual parts can still be added one by one. Open each distributor for live fitment, images, stock, and exact local price before ordering."
-            : "Search or browse below. For each item you can choose Regular, Midgrade or Performance parts. Prices include parts and labor for your vehicle."}
+            : "Search or browse below. For each item you can choose Regular, Midgrade or Performance parts. Prices include parts and labor for your vehicle. Maine sales tax on parts is added on your final bill."}
         </p>
 
         <div className="part-search-row">
