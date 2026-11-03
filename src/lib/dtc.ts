@@ -81,6 +81,30 @@ function isManufacturerSpecific(code: string) {
   return code[0] !== "P" && (second === "2" || second === "3");
 }
 
+export type DtcDetail = {
+  title: string;
+  description: string;
+  causes: { label: string; likelihood: string }[];
+  symptoms: string[];
+  hours: [number, number] | null;
+  difficulty: string;
+  related: string[];
+  sources: string[];
+  reviewed: string;
+};
+
+const detailFiles = new Map<string, Promise<Record<string, DtcDetail>>>();
+
+// Fuller notes on generic codes from OBDex (CC0), split into small files by code prefix.
+export async function loadDtcDetail(code: string): Promise<DtcDetail | null> {
+  const group = code.slice(0, 3);
+  if (!/^[PBCU][0-9A-F]{2}$/.test(group)) return null;
+  if (!detailFiles.has(group)) {
+    detailFiles.set(group, fetch(`/data/obdex/${group}.json`).then((response) => (response.ok ? response.json() : {})).catch(() => ({})));
+  }
+  return (await detailFiles.get(group)!)[code] ?? null;
+}
+
 export async function lookupDtcCodes(codes: string[], make: string): Promise<DtcLookup[]> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase || !codes.length) return [];

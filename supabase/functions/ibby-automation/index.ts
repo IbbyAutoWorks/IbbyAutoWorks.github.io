@@ -98,6 +98,9 @@ async function sendOne(event: Event, shop: Shop, keys: Record<string, string>, t
   if (!response.ok) throw new Error(`Gmail refused it: ${response.status} ${(await response.text()).slice(0, 200)}`);
 }
 
+// Gmail allows about 500 a day. Anything past this waits in the queue for tomorrow.
+const DAILY_EMAIL_STOP = 400;
+
 serve(async (req) => {
   const keys = await readKeys();
   if (!keys.cron_token || req.headers.get("x-ibby-cron") !== keys.cron_token) return json(401, { ok: false, error: "Not allowed" });
@@ -119,13 +122,17 @@ serve(async (req) => {
     return json(200, { ok: false, connected: true, error: String(error) });
   }
 
+  const { count: sentToday } = await supabase.from("email_events").select("id", { count: "exact", head: true }).eq("status", "sent").gte("sent_at", `${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+  const room = DAILY_EMAIL_STOP - (sentToday ?? 0);
+  if (room <= 0) return json(200, { ok: true, connected: true, sent: 0, note: "Daily email limit reached. The rest wait for tomorrow." });
+
   const { data: shop } = await supabase.from("business_settings").select("business_name,phone,email,metadata").limit(1).maybeSingle();
   const { data: events, error } = await supabase
     .from("email_events")
     .select("id,event_type,recipient_email,subject,payload,work_order_id")
     .eq("status", "queued")
     .lte("scheduled_for", new Date().toISOString())
-    .limit(20);
+    .limit(Math.min(20, room));
   if (error) return json(500, { ok: false, error: error.message });
 
   let sent = 0;
