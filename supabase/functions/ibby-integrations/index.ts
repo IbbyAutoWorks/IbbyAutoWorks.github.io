@@ -113,10 +113,20 @@ serve(async (req) => {
   if (body.action === "status") {
     const count = async (status: string) => (await supabase.from("email_events").select("id", { count: "exact", head: true }).eq("status", status)).count ?? 0;
     const { data: lastFailure } = await supabase.from("email_events").select("error").eq("status", "failed").order("updated_at", { ascending: false }).limit(1).maybeSingle();
+    const fillCount = async (status: string) => (await supabase.from("spec_fill_queue").select("id", { count: "exact", head: true }).eq("status", status)).count ?? 0;
+    const { data: filled } = await supabase.from("spec_fill_queue").select("filled").gt("filled", 0);
+    const { data: credits } = await supabase.from("spec_fill_usage").select("credits").gte("day", `${new Date().toISOString().slice(0, 7)}-01`);
     return reply(200, {
       ok: true,
       saved: rows.filter((row) => ownerKeys.includes(row.name)).map((row) => ({ name: row.name, updatedAt: row.updated_at })),
-      email: { queued: await count("queued"), sent: await count("sent"), failed: await count("failed"), lastFailure: lastFailure?.error ?? "", connectionError: keys.gmail_last_error ?? "" }
+      email: { queued: await count("queued"), sent: await count("sent"), failed: await count("failed"), lastFailure: lastFailure?.error ?? "", connectionError: keys.gmail_last_error ?? "" },
+      specFill: {
+        waiting: await fillCount("pending"),
+        done: await fillCount("done"),
+        values: (filled ?? []).reduce((sum, row) => sum + row.filled, 0),
+        searchesThisMonth: (credits ?? []).reduce((sum, row) => sum + row.credits, 0),
+        endsOn: keys.spec_fill_ends ?? ""
+      }
     });
   }
 

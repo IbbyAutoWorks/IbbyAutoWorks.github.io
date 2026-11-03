@@ -159,6 +159,14 @@ export function ConnectionsPanel() {
               {status?.email.lastFailure ? <p className="legal-note" role="alert">Last failed email: {status.email.lastFailure}</p> : null}
             </>
           ) : null}
+          {group.title.startsWith("Spec lookup") && status?.specFill ? (
+            <p className="legal-note">
+              Nightly fill: every third night, the app looks up common vehicles and the ones you&apos;ve worked on, and fills in blank specs. It won&apos;t change anything already saved, and what it finds is marked &quot;Auto-fill, not checked yet&quot; until you confirm it against the source link.
+              {" "}{status.specFill.endsOn
+                ? `Vehicles finished: ${status.specFill.done}. Waiting: ${status.specFill.waiting}. Specs found: ${status.specFill.values}. Searches this month: ${status.specFill.searchesThisMonth} of 750. Runs until ${new Date(status.specFill.endsOn).toLocaleDateString()}.`
+                : `It starts the first night after both keys are saved and runs for a month. Vehicles waiting: ${status.specFill.waiting}.`}
+            </p>
+          ) : null}
         </div>
       ))}
 

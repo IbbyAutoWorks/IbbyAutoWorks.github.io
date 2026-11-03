@@ -18,6 +18,7 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
 export type ConnectionStatus = {
   saved: { name: string; updatedAt: string }[];
   email: { queued: number; sent: number; failed: number; lastFailure: string; connectionError: string };
+  specFill?: { waiting: number; done: number; values: number; searchesThisMonth: number; endsOn: string };
 };
 
 export const connectionStatus = () => call<ConnectionStatus>({ action: "status" });
