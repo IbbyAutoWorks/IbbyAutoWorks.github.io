@@ -80,12 +80,12 @@ export function PaymentPlanManager() {
     <section className="panel payment-plan-manager-panel">
       <div className="panel-title">
         <div>
-          <p className="section-label">Stripe + Supabase plan manager</p>
-          <h2>Create, edit, archive, and open checkout plans from the admin portal.</h2>
+          <p className="section-label">Payment plans</p>
+          <h2>Plans customers can buy through Stripe</h2>
         </div>
         <CreditCard />
       </div>
-      {!configured ? <p className="legal-note">Supabase URL is not configured in this static build, so live plan management is disabled.</p> : null}
+      {!configured ? <p className="legal-note">Payment plans aren't available in this copy of the app.</p> : null}
       <div className="admin-token-row">
         <button className="secondary-button" disabled={busy || !configured} onClick={() => refresh()}><RefreshCcw size={15} /> Refresh</button>
       </div>

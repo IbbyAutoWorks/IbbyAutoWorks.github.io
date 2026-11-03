@@ -147,7 +147,7 @@ export function HelpLayer() {
     if (step.href && pathname !== step.href) { router.push(step.href); return; }
     const timer = window.setTimeout(() => {
       const element = step.target ? document.querySelector(step.target) : null;
-      const visible = element && (element as HTMLElement).offsetParent !== null;
+      const visible = element && element.getClientRects().length > 0;
       setHighlight(visible ? element : null);
       if (visible) element.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }, 300);

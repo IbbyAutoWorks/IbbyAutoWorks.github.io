@@ -146,7 +146,7 @@ export function CustomerAccount() {
         <section className="panel empty-state-panel">
           <Car size={28} />
           <h2>No customer records yet</h2>
-          <p>Submit a one-time service request or save account details in customer settings. Vehicles, work orders, notification choices, and reports will appear from the same prototype store the admin dashboard reads.</p>
+          <p>Submit a one-time service request or save account details in customer settings. Your vehicles, work orders and reports will appear here.</p>
           <div className="hero-actions">
             <Link href="/request" className="primary-button">Create first request</Link>
             <Link href="/account/settings" className="secondary-button"><Plus size={15} /> Customer settings</Link>

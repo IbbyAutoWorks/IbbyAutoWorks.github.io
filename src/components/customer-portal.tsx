@@ -9,12 +9,6 @@ import { MARKETING_SETTINGS_EVENT, readMarketingSettings, type MarketingSettings
 import { CustomerCouponPopup } from "@/components/marketing-widgets";
 import { SiteFooter } from "@/components/site-footer";
 
-const fallbackReviews = [
-  { name: "Local driver", review: "Clear updates, clean records, and the work order was easy to follow.", reviewRating: 5 },
-  { name: "Fleet customer", review: "The mobile workflow makes scheduling service and tracking reports simple.", reviewRating: 5 },
-  { name: "Ibby Auto Works™ customer", review: "Professional mobile service with the details saved for next time.", reviewRating: 5 }
-];
-
 export function CustomerPortal() {
   // Customer review state: pulls prototype customer records from browser storage.
   const [customers, setCustomers] = useState<PrototypeCustomerRecord[]>([]);
@@ -49,7 +43,7 @@ export function CustomerPortal() {
     const customerReviews = customers
       .filter((customer) => customer.review.trim())
       .map((customer) => ({ name: customer.name || "Customer", review: customer.review, reviewRating: customer.reviewRating || 5 }));
-    return customerReviews.length ? customerReviews : fallbackReviews;
+    return customerReviews;
   }, [customers]);
 
   return (
@@ -87,21 +81,16 @@ export function CustomerPortal() {
         <section className="iaw-home-widget">
           <div className="iaw-home-widget-arm"><Wrench size={54} /></div>
           <div>
-            <p className="section-label">Live shop workflow</p>
+            <p className="section-label">How it works</p>
             <h2>{marketing.homepageWidgetTitle}</h2>
             <p>{marketing.homepageWidgetMessage}</p>
             <Link href="/request" className="secondary-button"><Gauge size={16} /> {marketing.homepageWidgetCta}</Link>
           </div>
-          <div className="iaw-widget-stats">
-            <span>Photos</span><strong>request + job</strong>
-            <span>Calendar</span><strong>work + prayer blocks</strong>
-            <span>Archive</span><strong>Supabase + Google ready</strong>
-          </div>
         </section>
       ) : null}
 
-      {/* Reviews section: saved customer reviews, with static fallbacks for a fresh browser. */}
-      {marketing.reviewCarouselEnabled ? <section className="public-review-section">
+      {/* Reviews section: saved customer reviews; hidden until there are real ones. */}
+      {marketing.reviewCarouselEnabled && reviews.length ? <section className="public-review-section">
         <div className="panel-title">
           <div>
             <p className="section-label">Customer reviews</p>

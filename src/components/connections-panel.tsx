@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, ExternalLink, KeyRound, Mail, MessageSquare, Save, Search } from "lucide-react";
 
+import { IntegrationHub } from "@/components/integration-hub";
+import { OpsStatusPanel } from "@/components/ops-status-panel";
 import { connectionStatus, saveConnection, sendTestEmail, type ConnectionStatus } from "@/lib/integrations";
 
 type KeyField = { name: string; label: string; secret?: boolean };
@@ -159,6 +161,9 @@ export function ConnectionsPanel() {
           ) : null}
         </div>
       ))}
+
+      <OpsStatusPanel />
+      <IntegrationHub />
 
       <div className="panel">
         <div className="panel-title"><h2>Text messages</h2><MessageSquare /></div>

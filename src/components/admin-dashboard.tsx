@@ -9,7 +9,6 @@ import { gradeFallbackOptions, tierLabels } from "@/lib/parts";
 import { activity } from "@/lib/data";
 import { partsIntegrationNotes } from "@/lib/parts";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
-import { OpsStatusPanel } from "@/components/ops-status-panel";
 import { AdminPrayerReminder } from "@/components/marketing-widgets";
 import {
   CUSTOMER_RECORDS_EVENT,
@@ -208,7 +207,6 @@ export function AdminDashboard() {
         })}
       </section>
 
-      <OpsStatusPanel />
 
       {/* Dashboard grid: live work orders, selected job details, parts, messages, and customer records. */}
       <section className="dashboard-grid">
@@ -224,7 +222,7 @@ export function AdminDashboard() {
             <div className="mirror-banner">
               <div>
                 <strong>{customerOrders.length} customer-submitted request{customerOrders.length === 1 ? "" : "s"}</strong>
-                <span>Loaded from the customer portal prototype store.</span>
+                <span>From customers on the request page.</span>
               </div>
             </div>
           ) : null}

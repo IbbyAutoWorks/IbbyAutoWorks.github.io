@@ -18,7 +18,6 @@ import { isoDate, readScheduleSettings, saveScheduleSettings, SCHEDULE_DAYS, typ
 import { SHARED_SETTINGS_ERROR_EVENT } from "@/lib/shared-settings";
 import { defaultMarketingSettings, readMarketingSettings, saveMarketingSettings, type MarketingSettings } from "@/lib/marketing-settings";
 import { PaymentSettingsPanel } from "@/components/payment-settings";
-import { IntegrationHub } from "@/components/integration-hub";
 import { PaymentPlanManager } from "@/components/payment-plan-manager";
 import { CouponTaxManager } from "@/components/coupon-tax-manager";
 
@@ -208,10 +207,15 @@ export function AdminSettings() {
 
       <section className="settings-stack">
         {shareError ? <p className="legal-note" role="alert">A change saved on this device only and didn't reach customers: {shareError}</p> : null}
-        <IntegrationHub />
-      <PaymentPlanManager />
-      <CouponTaxManager />
-      <PaymentSettingsPanel />
+        <details className="panel settings-accordion">
+          <summary><span><BadgePercent size={16} /> Coupon list and Maine sales tax</span><ChevronDown size={16} /></summary>
+          <CouponTaxManager />
+        </details>
+        <details className="panel settings-accordion">
+          <summary><span><Wrench size={16} /> Payment plans</span><ChevronDown size={16} /></summary>
+          <PaymentPlanManager />
+        </details>
+        <PaymentSettingsPanel />
 
         <details className="panel settings-accordion">
           <summary><span><BadgePercent size={16} /> Coupons: on or off, when and where</span><ChevronDown size={16} /></summary>
@@ -231,7 +235,7 @@ export function AdminSettings() {
             ] as const).map(([key, label]) => (
               <label className="toggle-row" key={key}><input type="checkbox" disabled={!marketingSettings.couponsEnabled} checked={marketingSettings[key]} onChange={(event) => updateMarketingSettings({ ...marketingSettings, [key]: event.target.checked })} /><span>{label}</span></label>
             ))}
-            <p className="legal-note wide-field">Leave the dates empty to show coupons all the time. Which coupons exist and their codes are set under Coupons and taxes above. Only text coupons to customers who agreed to promotional texts.</p>
+            <p className="legal-note wide-field">Leave the dates empty to show coupons all the time. Which coupons exist and their codes are set under Coupon list and Maine sales tax. Only text coupons to customers who agreed to promotional texts.</p>
           </div>
         </details>
 
@@ -294,7 +298,7 @@ export function AdminSettings() {
                 Upload image
                 <input type="file" accept="image/*" onChange={(event) => uploadLogo(event.target.files?.[0] ?? null)} />
               </label>
-              <small>Uploaded images are saved into this browser prototype so he can switch back later.</small>
+              <small>Uploaded images are saved so you can switch back later.</small>
             </div>
 
             <div className="brand-preview-card saved-logo-card">
@@ -360,7 +364,7 @@ export function AdminSettings() {
               <span>Default distributor search area</span>
               <input value={pricingSettings.defaultSearchArea} onChange={(event) => updatePricingSetting("defaultSearchArea", event.target.value)} placeholder="Auburn ME" />
             </label>
-            <p className="legal-note">These settings feed the customer request estimator, retailer comparison cards, and saved work-order part quotes in this browser prototype.</p>
+            <p className="legal-note">Customer price estimates and part quotes are built from these.</p>
           </div>
         </details>
 

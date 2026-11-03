@@ -26,7 +26,7 @@ export function AuthPanel() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSignedInEmail(session?.user.email ?? null);
-      setStatus(session?.user.email ? "Signed in and ready for cloud sync." : "Signed out. Local prototype records stay in this browser.");
+      setStatus(session?.user.email ? "Signed in." : "Signed out.");
     });
 
     return () => listener.subscription.unsubscribe();
@@ -46,7 +46,7 @@ export function AuthPanel() {
     if (!supabase) return;
     setStatus("Signing in...");
     const { error } = await supabase.auth.signInWithPassword({ email: loginIdentifierToEmail(email), password });
-    setStatus(error ? error.message : "Signed in. Future requests can sync to Supabase.");
+    setStatus(error ? error.message : "Signed in.");
   }
 
   async function signOut() {

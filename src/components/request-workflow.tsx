@@ -262,7 +262,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       rows: [
         ["Services", selectedServices.length ? selectedServices.join(", ") : "None selected"],
         ["Tire position", needsTirePosition ? tireConcern : "Not needed"],
-        ["Draft estimate", selectedServices.length ? formatPriceRange(tieredTotal) : "Pending service selection"],
+        ["Estimate", selectedServices.length ? formatPriceRange(tieredTotal) : "Pending service selection"],
         ["Distributor choices", selectedDistributorSummary || "Customer can compare/select during parts review"],
         ["Symptoms / notes", form.symptoms || "No symptoms entered"]
       ]
@@ -499,13 +499,13 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
           <p>
             {isAdminMode
               ? "Use the same intake flow for phone, in-person, or admin-entered requests. Customer-only authorization prompts are skipped here."
-              : "This request saves to the work-order board and syncs to Supabase when you are signed in; local storage remains the offline fallback."}
+              : "Tell us what you need. You'll see a price range before anything's booked, and we'll confirm the time with you."}
           </p>
         </div>
         <div className="estimate-summary">
-          <span>Draft estimate range</span>
+          <span>Estimated price range</span>
           <strong>{selectedServices.length ? formatPriceRange(tieredTotal) : "Pending"}</strong>
-          <small>{selectedServices.length ? `${selectedServices.map((service) => `${service}: ${tierLabels[serviceTiers[service] ?? "mid"]}`).join(" - ")}` : "Select requested services to calculate parts, labor, and draft price range."}</small>
+          <small>{selectedServices.length ? `${selectedServices.map((service) => `${service}: ${tierLabels[serviceTiers[service] ?? "mid"]}`).join(" - ")}` : "Pick your services to see a price range for parts and labor."}</small>
         </div>
       </section>
 

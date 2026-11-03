@@ -6,13 +6,13 @@ import { CreditCard, Save } from "lucide-react";
 import { defaultPaymentPlans, defaultPaymentSettings, readPaymentSettings, savePaymentSettings, type PaymentSettings } from "@/lib/app-settings";
 
 const toggles: Array<[keyof PaymentSettings, string, string]> = [
-  ["stripeEnabled", "Show Stripe checkout", "Primary test checkout path now; production keys will be swapped later."],
-  ["appleGooglePayEnabled", "Show Apple Pay / Google Pay", "Runs through Stripe payment methods when Stripe Checkout is live."],
+  ["stripeEnabled", "Show Stripe checkout", "Customers pay by card through Stripe."],
+  ["appleGooglePayEnabled", "Show Apple Pay / Google Pay", "Runs through Stripe at card checkout."],
   ["achEnabled", "Show ACH bank transfer", "Useful for larger jobs, parts, tires, and payment plans."],
   ["paypalEnabled", "Show PayPal checkout", "Keep optional for customers who prefer PayPal."],
-  ["squareEnabled", "Show Square", "Placeholder for future card reader / Square invoice support."],
+  ["squareEnabled", "Show Square", "Shows Square as a choice. You collect it yourself with a Square reader or invoice."],
   ["cashEnabled", "Show cash/on-site", "Manual collection option for approved jobs."],
-  ["patreonEnabled", "Show Patreon membership/plan option", "Kept around but disabled by default for now."]
+  ["patreonEnabled", "Show Patreon membership/plan option", "Off by default."]
 ];
 
 const labels: Array<[keyof PaymentSettings, string]> = [
@@ -49,7 +49,7 @@ export function PaymentSettingsPanel() {
   return (
     <details className="panel settings-accordion" open>
       <summary><span><CreditCard size={16} /> Payment methods, plans, and packages</span><CreditCard size={16} /></summary>
-      <p className="legal-note">Stripe is the preferred testing path now. Patreon stays available but disabled by default. Secret/restricted Stripe keys must remain server-side; GitHub Pages can only show payment choices until a Vercel/Supabase checkout endpoint is deployed.</p>
+      <p className="legal-note">These are the ways of paying that customers see.</p>
       <div className="settings-fields payment-method-grid">
         {toggles.map(([key, label, note]) => (
           <label className="toggle-row payment-toggle-row" key={key}>
@@ -72,7 +72,7 @@ export function PaymentSettingsPanel() {
         ))}
       </div>
       <button className="primary-button" onClick={save}><Save size={16} /> Save payment settings</button>
-      {saved ? <p className="legal-note">Payment display settings saved in this browser prototype.</p> : null}
+      {saved ? <p className="legal-note">Saved.</p> : null}
     </details>
   );
 }
