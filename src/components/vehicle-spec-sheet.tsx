@@ -6,7 +6,9 @@ import { BookOpen, ExternalLink, Pencil, Save, Search, ShieldAlert } from "lucid
 import { lookupSpec, type SpecAnswer } from "@/lib/integrations";
 import { partNumberLinks } from "@/lib/parts";
 import { engineLabel, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
-import { fetchRecalls, loadSpecSheet, researchLinks, saveSpecValue, specFields, specQuery, type Recall, type SpecSheet } from "@/lib/vehicle-specs";
+import { fetchRecalls, type Recall } from "@/lib/nhtsa-issues";
+import { VehicleKnownIssues } from "@/components/vehicle-known-issues";
+import { loadSpecSheet, researchLinks, saveSpecValue, specFields, specQuery, type SpecSheet } from "@/lib/vehicle-specs";
 
 const groups = [...new Set(specFields.map((field) => field.group))];
 
@@ -97,7 +99,7 @@ export function VehicleSpecSheet({ config }: { config: VehicleConfig }) {
         <label className="wide-field"><span>Look up a spec</span>
           <input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="e.g. rear caliper bracket bolt torque" />
         </label>
-        <button className="secondary-button" disabled={question.trim().length < 3} onClick={runLookup} type="button"><Search size={14} /> Search trusted sites</button>
+        <button className="secondary-button" disabled={question.trim().length < 3} onClick={runLookup} type="button"><Search size={14} /> Search carmaker sites</button>
         {lookupStatus ? <p className="legal-note">{lookupStatus}</p> : null}
         {answers.length ? (
           <>
@@ -119,11 +121,13 @@ export function VehicleSpecSheet({ config }: { config: VehicleConfig }) {
           <summary><ShieldAlert size={15} /> {recalls.length} NHTSA recall{recalls.length === 1 ? "" : "s"} for this year/make/model - check whether this VIN is affected</summary>
           {recalls.map((recall) => (
             <div className="part-request-row" key={recall.campaign}>
-              <span><strong>{recall.campaign}</strong> {recall.component} ({recall.date})<br /><small>{recall.summary}</small><br /><small><em>Remedy:</em> {recall.remedy}</small></span>
+              <span><strong>{recall.campaign}</strong> {recall.component} ({recall.date}){recall.model.toLowerCase() !== config.model.toLowerCase() ? ` - ${recall.model}` : ""}<br /><small>{recall.summary}</small><br /><small><em>Remedy:</em> {recall.remedy}</small></span>
             </div>
           ))}
         </details>
       ) : null}
+
+      <VehicleKnownIssues config={config} />
 
       {groups.map((group) => (
         <div className="spec-group" key={group}>

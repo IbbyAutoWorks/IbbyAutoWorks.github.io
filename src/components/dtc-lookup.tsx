@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, ExternalLink, Search } from "lucide-react";
 
-import { lookupDtcCodes, parseDtcCodes, type DtcLookup } from "@/lib/dtc";
+import { loadDtcDetail, lookupDtcCodes, parseDtcCodes, type DtcDetail, type DtcLookup } from "@/lib/dtc";
 import type { PrototypeDiagnosticCode } from "@/lib/local-store";
 
 const sourceLabel: Record<NonNullable<DtcLookup["primarySource"]>, string> = {
@@ -11,6 +11,30 @@ const sourceLabel: Record<NonNullable<DtcLookup["primarySource"]>, string> = {
   "related-make": "Parent/sister-brand definition",
   generic: "Generic SAE definition (same on every vehicle)"
 };
+
+function DtcDetails({ code }: { code: string }) {
+  const [detail, setDetail] = useState<DtcDetail | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setDetail(null);
+    loadDtcDetail(code).then((found) => { if (!cancelled) setDetail(found); });
+    return () => { cancelled = true; };
+  }, [code]);
+
+  if (!detail) return null;
+  return (
+    <details className="dtc-details">
+      <summary><small>Common causes and how it works</small></summary>
+      <p><small>{detail.description}</small></p>
+      {detail.causes.length ? <><p><small><strong>Common causes</strong></small></p><ul>{detail.causes.map((cause) => <li key={cause.label}><small>{cause.label}{cause.likelihood ? ` (${cause.likelihood})` : ""}</small></li>)}</ul></> : null}
+      {detail.symptoms.length ? <><p><small><strong>Symptoms</strong></small></p><ul>{detail.symptoms.map((symptom) => <li key={symptom}><small>{symptom}</small></li>)}</ul></> : null}
+      {detail.hours ? <p><small><strong>Rough repair time:</strong> {detail.hours[0]}-{detail.hours[1]} hours{detail.difficulty ? `, ${detail.difficulty} difficulty` : ""}. Not a book time.</small></p> : null}
+      {detail.related.length ? <p><small><strong>Related codes:</strong> {detail.related.join(", ")}</small></p> : null}
+      <p><small>From OBDex. {detail.reviewed ? `Re-checked ${detail.reviewed}.` : "Not yet through its second review."}{detail.sources.length ? " Sources: " : ""}{detail.sources.map((source, index) => <span key={source}>{index ? ", " : ""}<a href={source} rel="noopener noreferrer" target="_blank">{index + 1}</a></span>)}</small></p>
+    </details>
+  );
+}
 
 // Type one or more codes; meanings are matched to the selected vehicle's make.
 export function DtcLookupPanel({
@@ -93,6 +117,7 @@ export function DtcLookupPanel({
                   {result.otherMakes.map((other) => <p key={other.manufacturer}><small>{other.manufacturer}: {other.description}</small></p>)}
                 </details>
               ) : null}
+              {result.manufacturerSpecific ? null : <DtcDetails code={result.code} />}
               <p>
                 <a href={`https://www.google.com/search?q=${encodeURIComponent(`${result.code} ${vehicleLabel}`)}`} target="_blank" rel="noopener noreferrer"><ExternalLink size={12} /> Search fixes for this vehicle</a>
                 {" · "}
@@ -111,7 +136,7 @@ export function DtcLookupPanel({
           ))}
         </div>
       ) : null}
-      <p className="legal-note">Code definitions: open-source DTC database (MIT). Always confirm with live data and pinpoint tests before replacing parts.</p>
+      <p className="legal-note">Code definitions: open-source DTC database (MIT) and OBDex (CC0). Always confirm with live data and pinpoint tests before replacing parts.</p>
     </div>
   );
 }

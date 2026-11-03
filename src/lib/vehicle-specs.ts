@@ -92,19 +92,3 @@ export async function saveSpecValue(config: VehicleConfig, fieldId: string, entr
   return specs;
 }
 
-export type Recall = { campaign: string; component: string; summary: string; remedy: string; date: string };
-
-export async function fetchRecalls(config: VehicleConfig): Promise<Recall[]> {
-  if (!config.year || !config.make || !config.model) return [];
-  const url = `https://api.nhtsa.gov/recalls/recallsByVehicle?make=${encodeURIComponent(config.make)}&model=${encodeURIComponent(config.model)}&modelYear=${encodeURIComponent(config.year)}`;
-  const response = await fetch(url);
-  if (!response.ok) return [];
-  const data = await response.json() as { results?: Array<Record<string, string>> };
-  return (data.results ?? []).map((row) => ({
-    campaign: row.NHTSACampaignNumber,
-    component: row.Component,
-    summary: row.Summary,
-    remedy: row.Remedy,
-    date: row.ReportReceivedDate
-  }));
-}

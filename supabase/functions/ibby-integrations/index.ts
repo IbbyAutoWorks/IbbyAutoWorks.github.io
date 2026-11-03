@@ -19,9 +19,17 @@ const ownerKeys = [
   "tavily_api_key", "gemini_api_key", "github_issues_token", "vehicledatabases_api_key", "motor_api_key", "partstech_api_key", "ebay_api_key"
 ];
 
-// Sites searched for specs. Includes the free sites the owner named and carmaker sites.
+// Limits the app stops at, ahead of each free plan's own limit.
+const TAVILY_LIMIT = 1000;
+const TAVILY_STOP = 950;
+const GMAIL_LIMIT = 500;
+const GMAIL_STOP = 400;
+const DATABASE_LIMIT_MB = 500;
+const DATABASE_STOP_MB = 450;
+
+// Sites searched for specs. Carmaker sites only: iFixit, CarCareKiosk and StartMyCar bar this kind of reuse,
+// and WhoCanFixMyCar is a UK site. Techs can still open those from the research links.
 const lookupSites = [
-  "ifixit.com", "carcarekiosk.com", "startmycar.com", "whocanfixmycar.com",
   "toyota.com", "honda.com", "acura.com", "ford.com", "chevrolet.com", "gmc.com", "buick.com", "cadillac.com", "mopar.com", "ramtrucks.com", "jeep.com", "dodge.com", "chrysler.com",
   "nissanusa.com", "infinitiusa.com", "hyundaiusa.com", "kia.com", "subaru.com", "mazdausa.com", "vw.com", "audiusa.com", "bmwusa.com", "mbusa.com", "volvocars.com", "lexus.com", "tesla.com"
 ];
@@ -54,6 +62,11 @@ function verified(answer: { value?: string; quote?: string; url?: string }, page
   return Boolean(page && normalize(page.text).includes(quote));
 }
 
+async function usageSince(service: string, since: string) {
+  const { data } = await supabase.from("service_usage").select("used").eq("service", service).gte("day", since);
+  return (data ?? []).reduce((sum, row) => sum + row.used, 0);
+}
+
 async function lookup(body: Record<string, unknown>, keys: Record<string, string>) {
   if (!keys.tavily_api_key || !keys.gemini_api_key) return reply(200, { ok: false, needsSetup: true, error: "Spec lookup isn't connected yet. The owner can add the free keys on the Connections page." });
   // Only the vehicle and the question leave here, never customer details.
@@ -61,6 +74,10 @@ async function lookup(body: Record<string, unknown>, keys: Record<string, string
   const question = String(body.question ?? "").slice(0, 200).trim();
   if (vehicle.length < 5 || question.length < 3) return reply(400, { ok: false, error: "Pick the vehicle and say what you're looking for." });
 
+  const monthStart = `${new Date().toISOString().slice(0, 7)}-01`;
+  if (await usageSince("tavily", monthStart) >= TAVILY_STOP) return reply(200, { ok: false, error: "This month's free searches are nearly used up, so spec search is off until next month. The owner can see this under Connections." });
+
+  await supabase.rpc("bump_usage", { service_name: "tavily", amount: 1 });
   const search = await fetch("https://api.tavily.com/search", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${keys.tavily_api_key}` },
@@ -82,6 +99,7 @@ PAGES:
 ${pages.map((page) => `URL: ${page.url}\n${page.text}`).join("\n---\n")}`;
 
   const model = keys.gemini_model || "gemini-3.5-flash-lite";
+  await supabase.rpc("bump_usage", { service_name: "gemini", amount: 1 });
   const ai = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": keys.gemini_api_key },
@@ -115,7 +133,9 @@ serve(async (req) => {
     const { data: lastFailure } = await supabase.from("email_events").select("error").eq("status", "failed").order("updated_at", { ascending: false }).limit(1).maybeSingle();
     const fillCount = async (status: string) => (await supabase.from("spec_fill_queue").select("id", { count: "exact", head: true }).eq("status", status)).count ?? 0;
     const { data: filled } = await supabase.from("spec_fill_queue").select("filled").gt("filled", 0);
-    const { data: credits } = await supabase.from("spec_fill_usage").select("credits").gte("day", `${new Date().toISOString().slice(0, 7)}-01`);
+    const today = new Date().toISOString().slice(0, 10);
+    const { count: emailsToday } = await supabase.from("email_events").select("id", { count: "exact", head: true }).eq("status", "sent").gte("sent_at", `${today}T00:00:00Z`);
+    const { data: databaseBytes } = await supabase.rpc("app_db_bytes");
     return reply(200, {
       ok: true,
       saved: rows.filter((row) => ownerKeys.includes(row.name)).map((row) => ({ name: row.name, updatedAt: row.updated_at })),
@@ -124,9 +144,14 @@ serve(async (req) => {
         waiting: await fillCount("pending"),
         done: await fillCount("done"),
         values: (filled ?? []).reduce((sum, row) => sum + row.filled, 0),
-        searchesThisMonth: (credits ?? []).reduce((sum, row) => sum + row.credits, 0),
         endsOn: keys.spec_fill_ends ?? ""
-      }
+      },
+      usage: [
+        { id: "tavily", name: "Spec searches (Tavily)", used: await usageSince("tavily", `${today.slice(0, 7)}-01`), limit: TAVILY_LIMIT, stopsAt: TAVILY_STOP, unit: "searches", period: "this month", note: "Includes the nightly fill and searches done by hand. Resets monthly." },
+        { id: "gemini", name: "AI page reading (Gemini)", used: await usageSince("gemini", today), limit: null, stopsAt: null, unit: "reads", period: "today", note: "Google sets this limit and can change it. If Google says stop, the app stops until the next run." },
+        { id: "gmail", name: "Customer emails (Gmail)", used: emailsToday ?? 0, limit: GMAIL_LIMIT, stopsAt: GMAIL_STOP, unit: "emails", period: "today", note: "Anything over the stop point waits for tomorrow." },
+        { id: "database", name: "App database (Supabase)", used: Math.round(Number(databaseBytes ?? 0) / 1e6), limit: DATABASE_LIMIT_MB, stopsAt: DATABASE_STOP_MB, unit: "MB", period: "in use", note: "Based on Supabase's free plan. The nightly fill stops at this point. Customer records keep saving." }
+      ]
     });
   }
 

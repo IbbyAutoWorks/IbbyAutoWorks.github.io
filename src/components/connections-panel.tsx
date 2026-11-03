@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, ExternalLink, KeyRound, Mail, MessageSquare, Save, Search } from "lucide-react";
+import { CheckCircle2, ExternalLink, Gauge, KeyRound, Mail, MessageSquare, Save, Search } from "lucide-react";
 
 import { IntegrationHub } from "@/components/integration-hub";
 import { OpsStatusPanel } from "@/components/ops-status-panel";
@@ -35,7 +35,7 @@ const groups: { title: string; icon: React.ReactNode; intro: string; steps?: str
   {
     title: "Spec lookup (free tiers)",
     icon: <Search />,
-    intro: "Lets the spec sheet search trusted sites for torques, fluids and capacities, and shows the exact sentence and page each answer came from. Answers not found word for word on the page are thrown out. Only the vehicle and the question are sent, never customer details.",
+    intro: "Lets the spec sheet search carmaker sites for torques, fluids and capacities, and shows the exact sentence and page each answer came from. Answers not found word for word on the page are thrown out. Only the vehicle and the question are sent, never customer details.",
     steps: [
       "Get a Tavily key: 1,000 free search credits a month, no card.",
       "Get a Gemini key from Google AI Studio. On the free tier, Google may use and review what's sent, which is why customer details are never included.",
@@ -163,12 +163,33 @@ export function ConnectionsPanel() {
             <p className="legal-note">
               Nightly fill: every third night, the app looks up common vehicles and the ones you&apos;ve worked on, and fills in blank specs. It won&apos;t change anything already saved, and what it finds is marked &quot;Auto-fill, not checked yet&quot; until you confirm it against the source link.
               {" "}{status.specFill.endsOn
-                ? `Vehicles finished: ${status.specFill.done}. Waiting: ${status.specFill.waiting}. Specs found: ${status.specFill.values}. Searches this month: ${status.specFill.searchesThisMonth} of 750. Runs until ${new Date(status.specFill.endsOn).toLocaleDateString()}.`
+                ? `Vehicles finished: ${status.specFill.done}. Waiting: ${status.specFill.waiting}. Specs found: ${status.specFill.values}. Runs until ${new Date(status.specFill.endsOn).toLocaleDateString()}.`
                 : `It starts the first night after both keys are saved and runs for a month. Vehicles waiting: ${status.specFill.waiting}.`}
             </p>
           ) : null}
         </div>
       ))}
+
+      {status?.usage ? (
+        <div className="panel usage-panel">
+          <div className="panel-title"><div><p className="section-label">Free limits</p><h2>Usage</h2></div><Gauge /></div>
+          <p className="legal-note">The app stops using a service before it runs past its free limit. When that happens, the rest of the app keeps working.</p>
+          {status.usage.map((item) => {
+            const stopped = item.stopsAt !== null && item.used >= item.stopsAt;
+            const close = item.stopsAt !== null && item.used >= item.stopsAt * 0.8;
+            return (
+              <div className="usage-row" key={item.id}>
+                <div className="usage-row-title">
+                  <strong>{item.name}</strong>
+                  <span className={stopped ? "usage-state stopped" : close ? "usage-state close" : "usage-state"}>{stopped ? "Stopped" : close ? "Getting close" : "OK"}</span>
+                </div>
+                {item.limit ? <progress aria-label={item.name} max={item.limit} value={Math.min(item.used, item.limit)} /> : null}
+                <small>{item.used.toLocaleString()}{item.limit ? ` of ${item.limit.toLocaleString()}` : ""} {item.unit} {item.period}{item.stopsAt !== null ? `. Stops at ${item.stopsAt.toLocaleString()}.` : "."} {item.note}</small>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
 
       <OpsStatusPanel />
       <IntegrationHub />
