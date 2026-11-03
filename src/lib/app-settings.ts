@@ -1,3 +1,5 @@
+import { shareSetting } from "@/lib/shared-settings";
+
 export type PaymentSettings = {
   stripeEnabled: boolean;
   paypalEnabled: boolean;
@@ -112,6 +114,7 @@ export function savePaymentSettings(settings: PaymentSettings) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(PAYMENT_SETTINGS_KEY, JSON.stringify(settings));
   window.dispatchEvent(new CustomEvent(PAYMENT_SETTINGS_EVENT, { detail: settings }));
+  shareSetting("payment", settings);
 }
 
 export function enabledPaymentLabels(settings: PaymentSettings) {

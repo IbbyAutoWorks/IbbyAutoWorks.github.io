@@ -1,3 +1,5 @@
+import { shareSetting } from "@/lib/shared-settings";
+
 export const BRANDING_STORAGE_KEY = "ibbys-auto.branding";
 export const BRANDING_EVENT = "ibbys-auto.branding.changed";
 
@@ -69,6 +71,7 @@ export function saveBranding(settings: BrandingSettings) {
   if (typeof localStorage === "undefined") return;
   localStorage.setItem(BRANDING_STORAGE_KEY, JSON.stringify(settings));
   window.dispatchEvent(new CustomEvent(BRANDING_EVENT, { detail: settings }));
+  shareSetting("branding", settings);
 }
 
 export function applySavedBranding() {

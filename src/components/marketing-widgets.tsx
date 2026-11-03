@@ -6,7 +6,7 @@ import { BadgePercent, BellRing, Gift, X } from "lucide-react";
 
 import { listPromotionOffers, type ManagedPromotionOffer } from "@/lib/payment-backend";
 import { effectivePrayerTime, readPrayerScheduleSettings, timeToMinutes, type PrayerBlock } from "@/lib/prayer-times";
-import { MARKETING_SETTINGS_EVENT, readMarketingSettings, type MarketingSettings } from "@/lib/marketing-settings";
+import { couponShowsIn, MARKETING_SETTINGS_EVENT, readMarketingSettings, type MarketingSettings } from "@/lib/marketing-settings";
 
 function formatOffer(offer?: ManagedPromotionOffer) {
   if (!offer) return "Active offer";
@@ -44,7 +44,7 @@ export function CustomerCouponPopup() {
   }, []);
 
   useEffect(() => {
-    if (!settings.couponPopupEnabled || dismissed) return;
+    if (!couponShowsIn(settings, "popup") || dismissed) return;
     const showTimer = window.setTimeout(() => setVisible(true), settings.couponPopupDelaySeconds * 1000);
     const hideTimer = window.setTimeout(() => setVisible(false), (settings.couponPopupDelaySeconds + settings.couponPopupDurationSeconds) * 1000);
     return () => {
@@ -58,7 +58,7 @@ export function CustomerCouponPopup() {
     return offers.find((offer) => offer.code?.toLowerCase() === code || offer.slug.toLowerCase() === code) ?? offers[0];
   }, [offers, settings.couponPopupCode]);
 
-  if (!settings.couponPopupEnabled || !visible || dismissed) return null;
+  if (!couponShowsIn(settings, "popup") || !visible || dismissed) return null;
 
   return (
     <aside className="floating-coupon-popup" role="status" aria-live="polite">

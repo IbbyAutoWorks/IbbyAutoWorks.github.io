@@ -21,7 +21,8 @@ import {
   WORK_ORDERS_EVENT
 } from "@/lib/local-store";
 import { gradeFallbackOptions, tierLabels } from "@/lib/parts";
-import { createWorkOrderCheckout } from "@/lib/payment-backend";
+import { createWorkOrderCheckout, listPromotionOffers } from "@/lib/payment-backend";
+import { billFromParts, MAINE_TAX_RULES, taxRulesFrom, type TaxRules } from "@/lib/tax-rules";
 import { supplyCatalog, supplyCategories } from "@/lib/supplies";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
 import { DtcLookupPanel } from "@/components/dtc-lookup";
@@ -114,6 +115,10 @@ function serviceStepIndexForStatus(status: PrototypeWorkOrder["status"]) {
   return 0;
 }
 
+function moneyToCents(value: string) {
+  return Math.round((Number.parseFloat(value.replace(/[^0-9.]/g, "")) || 0) * 100);
+}
+
 export function ServicePortal() {
   // Job state: mirrors prototype work orders and tracks the selected technician workflow step.
   const [orders, setOrders] = useState<PrototypeWorkOrder[]>([]);
@@ -134,6 +139,9 @@ export function ServicePortal() {
   const [paymentMethod, setPaymentMethod] = useState<PrototypePayment["method"] | "">("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [billParts, setBillParts] = useState("");
+  const [billLabor, setBillLabor] = useState("");
+  const [taxRules, setTaxRules] = useState<TaxRules>(MAINE_TAX_RULES);
   const [editingVehicle, setEditingVehicle] = useState(false);
   const { role, session } = useAuthRole();
   const [stripeLink, setStripeLink] = useState("");
@@ -212,8 +220,31 @@ export function ServicePortal() {
     if (typeof nextStep === "number") goToStep(nextStep);
   }
 
+  useEffect(() => {
+    listPromotionOffers().then((data) => setTaxRules(taxRulesFrom(data.tax_settings))).catch(() => setTaxRules(MAINE_TAX_RULES));
+  }, []);
+
+  function enteredBill() {
+    if (!billParts.trim() && !billLabor.trim()) return null;
+    return billFromParts(moneyToCents(billParts), moneyToCents(billLabor), taxRules);
+  }
+
+  function updateBill(parts: string, labor: string) {
+    setBillParts(parts);
+    setBillLabor(labor);
+    const bill = billFromParts(moneyToCents(parts), moneyToCents(labor), taxRules);
+    const total = bill.partsCents + bill.laborCents + bill.taxCents;
+    setPaymentAmount(total ? (total / 100).toFixed(2) : "");
+  }
+
+  function saveEnteredBill(orderId: string) {
+    const bill = enteredBill();
+    if (bill) updatePrototypeWorkOrder(orderId, { bill });
+  }
+
   function recordPayment() {
     if (!selectedOrder || !paymentMethod) return;
+    saveEnteredBill(selectedOrder.id);
     recordPrototypePayment(selectedOrder.id, {
       method: paymentMethod,
       amount: paymentAmount.trim(),
@@ -223,6 +254,8 @@ export function ServicePortal() {
     setPaymentMethod("");
     setPaymentAmount("");
     setPaymentReference("");
+    setBillParts("");
+    setBillLabor("");
     refresh(selectedOrder.id);
   }
 
@@ -235,6 +268,7 @@ export function ServicePortal() {
     }
     try {
       setStripeStatus("Creating Stripe checkout...");
+      saveEnteredBill(selectedOrder.id);
       const url = await createWorkOrderCheckout(selectedOrder.id, cents);
       setStripeLink(url);
       setStripeStatus("Send this link to the customer or open it on this device. The job completes automatically when Stripe confirms payment.");
@@ -783,6 +817,15 @@ export function ServicePortal() {
           </div>
         ) : (
           <div className="service-form-grid">
+            <label>
+              <span>Parts and shop supplies ($)</span>
+              <input inputMode="decimal" value={billParts} onChange={(event) => updateBill(event.target.value, billLabor)} placeholder="0.00" />
+            </label>
+            <label>
+              <span>Labor ($)</span>
+              <input inputMode="decimal" value={billLabor} onChange={(event) => updateBill(billParts, event.target.value)} placeholder="0.00" />
+            </label>
+            {enteredBill() ? <p className="legal-note wide-field">Maine sales tax: ${((enteredBill()?.taxCents ?? 0) / 100).toFixed(2)} ({(taxRules.rate * 100).toFixed(2)}% on taxable items). Keep parts and labor separate on the bill so labor stays untaxed.</p> : null}
             <label>
               <span>Payment method</span>
               <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PrototypePayment["method"] | "")}>

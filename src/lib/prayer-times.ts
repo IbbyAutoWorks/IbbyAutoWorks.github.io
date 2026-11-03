@@ -1,3 +1,5 @@
+import { shareSetting } from "@/lib/shared-settings";
+
 export type PrayerBlock = {
   name: string;
   enabled: boolean;
@@ -82,6 +84,7 @@ export function savePrayerScheduleSettings(settings: PrayerScheduleSettings) {
   const clean = cleanPrayerScheduleSettings(settings);
   window.localStorage.setItem(PRAYER_SETTINGS_KEY, JSON.stringify(clean));
   window.dispatchEvent(new CustomEvent("ibbys-auto.prayer-settings.changed", { detail: clean }));
+  shareSetting("prayer", clean);
 }
 
 function minutesToTime(totalMinutes: number) {

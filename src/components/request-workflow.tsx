@@ -777,7 +777,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <FileReviewIcon />
           </div>
           <p className="legal-note">Review each section before submitting. The admin dashboard will receive this as a new work order and link it to matching customer history when the contact and vehicle details match.</p>
-          {!isAdminMode ? <CustomerPromoOffers /> : null}
+          {!isAdminMode ? <CustomerPromoOffers place="request" /> : null}
           <div className="request-review-grid">
             {reviewGroups.map((group) => (
               <div className="request-review-card" key={group.title}>

@@ -16,6 +16,7 @@ import { appointmentWindows, businessSchedule } from "@/lib/schedule";
 import { readSavedTheme, saveTheme, ThemeRoleColors } from "@/lib/theme";
 import { readPricingSettings, savePricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 import { fetchPrayerTimesFromAladhan, prayerBlockLabel, readPrayerScheduleSettings, savePrayerScheduleSettings, type PrayerBlock, type PrayerScheduleSettings } from "@/lib/prayer-times";
+import { SHARED_SETTINGS_ERROR_EVENT } from "@/lib/shared-settings";
 import { defaultMarketingSettings, readMarketingSettings, saveMarketingSettings, type MarketingSettings } from "@/lib/marketing-settings";
 import { PaymentSettingsPanel } from "@/components/payment-settings";
 import { IntegrationHub } from "@/components/integration-hub";
@@ -61,6 +62,13 @@ export function AdminSettings() {
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(() => readPricingSettings());
   const [prayerSettings, setPrayerSettings] = useState<PrayerScheduleSettings>(() => readPrayerScheduleSettings());
   const [marketingSettings, setMarketingSettings] = useState<MarketingSettings>(() => readMarketingSettings());
+  const [shareError, setShareError] = useState("");
+
+  useEffect(() => {
+    const onError = (event: Event) => setShareError((event as CustomEvent<{ message: string }>).detail.message);
+    window.addEventListener(SHARED_SETTINGS_ERROR_EVENT, onError);
+    return () => window.removeEventListener(SHARED_SETTINGS_ERROR_EVENT, onError);
+  }, []);
   const [prayerFetchStatus, setPrayerFetchStatus] = useState("Prayer blocks are local until live calendar sync is connected.");
 
   useEffect(() => {
@@ -204,15 +212,37 @@ export function AdminSettings() {
       </section>
 
       <section className="settings-stack">
+        {shareError ? <p className="legal-note" role="alert">A change saved on this device only and didn't reach customers: {shareError}</p> : null}
         <IntegrationHub />
       <PaymentPlanManager />
       <CouponTaxManager />
       <PaymentSettingsPanel />
 
         <details className="panel settings-accordion" open>
-          <summary><span><BadgePercent size={16} /> Public popups, reviews, and homepage widget</span><ChevronDown size={16} /></summary>
+          <summary><span><BadgePercent size={16} /> Coupons: on or off, when and where</span><ChevronDown size={16} /></summary>
           <div className="settings-fields marketing-settings-fields">
-            <label><span>Coupon popup</span><select value={marketingSettings.couponPopupEnabled ? "on" : "off"} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupEnabled: event.target.value === "on" })}><option value="on">On</option><option value="off">Off</option></select></label>
+            <label className="toggle-row wide-field"><input type="checkbox" checked={marketingSettings.couponsEnabled} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponsEnabled: event.target.checked })} /><span><strong>Show coupons to customers</strong> (turning this off hides them everywhere)</span></label>
+            <label><span>Start showing on</span><input type="date" value={marketingSettings.couponStartDate} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponStartDate: event.target.value })} /></label>
+            <label><span>Stop showing after</span><input type="date" value={marketingSettings.couponEndDate} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponEndDate: event.target.value })} /></label>
+            {([
+              ["couponPopupEnabled", "In the app: pop-up on the home page"],
+              ["couponOnRequestPage", "In the app: on the request page"],
+              ["couponOnAccountPage", "In the app: on the customer's account page"],
+              ["couponInEmail", "In emails to customers"],
+              ["couponInText", "In text messages to customers"],
+              ["couponWithConfirmation", "Messages: with appointment confirmations"],
+              ["couponWithReminder", "Messages: with appointment reminders"],
+              ["couponWithNextService", "Messages: with next-service reminders"]
+            ] as const).map(([key, label]) => (
+              <label className="toggle-row" key={key}><input type="checkbox" disabled={!marketingSettings.couponsEnabled} checked={marketingSettings[key]} onChange={(event) => updateMarketingSettings({ ...marketingSettings, [key]: event.target.checked })} /><span>{label}</span></label>
+            ))}
+            <p className="legal-note wide-field">Leave the dates empty to show coupons all the time. Which coupons exist and their codes are set under Coupons and taxes above. Only text coupons to customers who agreed to promotional texts.</p>
+          </div>
+        </details>
+
+        <details className="panel settings-accordion" open>
+          <summary><span><BadgePercent size={16} /> Pop-up details, reviews, and homepage widget</span><ChevronDown size={16} /></summary>
+          <div className="settings-fields marketing-settings-fields">
             <label><span>Popup delay seconds</span><input type="number" min="0" max="120" value={marketingSettings.couponPopupDelaySeconds} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupDelaySeconds: Number(event.target.value || 0) })} /></label>
             <label><span>Popup visible seconds</span><input type="number" min="5" max="120" value={marketingSettings.couponPopupDurationSeconds} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupDurationSeconds: Number(event.target.value || 5) })} /></label>
             <label><span>Coupon code or slug</span><input value={marketingSettings.couponPopupCode} onChange={(event) => updateMarketingSettings({ ...marketingSettings, couponPopupCode: event.target.value.toUpperCase() })} /></label>

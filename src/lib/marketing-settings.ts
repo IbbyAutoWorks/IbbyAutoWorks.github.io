@@ -1,4 +1,16 @@
+import { shareSetting } from "@/lib/shared-settings";
+
 export type MarketingSettings = {
+  couponsEnabled: boolean;
+  couponOnRequestPage: boolean;
+  couponOnAccountPage: boolean;
+  couponInEmail: boolean;
+  couponInText: boolean;
+  couponWithConfirmation: boolean;
+  couponWithReminder: boolean;
+  couponWithNextService: boolean;
+  couponStartDate: string;
+  couponEndDate: string;
   couponPopupEnabled: boolean;
   couponPopupDelaySeconds: number;
   couponPopupDurationSeconds: number;
@@ -16,11 +28,23 @@ export type MarketingSettings = {
   googleCalendarBookingEnabled: boolean;
 };
 
+type CouponFlag = "couponsEnabled" | "couponOnRequestPage" | "couponOnAccountPage" | "couponInEmail" | "couponInText" | "couponWithConfirmation" | "couponWithReminder" | "couponWithNextService";
+
 export const MARKETING_SETTINGS_KEY = "ibbys-auto.marketing-settings";
 export const MARKETING_SETTINGS_EVENT = "ibbys-auto.marketing-settings.changed";
 
 export function defaultMarketingSettings(): MarketingSettings {
   return {
+    couponsEnabled: true,
+    couponOnRequestPage: true,
+    couponOnAccountPage: true,
+    couponInEmail: false,
+    couponInText: false,
+    couponWithConfirmation: false,
+    couponWithReminder: true,
+    couponWithNextService: true,
+    couponStartDate: "",
+    couponEndDate: "",
     couponPopupEnabled: true,
     couponPopupDelaySeconds: 5,
     couponPopupDurationSeconds: 18,
@@ -41,7 +65,18 @@ export function defaultMarketingSettings(): MarketingSettings {
 
 export function cleanMarketingSettings(value: Partial<MarketingSettings> | null | undefined): MarketingSettings {
   const fallback = defaultMarketingSettings();
+  const flag = (key: CouponFlag) => (typeof value?.[key] === "boolean" ? value[key] as boolean : fallback[key]);
   return {
+    couponsEnabled: flag("couponsEnabled"),
+    couponOnRequestPage: flag("couponOnRequestPage"),
+    couponOnAccountPage: flag("couponOnAccountPage"),
+    couponInEmail: flag("couponInEmail"),
+    couponInText: flag("couponInText"),
+    couponWithConfirmation: flag("couponWithConfirmation"),
+    couponWithReminder: flag("couponWithReminder"),
+    couponWithNextService: flag("couponWithNextService"),
+    couponStartDate: String(value?.couponStartDate ?? ""),
+    couponEndDate: String(value?.couponEndDate ?? ""),
     couponPopupEnabled: typeof value?.couponPopupEnabled === "boolean" ? value.couponPopupEnabled : fallback.couponPopupEnabled,
     couponPopupDelaySeconds: Math.max(0, Math.min(120, Number(value?.couponPopupDelaySeconds ?? fallback.couponPopupDelaySeconds) || 0)),
     couponPopupDurationSeconds: Math.max(5, Math.min(120, Number(value?.couponPopupDurationSeconds ?? fallback.couponPopupDurationSeconds) || fallback.couponPopupDurationSeconds)),
@@ -75,4 +110,22 @@ export function saveMarketingSettings(settings: MarketingSettings) {
   const clean = cleanMarketingSettings(settings);
   window.localStorage.setItem(MARKETING_SETTINGS_KEY, JSON.stringify(clean));
   window.dispatchEvent(new CustomEvent(MARKETING_SETTINGS_EVENT, { detail: clean }));
+  shareSetting("marketing", clean);
+}
+
+export type CouponPlace = "popup" | "request" | "account" | "email" | "text";
+
+// The one check every coupon display goes through: master switch, date window, then place.
+export function couponShowsIn(settings: MarketingSettings, place: CouponPlace, now = new Date()) {
+  if (!settings.couponsEnabled) return false;
+  const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  if (settings.couponStartDate && day < settings.couponStartDate) return false;
+  if (settings.couponEndDate && day > settings.couponEndDate) return false;
+  return {
+    popup: settings.couponPopupEnabled,
+    request: settings.couponOnRequestPage,
+    account: settings.couponOnAccountPage,
+    email: settings.couponInEmail,
+    text: settings.couponInText
+  }[place];
 }

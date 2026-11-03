@@ -1,3 +1,5 @@
+import { shareSetting } from "@/lib/shared-settings";
+
 export const THEME_STORAGE_KEY = "ibbys-auto.theme";
 
 export type ThemeRoleColors = {
@@ -23,6 +25,7 @@ export function saveTheme(roleColors: ThemeRoleColors) {
   applyTheme(roleColors);
   if (typeof localStorage === "undefined") return;
   localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(roleColors));
+  shareSetting("theme", roleColors);
 }
 
 export function readSavedTheme(): ThemeRoleColors | null {

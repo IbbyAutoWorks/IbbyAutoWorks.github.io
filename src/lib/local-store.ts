@@ -1,3 +1,4 @@
+import type { WorkOrderBill } from "@/lib/tax-rules";
 import { defaultAgreementAcceptance, type AgreementAcceptance } from "@/lib/agreements";
 import { buildPartSupplierCandidates, estimateServiceParts, type PartSupplierCandidate, type PriceRange } from "@/lib/parts";
 import { supplyCatalog, supplyVendorCandidates } from "@/lib/supplies";
@@ -155,6 +156,8 @@ export type PrototypeWorkOrder = {
   agreementAcceptance: AgreementAcceptance;
   customerPreferences: PrototypeCustomerPreferences;
   payment?: PrototypePayment;
+  // Final bill, kept apart from the payment so a Stripe confirmation can't overwrite it.
+  bill?: WorkOrderBill;
   diagnosticCodes?: PrototypeDiagnosticCode[];
   // Full year/make/model/engine from the picker or VIN decode (newer orders only).
   vehicleConfig?: VehicleConfig;

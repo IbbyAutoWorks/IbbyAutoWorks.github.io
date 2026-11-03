@@ -1,3 +1,5 @@
+import { shareSetting } from "@/lib/shared-settings";
+
 export type PricingSettings = {
   shopLaborRate: number;
   marketLaborRate: number;
@@ -40,4 +42,5 @@ export function savePricingSettings(settings: PricingSettings) {
   const clean = cleanSettings(settings);
   window.localStorage.setItem(PRICING_SETTINGS_KEY, JSON.stringify(clean));
   window.dispatchEvent(new CustomEvent("ibbys-auto.pricing-settings.changed", { detail: clean }));
+  shareSetting("pricing", clean);
 }

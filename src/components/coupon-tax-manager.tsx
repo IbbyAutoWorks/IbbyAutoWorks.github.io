@@ -37,8 +37,8 @@ const defaultTax: MaineTaxSettings = {
   sales_tax_rate: 0.055,
   local_tax_rate: 0,
   parts_taxable: true,
-  labor_taxable: true,
-  diagnostic_taxable: true,
+  labor_taxable: false,
+  diagnostic_taxable: false,
   shop_supplies_taxable: true,
   tire_fees_note: "Track tire/disposal/environmental fees separately from sales tax when charged.",
   disclaimer: "Maine generally uses a 5.5% sales tax with no local sales tax. Auto parts and repair/installation services may be taxable; verify final filing treatment with Maine Revenue Services or a tax professional."
