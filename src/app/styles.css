@@ -6121,3 +6121,61 @@ html {
     flex: 0 0 min(260px, 78vw);
   }
 }
+
+.legal-page h1 {
+  margin-bottom: 8px;
+}
+
+.legal-text h2 {
+  margin-top: 16px;
+}
+
+.legal-text h3 {
+  margin: 14px 0 4px;
+  font-size: 1rem;
+}
+
+.legal-text p {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+.legal-bullet {
+  padding-left: 16px;
+  position: relative;
+}
+
+.legal-bullet::before {
+  content: "\2022";
+  position: absolute;
+  left: 2px;
+}
+
+.agreement-reader {
+  max-height: 90vh;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.agreement-reader-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.link-button {
+  border: 0;
+  background: none;
+  padding: 0;
+  min-height: 0;
+  color: var(--red-dark, #8f1420);
+  text-decoration: underline;
+  font: inherit;
+  cursor: pointer;
+}
+
+.feedback-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}

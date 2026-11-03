@@ -15,6 +15,8 @@ import { emptyVehicleConfig, engineLabel, vehicleConfigLabel, type VehicleConfig
 import { VehiclePicker } from "@/components/vehicle-picker";
 import { readPrayerScheduleSettings, prayerBlockLabel, timeToMinutes, effectivePrayerTime, type PrayerScheduleSettings } from "@/lib/prayer-times";
 import { ServiceSelector } from "@/components/service-selector";
+import { LegalText } from "@/components/legal-text";
+import { legalDocument } from "@/lib/legal-documents";
 import { CustomerPaymentOptions } from "@/components/customer-payment-options";
 import { CustomerPromoOffers } from "@/components/customer-promo-offers";
 
@@ -86,6 +88,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   // Customer's price tier per selected job (Value / Recommended / Premium).
   const [serviceTiers, setServiceTiers] = useState<Record<string, PartTier>>({});
   const [gradeFallback, setGradeFallback] = useState<GradeFallback>("call");
+  const [viewingAgreement, setViewingAgreement] = useState("");
   const [form, setForm] = useState({
     name: "",
     firstName: "",
@@ -466,6 +469,18 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
 
   return (
     <div className="request-workflow">
+      {viewingAgreement ? (
+        <div className="vin-scanner-overlay" role="dialog" aria-label={legalDocument(viewingAgreement)?.title}>
+          <div className="vin-scanner agreement-reader">
+            <div className="panel-title">
+              <h2>{legalDocument(viewingAgreement)?.title}</h2>
+              <button className="icon-button" aria-label="Close agreement" onClick={() => setViewingAgreement("")} type="button"><X size={18} /></button>
+            </div>
+            <div className="agreement-reader-body"><LegalText text={legalDocument(viewingAgreement)?.text ?? ""} /></div>
+            <button className="primary-button" onClick={() => setViewingAgreement("")} type="button">Back to the form</button>
+          </div>
+        </div>
+      ) : null}
       {/* Request overview: explains the intake flow and shows the live draft estimate. */}
       <section className="request-overview">
         <div>
@@ -706,7 +721,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
                 <div>
                   <strong>{agreement.title}</strong>
                   <span>{agreement.summary}</span>
-                  <small><a href={agreement.url} target="_blank" rel="noreferrer">View agreement file</a></small>
+                  <small><button className="link-button" onClick={(event) => { event.preventDefault(); setViewingAgreement(agreement.slug); }} type="button">Read the full agreement</button></small>
                 </div>
               </label>
             ))}

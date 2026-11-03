@@ -10,9 +10,9 @@ export const appDisplayName = "Ibby Auto Works™";
 export const copyrightNotice = "© 2026 Ibby Auto Works™. All rights reserved.";
 
 export const footerLinks = {
-  privacy: { label: "Privacy Policy", href: "https://github.com/IbbyAutoWorks/IbbyAutoWorks/blob/main/docs/privacy-policy.md" },
-  terms: { label: "Terms of Service", href: "https://github.com/IbbyAutoWorks/IbbyAutoWorks/blob/main/docs/terms-of-service.md" },
-  issues: { label: "Issues", href: "https://github.com/IbbyAutoWorks/IbbyAutoWorks/issues" },
-  request: { label: "Request Feature", href: "https://github.com/IbbyAutoWorks/IbbyAutoWorks/issues" },
+  privacy: { label: "Privacy Policy", href: "/legal/privacy" },
+  terms: { label: "Terms of Service", href: "/legal/terms" },
+  issues: { label: "Report a problem", href: "/feedback" },
+  request: { label: "Request a feature", href: "/feedback?type=feature" },
   contact: { label: "Contact", href: `mailto:${supportEmail}` }
 };
