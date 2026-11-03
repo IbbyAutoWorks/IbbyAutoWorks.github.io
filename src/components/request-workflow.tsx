@@ -6,7 +6,7 @@ import { Bell, CalendarClock, Camera, Car, CheckCircle2, KeyRound, LocateFixed, 
 
 import { agreementSummaries, defaultAgreementAcceptance, hasRequiredAgreementAcceptance, partsReturnOptions, type AgreementId, type PartsReturnPreference } from "@/lib/agreements";
 import { serviceOptions, timeline } from "@/lib/data";
-import { estimateServices, estimateTieredTotal, formatPriceRange, tierLabels, vehicleHintFromContext, type PartTier } from "@/lib/parts";
+import { estimateServices, estimateTieredTotal, formatPriceRange, tierLabels, vehicleHintFromContext, type GradeFallback, type PartTier } from "@/lib/parts";
 import { readPricingSettings, type PricingSettings } from "@/lib/pricing-settings";
 import { buildPrototypeInspection, buildPrototypeParts, CUSTOMER_RECORDS_EVENT, defaultCustomerPreferences, defaultServiceMeasurements, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, savePrototypeWorkOrder } from "@/lib/local-store";
 import { appointmentWindows, businessSchedule, findAppointmentWindow } from "@/lib/schedule";
@@ -85,6 +85,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
   const [vehicleConfig, setVehicleConfig] = useState<VehicleConfig>(emptyVehicleConfig);
   // Customer's price tier per selected job (Value / Recommended / Premium).
   const [serviceTiers, setServiceTiers] = useState<Record<string, PartTier>>({});
+  const [gradeFallback, setGradeFallback] = useState<GradeFallback>("call");
   const [form, setForm] = useState({
     name: "",
     firstName: "",
@@ -423,6 +424,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       service: selectedServices.length ? (needsTirePosition ? `${selectedServices.join(", ")} (${tireConcern} tire)` : selectedServices.join(", ")) : "Service pending",
       services: selectedServices,
       tier: serviceTiers[selectedServices[0]] ?? "mid",
+      gradeFallback,
       serviceTiers: Object.fromEntries(selectedServices.map((service) => [service, serviceTiers[service] ?? "mid"])),
       estimate: selectedServices.length ? formatPriceRange(tieredTotal) : "Pending",
       preferredWindow,
@@ -468,7 +470,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
       <section className="request-overview">
         <div>
           <p className="section-label">Customer work request</p>
-          <h1>{isAdminMode ? "Admin intake for a customer work order." : "Build a work order with vehicle, service, appointment, photos, and contact details."}</h1>
+          <h1>{isAdminMode ? "New work order" : "Request service"}</h1>
           <p>
             {isAdminMode
               ? "Use the same intake flow for phone, in-person, or admin-entered requests. Customer-only authorization prompts are skipped here."
@@ -604,7 +606,7 @@ export function RequestWorkflow({ mode = "customer" }: { mode?: "customer" | "ad
             <h2>Requested services</h2>
             <Car />
           </div>
-          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} vehicleContext={[activeVehicleContext, vehicleHint.fuel === "Diesel" ? "diesel" : ""].filter(Boolean).join(" ")} areaContext={activeAreaContext} audience={isAdminMode ? "staff" : "customer"} serviceTiers={serviceTiers} onTierChange={(service, tier) => setServiceTiers((current) => ({ ...current, [service]: tier }))} />
+          <ServiceSelector selectedServices={selectedServices} onToggleService={toggleService} selectedSupplierChoices={selectedSupplierChoices} onSupplierChoiceChange={chooseSupplier} vehicleContext={[activeVehicleContext, vehicleHint.fuel === "Diesel" ? "diesel" : ""].filter(Boolean).join(" ")} areaContext={activeAreaContext} audience={isAdminMode ? "staff" : "customer"} serviceTiers={serviceTiers} onTierChange={(service, tier) => setServiceTiers((current) => ({ ...current, [service]: tier }))} gradeFallback={gradeFallback} onGradeFallbackChange={setGradeFallback} />
           {selectedServices.length ? (
             <div className="selected-service-removal-row">
               {selectedServices.map((service) => (

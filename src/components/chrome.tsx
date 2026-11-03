@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, Search, Settings, X } from "lucide-react";
+import { Menu, Settings, X } from "lucide-react";
+
+import { WorkOrderSearch } from "@/components/work-order-search";
 
 import { BRANDING_EVENT, logoSrcForBranding, readSavedBranding } from "@/lib/branding";
 import { nav } from "@/lib/data";
@@ -12,7 +14,7 @@ import { SiteFooter } from "@/components/site-footer";
 export function AppShell({ children, active }: { children: React.ReactNode; active: "home" | "request" | "account" | "customer-settings" | "admin" | "service" | "service-settings" | "settings" }) {
   // Shell state: controls the mobile sidebar and decides which settings route is active.
   const [menuOpen, setMenuOpen] = useState(false);
-  const [brandLogoSrc, setBrandLogoSrc] = useState("/images/ibby-auto-emblem.png");
+  const [brandLogoSrc, setBrandLogoSrc] = useState("/images/ibby-auto-emblem-256.png");
   const { session, role } = useAuthRole();
   const serviceSettingsActive = active === "service" || active === "service-settings";
   // Owner sees everything (including the Service portal for solo jobs); technicians
@@ -20,15 +22,18 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
   const isOwner = role === "admin";
   const isTech = role === "staff";
   const isSignedInCustomer = Boolean(session) && !isOwner && !isTech;
-  const visibleNav = isOwner
-    ? nav
+  // Settings lives on the gear icon, and Home is only for visitors who aren't signed in.
+  const visibleHrefs = isOwner
+    ? ["/admin", "/service", "/account"]
     : isTech
-      ? nav.filter((item) => !["/admin", "/admin/settings"].includes(item.href))
+      ? ["/service", "/account"]
       : isSignedInCustomer
-        ? nav.filter((item) => item.href === "/account")
-        : nav.filter((item) => !["/admin", "/service", "/admin/settings"].includes(item.href));
+        ? ["/request", "/account"]
+        : ["/", "/request", "/account"];
+  const visibleNav = visibleHrefs.flatMap((href) => nav.filter((item) => item.href === href));
   const settingsHref = isSignedInCustomer ? "/account/settings" : isTech || serviceSettingsActive ? "/service/settings" : "/admin/settings";
   const settingsLabel = isSignedInCustomer ? "Customer settings" : isTech || serviceSettingsActive ? "Service settings" : "Admin settings";
+  const signedIn = isOwner || isTech || isSignedInCustomer;
 
   useEffect(() => {
     function syncBranding() {
@@ -64,11 +69,6 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
             </BurnoutNavLink>
           ))}
         </nav>
-        <div className="sidebar-card">
-          <span>Cloud operations</span>
-          <strong>Next + Supabase + Vercel</strong>
-          <p>Live requests now. Google archive/calendar and Cloudflare health are being wired in.</p>
-        </div>
       </aside>
       {/* Main pane: mobile menu button, global search placeholder, settings shortcut, and page content. */}
       <main className="main-pane">
@@ -76,10 +76,12 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
           <button className="icon-button" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen((current) => !current)}>
             {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
-          <div className="search-box"><Search size={16} /><span>Search work orders, VINs, customers, parts</span></div>
-          <BurnoutNavLink href={settingsHref} active={active === "settings"} className="icon-button" aria-label={settingsLabel}>
-            <Settings size={18} />
-          </BurnoutNavLink>
+          {isOwner || isTech ? <WorkOrderSearch basePath={isOwner ? "/admin" : "/service"} /> : <strong className="topbar-brand">Ibby Auto Works™</strong>}
+          {signedIn ? (
+            <BurnoutNavLink href={settingsHref} active={active === "settings"} className="icon-button" aria-label={settingsLabel}>
+              <Settings size={18} />
+            </BurnoutNavLink>
+          ) : null}
         </header>
         {children}
         <SiteFooter context={active === "settings" ? "admin-settings" : active} />

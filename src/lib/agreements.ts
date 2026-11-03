@@ -1,6 +1,6 @@
 export type AgreementId = "inspection" | "partsReturn" | "preRepair" | "billing" | "safety" | "damage" | "repair";
 
-export type PartsReturnPreference = "return" | "dispose" | "core";
+export type PartsReturnPreference = "not-sure" | "return" | "dispose" | "core";
 
 export type AgreementAcceptance = {
   accepted: Record<AgreementId, boolean>;
@@ -79,7 +79,7 @@ export function defaultAgreementAcceptance(): AgreementAcceptance {
       damage: false,
       repair: false
     },
-    partsReturnPreference: "dispose",
+    partsReturnPreference: "not-sure",
     acceptedAt: "",
     acceptedBy: ""
   };

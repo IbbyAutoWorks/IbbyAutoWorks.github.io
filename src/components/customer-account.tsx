@@ -128,7 +128,7 @@ export function CustomerAccount() {
         {selectedCustomer?.profileImage ? <img className="profile-image-preview account-profile-image" src={selectedCustomer.profileImage} alt={`${selectedCustomer.name} profile`} /> : null}
         <div>
           <p className="section-label">Customer account</p>
-          <h1>Vehicles, work orders, reports, reminders, and payment links in one customer record.</h1>
+          <h1>Your vehicles and work orders</h1>
         </div>
         <Link href="/request" className="primary-button"><Car size={16} /> Add request</Link>
       </section>

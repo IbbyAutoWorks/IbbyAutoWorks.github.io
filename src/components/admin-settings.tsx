@@ -198,7 +198,7 @@ export function AdminSettings() {
       <section className="admin-header">
         <div>
           <p className="section-label">Configurable admin workspace</p>
-          <h1>Make the app editable without turning it into a fragile page builder.</h1>
+          <h1>Settings</h1>
         </div>
         <button className="primary-button" onClick={() => { saveTheme(roleColors); savePricingSettings(pricingSettings); }}><Save size={16} /> Save draft settings</button>
       </section>

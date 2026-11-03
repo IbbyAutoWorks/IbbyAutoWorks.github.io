@@ -19,7 +19,7 @@ export function ServiceSettings() {
       <section className="admin-header">
         <div>
           <p className="section-label">Service settings</p>
-          <h1>Edit service flow, technician operations, and field workflow labels.</h1>
+          <h1>Service settings</h1>
         </div>
         <button className="primary-button" onClick={() => setSaved(true)}><Save size={16} /> Save service draft</button>
       </section>

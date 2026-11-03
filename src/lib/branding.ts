@@ -18,7 +18,7 @@ export type BrandingSettings = {
   savedLogos: SavedBrandLogo[];
 };
 
-export const EMBLEM_LOGO_SRC = "/images/ibby-auto-emblem.png";
+export const EMBLEM_LOGO_SRC = "/images/ibby-auto-emblem-256.png";
 
 export const CROWN_LOGO_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">

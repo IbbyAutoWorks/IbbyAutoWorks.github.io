@@ -20,6 +20,7 @@ import {
   updatePrototypeWorkOrderStatus,
   WORK_ORDERS_EVENT
 } from "@/lib/local-store";
+import { gradeFallbackOptions, tierLabels } from "@/lib/parts";
 import { createWorkOrderCheckout } from "@/lib/payment-backend";
 import { supplyCatalog, supplyCategories } from "@/lib/supplies";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
@@ -117,6 +118,11 @@ export function ServicePortal() {
   // Job state: mirrors prototype work orders and tracks the selected technician workflow step.
   const [orders, setOrders] = useState<PrototypeWorkOrder[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  // Top-bar search links here with ?order=<id>.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("order");
+    if (requested) setSelectedOrderId(requested);
+  }, []);
   const [partName, setPartName] = useState("");
   const [partReason, setPartReason] = useState("");
   const [supplyItemId, setSupplyItemId] = useState(supplyCatalog[0]?.id ?? "");
@@ -152,7 +158,8 @@ export function ServicePortal() {
   }, []);
 
   const serviceOrders = useMemo(
-    () => orders.filter((order) => serviceStatuses.includes(order.status) || order.status === "Requested" || order.status === "Parts Search"),
+    // Techs work accepted jobs only; new requests wait for the owner on the Dashboard.
+    () => orders.filter((order) => serviceStatuses.includes(order.status) && order.status !== "Complete"),
     [orders]
   );
   const acceptedJobs = useMemo(
@@ -354,6 +361,8 @@ export function ServicePortal() {
         <div><span>Phone</span><strong>{order.phone}</strong></div>
         <div><span>Services</span><strong>{(order.services?.length ? order.services : [order.service]).join(", ")}</strong></div>
         <div><span>Location</span><strong>{order.location}</strong></div>
+        <div><span>Part grades</span><strong>{Object.entries(order.serviceTiers ?? {}).map(([service, tier]) => `${service}: ${tierLabels[tier]}`).join(", ") || "Not recorded"}</strong></div>
+        <div><span>If a grade can&apos;t arrive in time</span><strong>{gradeFallbackOptions.find((option) => option.value === (order.gradeFallback ?? "call"))?.label}</strong></div>
       </div>
     );
   }
@@ -816,8 +825,8 @@ export function ServicePortal() {
       {/* Technician header: page purpose and quick route action for the selected job. */}
       <section className="admin-header">
         <div>
-          <p className="section-label">Technician workspace</p>
-          <h1>Work one job step at a time, document the vehicle, and send parts issues back to admin.</h1>
+          <p className="section-label">Service</p>
+          <h1>Your jobs</h1>
         </div>
         <div className="admin-actions">
           {selectedOrder ? <a className="primary-button" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedOrder.location)}`} target="_blank" rel="noreferrer"><Map size={16} /> Route</a> : null}
@@ -840,7 +849,7 @@ export function ServicePortal() {
               <strong>No service jobs yet</strong>
               <span>Admin accepted jobs will appear here for the technician.</span>
             </div>
-          ) : serviceOrders.map((order) => (
+          ) : <div className="service-queue-list">{serviceOrders.map((order) => (
             <button className={order.id === selectedOrder?.id ? "work-row selected" : "work-row"} key={order.id} onClick={() => setSelectedOrderId(order.id)}>
               <div className="order-id">#{order.id}</div>
               <div>
@@ -851,7 +860,7 @@ export function ServicePortal() {
               <span>{order.due}</span>
               <small>{order.risk}</small>
             </button>
-          ))}
+          ))}</div>}
         </div>
 
         <div className="panel service-wizard-panel">

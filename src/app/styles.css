@@ -3970,6 +3970,9 @@ h2 {
     z-index: 30;
     transform: translateX(-105%);
     transition: transform 180ms ease;
+  }
+
+  .menu-open .sidebar {
     box-shadow: 20px 0 50px rgba(17, 20, 24, 0.22);
   }
 
@@ -5864,5 +5867,257 @@ h2 {
   .mileage-log-card,
   .service-form-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Phone, tablet and desktop consistency ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Grid and flex children may shrink below their content, so wide content scrolls or
+   wraps inside its own box instead of pushing the whole page sideways. */
+.business-dashboard > *,
+.business-grid > *,
+.manual-book > *,
+.settings-stack > *,
+.settings-stack details > *,
+.form-grid > *,
+.settings-fields > *,
+.service-form-grid > *,
+.supply-custom-row > * {
+  min-width: 0;
+}
+
+.panel {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.panel input,
+.panel select,
+.panel textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.business-dashboard,
+.manual-book {
+  padding: 18px;
+}
+
+.admin-tabs {
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+/* Keep content clear of notches and the iPhone home bar when installed. */
+.topbar {
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+
+.request-step-actions {
+  bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 820px) {
+  /* iPhones zoom the page when a focused field is under 16px. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Finger-sized controls. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
+  select,
+  button,
+  summary,
+  .primary-button,
+  .secondary-button,
+  .admin-tab,
+  .icon-button {
+    min-height: 44px;
+  }
+
+  .icon-button {
+    min-width: 44px;
+  }
+
+  .admin-tab {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .business-dashboard,
+  .manual-book {
+    padding: 12px;
+  }
+
+  .admin-tabs {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .settings-fields,
+  .service-form-grid,
+  .supply-custom-row,
+  .mileage-log-card,
+  .form-grid,
+  .branding-settings-grid,
+  .schedule-config-panel .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .month-bars {
+    gap: 3px;
+  }
+
+  .month-bar {
+    font-size: 0.62rem;
+  }
+}
+
+/* Links inside text and lists get breathing room on touch screens. */
+@media (pointer: coarse) {
+  .manual-toc a,
+  .directory-card a,
+  .manual-section .research-link-row a,
+  .research-link-row a {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.topbar-brand {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.work-order-search {
+  position: relative;
+}
+
+.work-order-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  padding: 0;
+}
+
+.work-order-search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: grid;
+  background: var(--panel, #fff);
+  border: 1px solid var(--line, #dde1e6);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.work-order-search-results a {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--line, #eceef1);
+}
+
+.work-order-search-results span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.work-order-search-empty {
+  padding: 12px;
+}
+
+.part-search-results {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 12px;
+}
+
+.part-search-results button {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--line, #dde1e6);
+  border-radius: 8px;
+  background: var(--panel, #fff);
+  cursor: pointer;
+}
+
+.part-search-results small {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.admin-tabs {
+  scrollbar-width: none;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 820px) {
+  /* Page title above its action buttons, not squeezed beside them. */
+  .admin-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .admin-header h1 {
+    font-size: clamp(1.45rem, 6.5vw, 2rem);
+    line-height: 1.15;
+  }
+
+  .admin-actions {
+    margin-top: 0;
+  }
+
+  .admin-actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  /* Jobs swipe sideways so the current job's steps stay on screen. */
+  .service-order-list .order-list,
+  .service-queue-list {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    scrollbar-width: none;
+  }
+}
+
+.service-queue-list {
+  display: grid;
+  gap: 8px;
+}
+
+@media (max-width: 820px) {
+  .service-queue-list {
+    display: flex;
+  }
+
+  .service-queue-list > .work-row {
+    flex: 0 0 min(260px, 78vw);
   }
 }

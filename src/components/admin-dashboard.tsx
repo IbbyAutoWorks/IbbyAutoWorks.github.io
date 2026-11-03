@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarDays, ChevronRight, FileText, Gauge, Mail, Map, MapPin, Phone, Plus, RotateCcw, Settings2, Wrench } from "lucide-react";
 
 import { agreementSummaries, partsReturnOptions } from "@/lib/agreements";
+import { gradeFallbackOptions, tierLabels } from "@/lib/parts";
 import { activity } from "@/lib/data";
 import { partsIntegrationNotes } from "@/lib/parts";
 import { InspectionReferencePanel } from "@/components/inspection-reference";
@@ -47,6 +48,11 @@ export function AdminDashboard() {
   // Admin state: filters, selected records, mirrored customer requests, and editable customer drafts.
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  // Top-bar search links here with ?order=<id>.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("order");
+    if (requested) setSelectedOrderId(requested);
+  }, []);
   const [customerOrders, setCustomerOrders] = useState<PrototypeWorkOrder[]>([]);
   const [customers, setCustomers] = useState<PrototypeCustomerRecord[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
@@ -179,8 +185,8 @@ export function AdminDashboard() {
       {/* Admin header: dashboard purpose plus shortcuts for settings and new work orders. */}
       <section className="admin-header">
         <div>
-          <p className="section-label">Operations command center</p>
-          <h1>Admin dashboard for jobs, inspections, parts, messages, routing, and editable shop settings.</h1>
+          <p className="section-label">Dashboard</p>
+          <h1>Work orders</h1>
         </div>
         <div className="admin-actions">
           <Link className="secondary-button" href="/admin/settings"><Settings2 size={16} /> Edit app settings</Link>
@@ -305,6 +311,8 @@ export function AdminDashboard() {
                     /{agreementSummaries.length} required accepted
                   </span>
                 </div>
+                <small>Part grades: {Object.entries(selectedOrder.serviceTiers ?? {}).map(([service, tier]) => `${service}: ${tierLabels[tier]}`).join(", ") || "Not recorded"}</small>
+                <small>If a grade can't arrive in time: {gradeFallbackOptions.find((option) => option.value === (selectedOrder.gradeFallback ?? "call"))?.label}</small>
                 <small>
                   Parts return: {partsReturnOptions.find((option) => option.value === selectedOrder.agreementAcceptance.partsReturnPreference)?.label}
                 </small>

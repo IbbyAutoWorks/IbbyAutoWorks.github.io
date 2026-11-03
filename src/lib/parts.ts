@@ -176,10 +176,6 @@ export const estimatePartCategories: EstimatePartCategory[] = [
   ] }
 ];
 
-export const popularEstimateQueries = [
-  "front brake pads", "rear brake pads", "oil change", "front wiper blades", "low beam bulb", "battery", "single tire repair", "tire replacement", "check engine light diagnostic", "cooling", "transmission", "suspension", "exhaust", "hardware"
-];
-
 export function flatEstimateCategoryParts() {
   return estimatePartCategories.flatMap((category) => [
     ...(category.parts ?? []),
@@ -586,7 +582,14 @@ export type TierEstimate = {
   total: PriceRange;
 };
 
-export const tierLabels: Record<PartTier, string> = { low: "Value", mid: "Recommended", high: "Premium" };
+export type GradeFallback = "call" | "closest" | "reschedule";
+export const gradeFallbackOptions: Array<{ value: GradeFallback; label: string }> = [
+  { value: "call", label: "Call me and we'll decide together" },
+  { value: "closest", label: "Use the closest grade in stock and keep my appointment" },
+  { value: "reschedule", label: "Reschedule so I get the grade I picked" }
+];
+
+export const tierLabels: Record<PartTier, string> = { low: "Regular", mid: "Midgrade", high: "Performance" };
 export const partTiers: PartTier[] = ["low", "mid", "high"];
 
 // "2021 Toyota RAV4 2.5L 4-cyl" -> engine hints used for fluid quantities.
@@ -639,23 +642,22 @@ function tierUnitPrice(part: string, tier: PartTier, vehicle?: VehicleHint): Pri
   return { min: band.min + third * index, max: band.min + third * (index + 1) };
 }
 
+// What each grade means for this kind of part, in plain language.
 const tierDescriptions: Array<{ match: RegExp; text: Record<PartTier, string> }> = [
-  { match: /oil/i, text: {
-    low: "Conventional or synthetic-blend oil that meets your engine's spec, economy filter.",
-    mid: "Full synthetic oil to your engine's spec and a quality name-brand filter.",
-    high: "Top-brand full synthetic (Mobil 1, Castrol Edge or OEM) and a premium or OEM filter."
-  } },
-  { match: /tire/i, text: {
-    low: "Budget brand tires sized for your vehicle.",
-    mid: "Name-brand all-season tires with a solid treadwear warranty.",
-    high: "Premium or performance tires (Michelin, Bridgestone class)."
-  } }
+  { match: /oil/i, text: { low: "Conventional or synthetic-blend oil that meets your engine's spec, standard filter.", mid: "Full synthetic oil to your engine's spec and a quality name-brand filter.", high: "Top-brand full synthetic (Mobil 1, Castrol Edge or OEM) and a premium or OEM filter." } },
+  { match: /brake|pads?|rotor/i, text: { low: "Standard pads and rotors for everyday driving.", mid: "Quiet, low-dust ceramic pads and coated rotors.", high: "Premium or performance pads and rotors for heavier use, towing or spirited driving." } },
+  { match: /tire/i, text: { low: "Budget-brand tires sized for your vehicle.", mid: "Name-brand all-season tires with a solid treadwear warranty.", high: "Premium or performance tires (Michelin or Bridgestone class)." } },
+  { match: /battery/i, text: { low: "Standard flooded battery with a shorter warranty.", mid: "Longer-warranty battery with more cold-cranking power.", high: "Premium AGM battery where your vehicle supports it." } },
+  { match: /spark plug/i, text: { low: "Copper or standard plugs where your engine allows them.", mid: "Platinum plugs with a longer service life.", high: "Iridium or OEM plugs with the longest service life." } },
+  { match: /wiper/i, text: { low: "Standard frame blades.", mid: "Beam blades for better contact and winter use.", high: "Premium or hybrid silicone blades." } },
+  { match: /strut|shock/i, text: { low: "Standard replacement ride quality.", mid: "Name-brand assemblies matching original ride.", high: "Heavy-duty or OEM units for load or firmer handling." } },
+  { match: /fluid|coolant|antifreeze|atf|cvt/i, text: { low: "Fluid that meets your vehicle's spec.", mid: "Name-brand fluid that meets your vehicle's spec.", high: "OEM (dealer) fluid." } }
 ];
 
 function describeTier(service: string, tier: PartTier) {
   const match = tierDescriptions.find((entry) => entry.match.test(service));
   if (match) return match.text[tier];
-  return { low: "Economy aftermarket parts that fit your vehicle.", mid: "Quality name-brand parts - our usual choice.", high: "OEM (dealer) or premium-brand parts." }[tier];
+  return { low: "Standard aftermarket part that fits your vehicle.", mid: "Quality name-brand part.", high: "OEM (dealer) or performance part." }[tier];
 }
 
 function roundPrice(price: PriceRange): PriceRange {
