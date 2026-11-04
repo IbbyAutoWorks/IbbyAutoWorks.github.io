@@ -4,11 +4,12 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 
 ## Starter sheets
 
-- [2021 Chevrolet Silverado 1500 — 5.3L V8](data/2021/chevrolet/silverado-1500/5.3l-v8.md) — starter / needs shop review
-- [2021 Ram 1500 (DT) — 5.7L HEMI V8](data/2021/ram/1500/5.7l-v8.md) — starter / needs shop review
+- None currently. Newly added or substantially revised sheets remain under **Researched sheets** with explicit review states and unresolved fields.
 
 ## Researched sheets
 
+- [2021 Chevrolet Silverado 1500 — 5.3L V8 gasoline (L82/L84; RPO confirmation required)](data/2021/chevrolet/silverado-1500/5.3l-v8.md) — researched / variant confirmation and shop review required
+- [2021 Ram 1500 (DT) — 5.7L HEMI V8 (eTorque/drivetrain/axle confirmation required)](data/2021/ram/1500/5.7l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ford F-150 — 2.7L EcoBoost V6, 10-speed automatic, 4x2](data/2021/ford/f-150/2.7l-v6.md) — researched / needs shop review
 - [2021 Toyota RAV4 — 2.5L inline-4, 8-speed automatic, FWD, no stop-start](data/2021/toyota/rav4/2.5l-i4.md) — researched / needs shop review
 - [2021 Toyota Camry LE/SE — 2.5L inline-4, 8-speed automatic, FWD](data/2021/toyota/camry/2.5l-i4.md) — researched / needs shop review
@@ -27,7 +28,10 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 
 ## Coverage queue
 
+- Current phase: 2017–2026.
 - Continue mainstream US-market passenger cars, crossovers, SUVs, minivans, vans and light/medium-duty pickups.
 - Prioritize vehicles already appearing in shop work orders, then high-volume models.
-- Keep hybrids, PHEVs, EVs, diesels, HD trucks and legacy-body variants on separate sheets.
+- Keep materially different engines, transmissions, drivetrains, hybrids, PHEVs, EVs, diesels, HD trucks and legacy-body variants on separate sheets.
+- Split the legacy combined Silverado L82/L84 path after exact EPA/vPIC and transmission/drivetrain identities are collected; until then, every affected field requires RPO confirmation.
+- Keep Ram eTorque/Stop-Start, 2WD/4WD, transfer-case and axle options explicit rather than inferring one configuration.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
