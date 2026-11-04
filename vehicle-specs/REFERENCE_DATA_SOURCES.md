@@ -50,20 +50,40 @@ Complaint information may be useful as a pattern-finding reference, but an alleg
 - Label all complaint summaries as owner reports, not confirmed failures.
 - Never turn complaint frequency into a diagnosis or safety conclusion without stronger evidence.
 
-### Wikimedia Commons vehicle images
+### Commercial-use vehicle images
 
-A search result or Wikipedia thumbnail is not enough to establish reusable image rights. Before a Commons image becomes a shop default, record:
+Google Images may be used only to discover a possible original source. A Google result, thumbnail, hotlink, or `Usage rights` filter is not itself a license and must never be copied directly into the app.
 
-- Commons file-description page URL
-- Original file URL
+Preferred discovery sources are Wikimedia Commons and Openverse because they expose creator and license metadata. Carefully reviewed Unsplash or Pexels photos may also be considered under their site licenses. Manufacturer, dealer, auction, marketplace, news, social-media and enthusiast-site images are rejected unless the original rights holder publishes explicit commercial reuse terms for that exact image.
+
+Before any image becomes a shop default, record:
+
+- Original source/file-description page URL
+- Original image URL
 - Creator/author
-- Exact license identifier
+- Exact license identifier and version
 - License URL
 - Required attribution text
-- Whether modification/share-alike requirements apply
+- Whether modification or share-alike requirements apply
+- Vehicle identity confidence: exact year/generation, make and model
 - Review date
 
-Only images with acceptable reusable licenses and complete attribution metadata may be used. Files with unclear, noncommercial-only, no-derivatives or missing-license metadata must be rejected. Prefer linking to the Commons-hosted image rather than copying it into the repository.
+Normally acceptable after metadata review:
+
+- Public domain or CC0
+- CC BY, with visible attribution
+- CC BY-SA, with attribution and share-alike handling for adaptations
+- A site-specific license that explicitly permits commercial app use and the intended hosting/copying behavior
+
+Always reject:
+
+- `All rights reserved`, unknown or missing licenses
+- CC BY-NC and every other noncommercial license
+- No-derivatives licenses when the app will crop, resize, overlay or otherwise modify the image
+- Search thumbnails and images whose original source cannot be verified
+- Images that depict the wrong generation or an uncertain vehicle
+
+Prefer linking to the original hosted image when its terms allow hotlinking. If the app stores a copy, preserve the attribution and license metadata beside that copy. An image candidate remains pending until a human reviews it; the automated job must never set a shop-default image by itself.
 
 ## Per-vehicle sheet additions
 
