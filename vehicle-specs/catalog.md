@@ -40,4 +40,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - Keep materially different engines, transmissions, drivetrains, hybrids, PHEVs, EVs, diesels, HD trucks and legacy-body variants on separate sheets.
 - Split the legacy combined Silverado L82/L84 path after exact EPA/vPIC and transmission/drivetrain identities are collected; until then, every affected field requires RPO confirmation.
 - Keep Ram eTorque/Stop-Start, 2WD/4WD, transfer-case and axle options explicit rather than inferring one configuration.
+- 2026-11-04 recall-enrichment pass completed for ten exact sheets spanning Toyota, Hyundai, Nissan, Ford, Chevrolet and Ram; model-level campaigns remain VIN/equipment-specific and separate from mechanical authority.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
