@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ExternalLink, FileText, MessageSquareWarning } from "lucide-react";
 
 import { fetchBulletins, fetchComplaintGroups, nhtsaVehicleUrl, type Bulletin, type ComplaintGroup } from "@/lib/nhtsa-issues";
+import { fetchStoredBulletins } from "@/lib/vehicle-bulletins";
 import type { VehicleConfig } from "@/lib/vehicle-data";
 
 const shortDate = (value: string) => {
@@ -28,7 +29,11 @@ export function VehicleKnownIssues({ config }: { config: VehicleConfig }) {
 
   function openBulletins(open: boolean) {
     if (!open || bulletins) return;
-    fetchBulletins(config).then(setBulletins).catch(() => { setBulletins([]); setProblem("NHTSA didn't answer. Try again in a bit."); });
+    // The shop's copy covers common makes from 2015 on. NHTSA's live list adds anything else it has.
+    Promise.all([fetchStoredBulletins(config), fetchBulletins(config).catch(() => [] as Bulletin[])]).then(([stored, live]) => {
+      const merged = [...new Map([...live, ...stored].map((item) => [item.id, item])).values()];
+      setBulletins(merged.sort((a, b) => Date.parse(b.date) - Date.parse(a.date)));
+    });
   }
 
   function openComplaints(open: boolean) {
@@ -56,7 +61,7 @@ export function VehicleKnownIssues({ config }: { config: VehicleConfig }) {
           </div>
         ))}
         {shown.length > 40 ? <p className="legal-note">Showing the newest 40 of {shown.length}. Search to narrow it down.</p> : null}
-        {bulletins && !bulletins.length && !problem ? <p className="legal-note">NHTSA&apos;s live list has none for this vehicle. It doesn&apos;t cover every model, so check NHTSA&apos;s site too.</p> : null}
+        {bulletins && !bulletins.length && !problem ? <p className="legal-note">None found for this vehicle. The shop&apos;s copy covers common makes from 2015 on, so check NHTSA&apos;s site for anything else.</p> : null}
         {bulletins ? <p className="legal-note">These are short summaries. Get the full bulletin from the manufacturer. <a href={nhtsaVehicleUrl(config)} rel="noopener noreferrer" target="_blank"><ExternalLink size={12} /> Look this vehicle up at NHTSA</a></p> : null}
       </details>
 

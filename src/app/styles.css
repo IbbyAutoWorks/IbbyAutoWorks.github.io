@@ -6426,3 +6426,12 @@ html {
 .usage-state.stopped {
   color: #b3261e;
 }
+
+.vehicle-picture {
+  margin: 0;
+}
+
+.vehicle-picture figcaption {
+  margin: -6px 0 12px;
+  overflow-wrap: anywhere;
+}

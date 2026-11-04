@@ -1,14 +1,16 @@
 import { getCurrentSupabaseSession, getSupabaseBrowserClient } from "@/lib/supabase-client";
 import type { VehicleConfig } from "@/lib/vehicle-data";
+import { findStockPhoto } from "@/lib/vehicle-stock-photo";
 
 // Vehicle pictures, best first:
-//   1. the photo taken of this customer's car (stored on the work order)
-//   2. the owner's default picture for this year/make/model, then make/model
-//   3. a Wikipedia/Wikimedia Commons photo of the model (credited)
+//   1. the photo taken of this customer's car (private; the work order keeps a reference to it)
+//   2. the owner's default picture for this year/make/model, then make/model (public)
+//   3. a Wikimedia Commons photo, linked and credited, never copied
 
 export type VehicleImage = {
   url: string;
-  source: "customer" | "shop-year" | "shop-model" | "wikipedia" | "none";
+  source: "customer" | "shop-year" | "shop-model" | "stock" | "none";
+  exactYear?: boolean;
   credit?: { label: string; url: string };
 };
 
@@ -44,18 +46,52 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
-// Signed-in users upload to Storage and get a URL; guests keep a small local copy.
-export async function uploadVehiclePhoto(file: File): Promise<string> {
+const PRIVATE_PREFIX = "private:";
+const PRIVATE_BUCKET = "customer-photos";
+const PUBLIC_BUCKET = "vehicle-photos";
+
+async function storePublicly(blob: Blob) {
+  const supabase = getSupabaseBrowserClient()!;
+  const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase.storage.from(PUBLIC_BUCKET).upload(path, blob, { contentType: "image/jpeg", cacheControl: "31536000" });
+  if (error) throw new Error(error.message.includes("row-level security") ? "Only the owner can add public pictures, and photo storage must have room." : error.message);
+  return supabase.storage.from(PUBLIC_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+// A photo of a customer's car stays private. Only the owner's default pictures are public.
+// Guests aren't signed in, so they keep a small copy on their own device.
+export async function uploadVehiclePhoto(file: File, place: "customer" | "public" = "customer"): Promise<string> {
   const supabase = getSupabaseBrowserClient();
   const session = await getCurrentSupabaseSession();
   if (supabase && session?.user) {
     const blob = await compressImage(file);
+    if (place === "public") return storePublicly(blob);
     const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.jpg`;
-    const { error } = await supabase.storage.from("vehicle-photos").upload(path, blob, { contentType: "image/jpeg", cacheControl: "31536000" });
-    if (error) throw new Error(error.message);
-    return supabase.storage.from("vehicle-photos").getPublicUrl(path).data.publicUrl;
+    const { error } = await supabase.storage.from(PRIVATE_BUCKET).upload(path, blob, { contentType: "image/jpeg", cacheControl: "3600" });
+    if (error) throw new Error(error.message.includes("row-level security") ? "Photo storage is nearly full, so this photo wasn't saved. The owner can see this under Connections." : error.message);
+    return PRIVATE_PREFIX + path;
   }
   return blobToDataUrl(await compressImage(file, 640, 0.7));
+}
+
+const signedLinks = new Map<string, Promise<string>>();
+
+// Turns a saved photo reference into something an <img> can show. Private links expire after an hour.
+async function photoUrl(reference: string) {
+  if (!reference.startsWith(PRIVATE_PREFIX)) return reference;
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return "";
+  if (!signedLinks.has(reference)) {
+    signedLinks.set(reference, supabase.storage.from(PRIVATE_BUCKET).createSignedUrl(reference.slice(PRIVATE_PREFIX.length), 3600).then(({ data }) => data?.signedUrl ?? ""));
+    window.setTimeout(() => signedLinks.delete(reference), 50 * 60 * 1000);
+  }
+  return signedLinks.get(reference)!;
+}
+
+// Older orders can hold a stock catalog address. Only a real photo of this car counts as the customer's.
+export function ownPhotoOf(order: { vehicleImage?: string }) {
+  const saved = order.vehicleImage ?? "";
+  return saved.startsWith(PRIVATE_PREFIX) || saved.startsWith("data:") || saved.includes("/storage/v1/object/") ? saved : "";
 }
 
 export async function setShopDefaultImage(vehicle: Ids, imageUrl: string, scope: "year" | "model") {
@@ -63,12 +99,19 @@ export async function setShopDefaultImage(vehicle: Ids, imageUrl: string, scope:
   const session = await getCurrentSupabaseSession();
   if (!supabase || !session?.user) throw new Error("Sign in as the owner to set default pictures.");
   const keys = vehicleImageKeys(vehicle);
+  // Default pictures are public, so a private job photo gets a separate public copy.
+  let publicUrl = imageUrl;
+  if (imageUrl.startsWith(PRIVATE_PREFIX)) {
+    const { data, error: readError } = await supabase.storage.from(PRIVATE_BUCKET).download(imageUrl.slice(PRIVATE_PREFIX.length));
+    if (readError || !data) throw new Error("Couldn't read that photo. Please try again.");
+    publicUrl = await storePublicly(data);
+  }
   const { error } = await supabase.from("vehicle_images").upsert({
     key: scope === "year" ? keys.year : keys.model,
     year: scope === "year" ? vehicle.year : "",
     make: vehicle.make,
     model: vehicle.model,
-    image_url: imageUrl,
+    image_url: publicUrl,
     set_by: session.user.id,
     updated_at: new Date().toISOString()
   });
@@ -115,29 +158,38 @@ async function shopDefault(vehicle: Ids): Promise<VehicleImage | null> {
   return shopCache.get(cacheKey)!;
 }
 
-const wikiCache = new Map<string, Promise<VehicleImage | null>>();
+const stockCache = new Map<string, Promise<VehicleImage | null>>();
+const STOCK_KEY = "ibbys-auto.stock-photo.";
+const STOCK_DAYS = 30;
 
-async function wikipediaImage(vehicle: Ids): Promise<VehicleImage | null> {
-  if (!vehicle.make || !vehicle.model) return null;
-  const query = `${vehicle.make} ${vehicle.model}`;
-  if (!wikiCache.has(query)) {
-    wikiCache.set(query, (async () => {
-      const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=1&gsrsearch=${encodeURIComponent(`${query} automobile`)}&prop=pageimages|info&piprop=thumbnail&pithumbsize=800&inprop=url`;
+// Wikimedia limits how often a device can ask, so a found picture is remembered on this device for a while.
+async function stockImage(vehicle: Ids): Promise<VehicleImage | null> {
+  if (!vehicle.year || !vehicle.make || !vehicle.model) return null;
+  const query = [vehicle.year, slug(vehicle.make), slug(vehicle.model)].join("|");
+  if (!stockCache.has(query)) {
+    stockCache.set(query, (async () => {
       try {
-        const response = await fetch(url);
-        const data = await response.json() as { query?: { pages?: Record<string, { title: string; fullurl: string; thumbnail?: { source: string } }> } };
-        const page = Object.values(data.query?.pages ?? {})[0];
-        if (!page?.thumbnail?.source) return null;
-        return { url: page.thumbnail.source, source: "wikipedia" as const, credit: { label: `Wikipedia: ${page.title}`, url: page.fullurl } };
+        const saved = JSON.parse(window.localStorage.getItem(STOCK_KEY + query) ?? "null") as { at: number; image: VehicleImage } | null;
+        if (saved && Date.now() - saved.at < STOCK_DAYS * 864e5) return saved.image;
+      } catch { /* storage unavailable: search instead */ }
+      try {
+        const found = await findStockPhoto(vehicle.year, vehicle.make, vehicle.model);
+        if (!found) return null;
+        const image: VehicleImage = { url: found.url, source: "stock", exactYear: found.exactYear, credit: found.credit };
+        try { window.localStorage.setItem(STOCK_KEY + query, JSON.stringify({ at: Date.now(), image })); } catch { /* storage unavailable */ }
+        return image;
       } catch {
         return null;
       }
     })());
   }
-  return wikiCache.get(query)!;
+  return stockCache.get(query)!;
 }
 
 export async function resolveVehicleImage(vehicle: Ids, customerPhoto?: string): Promise<VehicleImage> {
-  if (customerPhoto) return { url: customerPhoto, source: "customer" };
-  return (await shopDefault(vehicle)) ?? (await wikipediaImage(vehicle)) ?? { url: "", source: "none" };
+  if (customerPhoto) {
+    const url = await photoUrl(customerPhoto);
+    if (url) return { url, source: "customer" };
+  }
+  return (await shopDefault(vehicle)) ?? (await stockImage(vehicle)) ?? { url: "", source: "none" };
 }

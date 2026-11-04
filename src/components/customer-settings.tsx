@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Bell, Car, ImagePlus, KeyRound, LocateFixed, Save, Star, UserRound } from "lucide-react";
 
+import { VehiclePicture } from "@/components/vehicle-picture";
 import { compressImage, uploadVehiclePhoto } from "@/lib/vehicle-images";
 
 import {
@@ -192,12 +193,12 @@ export function CustomerSettings() {
             <div className="vehicle-photo-list">
               {customerOrders.length ? customerOrders.map((order) => (
                 <div className="vehicle-photo-row" key={order.id}>
-                  {order.vehicleImage ? <img src={order.vehicleImage} alt={`${order.vehicle} saved vehicle`} /> : <div className="profile-image-empty"><Car size={20} /><span>No vehicle image</span></div>}
+                  <VehiclePicture order={order} fallback={<div className="profile-image-empty"><Car size={20} /><span>No vehicle image</span></div>} />
                   <div>
                     <strong>{order.vehicle}</strong>
                     <span>{order.plate} - {order.mileage}</span>
                     <div className="vehicle-photo-actions">
-                      <button className="secondary-button" onClick={() => { updatePrototypeWorkOrder(order.id, { vehicleImage: order.vehicleSpec.image }); setOrders(readPrototypeWorkOrders()); }}>Use stock photo</button>
+                      <button className="secondary-button" onClick={() => { updatePrototypeWorkOrder(order.id, { vehicleImage: "" }); setOrders(readPrototypeWorkOrders()); }}>Use stock photo</button>
                       <label className="file-upload-button">
                         <ImagePlus size={15} />
                         <span>Upload vehicle</span>
