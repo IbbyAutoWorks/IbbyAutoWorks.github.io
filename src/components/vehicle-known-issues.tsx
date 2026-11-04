@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ExternalLink, FileText, MessageSquareWarning } from "lucide-react";
 
 import { fetchBulletins, fetchComplaintGroups, nhtsaVehicleUrl, type Bulletin, type ComplaintGroup } from "@/lib/nhtsa-issues";
@@ -18,21 +18,17 @@ export function VehicleKnownIssues({ config }: { config: VehicleConfig }) {
   const [complaints, setComplaints] = useState<{ total: number; groups: ComplaintGroup[] } | null>(null);
   const [filter, setFilter] = useState("");
   const [problem, setProblem] = useState("");
-  const vehicleKey = [config.year, config.make, config.model].join("|");
-
-  useEffect(() => {
-    setBulletins(null);
-    setComplaints(null);
-    setFilter("");
-    setProblem("");
-  }, [vehicleKey]);
+  const [liveDone, setLiveDone] = useState(false);
 
   function openBulletins(open: boolean) {
     if (!open || bulletins) return;
-    // The shop's copy covers common makes from 2015 on. NHTSA's live list adds anything else it has.
-    Promise.all([fetchStoredBulletins(config), fetchBulletins(config).catch(() => [] as Bulletin[])]).then(([stored, live]) => {
+    // The shop's copy covers common makes from 2015 on and shows right away. NHTSA's live list is slower and adds anything else it has.
+    const stored = fetchStoredBulletins(config).catch(() => { setProblem("The shop's copy of the bulletins didn't load, so this list may be short. Try again in a bit."); return [] as Bulletin[]; });
+    stored.then((list) => { if (list.length) setBulletins((current) => current ?? list); });
+    Promise.all([stored, fetchBulletins(config).catch(() => [] as Bulletin[])]).then(([stored, live]) => {
       const merged = [...new Map([...live, ...stored].map((item) => [item.id, item])).values()];
       setBulletins(merged.sort((a, b) => Date.parse(b.date) - Date.parse(a.date)));
+      setLiveDone(true);
     });
   }
 
@@ -49,7 +45,8 @@ export function VehicleKnownIssues({ config }: { config: VehicleConfig }) {
       {problem ? <p className="legal-note" role="alert">{problem}</p> : null}
       <details className="recall-box" onToggle={(event) => openBulletins(event.currentTarget.open)}>
         <summary><FileText size={15} /> Manufacturer bulletins{bulletins ? ` (${bulletins.length})` : ""}</summary>
-        {!bulletins ? <p className="legal-note">Loading from NHTSA...</p> : null}
+        {!bulletins ? <p className="legal-note">Loading bulletins...</p> : null}
+        {bulletins && !liveDone ? <p className="legal-note">Checking NHTSA for more...</p> : null}
         {bulletins?.length ? (
           <label className="wide-field"><span>Search bulletins</span>
             <input onChange={(event) => setFilter(event.target.value)} placeholder="e.g. coolant, transmission, software" value={filter} />
