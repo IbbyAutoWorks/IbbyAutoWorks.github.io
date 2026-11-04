@@ -41,4 +41,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - Split the legacy combined Silverado L82/L84 path after exact EPA/vPIC and transmission/drivetrain identities are collected; until then, every affected field requires RPO confirmation.
 - Keep Ram eTorque/Stop-Start, 2WD/4WD, transfer-case and axle options explicit rather than inferring one configuration.
 - 2026-11-04 recall-enrichment pass completed for ten exact sheets spanning Toyota, Hyundai, Nissan, Ford, Chevrolet and Ram; model-level campaigns remain VIN/equipment-specific and separate from mechanical authority.
+- 2026-11-04 second recall-enrichment pass materially improved ten additional Nissan, Ford, Toyota, Chevrolet and Jeep sheets; engine/body exclusions were preserved, including Rogue VC-Turbo, F-150 Nano EcoBoost, Silverado diesel/6.2L and Grand Cherokee WK/WL distinctions.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
