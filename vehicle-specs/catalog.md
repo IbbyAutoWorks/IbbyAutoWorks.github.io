@@ -10,8 +10,6 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2021 Toyota RAV4 — 2.5L inline-4](data/2021/toyota/rav4/2.5l-i4.md) — starter / needs shop review
 - [2021 Toyota Camry — 2.5L inline-4](data/2021/toyota/camry/2.5l-i4.md) — starter / needs shop review
 - [2021 Toyota Corolla — 1.8L inline-4](data/2021/toyota/corolla/1.8l-i4.md) — starter / needs shop review
-- [2021 Nissan Rogue — 2.5L PR25DD inline-4](data/2021/nissan/rogue/2.5l-i4.md) — starter / needs shop review
-- [2021 Hyundai Elantra — 2.0L inline-4](data/2021/hyundai/elantra/2.0l-i4.md) — starter / needs shop review
 
 ## Researched sheets
 
@@ -20,6 +18,9 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2021 Ford F-150 — 3.5L EcoBoost V6, 10-speed automatic, 4x2](data/2021/ford/f-150/3.5l-ecoboost-v6-4x2.md) — researched / needs shop review
 - [2021 Ford F-150 — 5.0L V8, 10-speed automatic, 4x2](data/2021/ford/f-150/5.0l-v8-4x2.md) — researched / needs shop review
 - [2022 Jeep Grand Cherokee WK — 3.6L Pentastar V6, 8-speed automatic, 4x4](data/2022/jeep/grand-cherokee-wk/3.6l-v6-4x4.md) — researched / needs shop review
+- [2021 Hyundai Elantra — Smartstream G2.0 Atkinson, IVT, FWD, no stop-start](data/2021/hyundai/elantra/2.0l-i4.md) — researched / needs shop review
+- [2021 Nissan Rogue — 2.5L PR25DD, CVT, FWD](data/2021/nissan/rogue/2.5l-i4.md) — researched / needs shop review
+- [2021 Nissan Rogue — 2.5L PR25DD, CVT, AWD](data/2021/nissan/rogue/2.5l-i4-awd.md) — researched / needs shop review
 
 ## Coverage queue
 
