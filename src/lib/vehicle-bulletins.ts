@@ -3,23 +3,24 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-client";
 import type { VehicleConfig } from "@/lib/vehicle-data";
 
 const squash = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, "");
+const PAGE = 1000; // The most Supabase returns in one call.
 
-type Row = { bulletins: { id: number; number: string; issued_on: string | null; components: string; summary: string } | null };
+type Row = { id: number; number: string; issued_on: string | null; components: string; summary: string };
 
-// The shop's own copy of NHTSA's bulletins. An exact model name wins; otherwise every model starting
-// with that name is used, since the picker's Silverado is NHTSA's SILVERADO 1500, 2500 and so on.
+// The shop's own copy of NHTSA's bulletins, newest first. The database decides which model names count.
+// Every page is read so that searching the list covers all of them.
 export async function fetchStoredBulletins(config: Pick<VehicleConfig, "year" | "make" | "model">): Promise<Bulletin[]> {
   const supabase = getSupabaseBrowserClient();
   const year = Number(config.year);
   if (!supabase || !year || !config.make || !config.model) return [];
-  const key = `${squash(config.make)}|${squash(config.model)}`;
-  const columns = "bulletins(id,number,issued_on,components,summary)";
+  const args = { p_model_key: `${squash(config.make)}|${squash(config.model)}`, p_year: year };
 
-  const exact = await supabase.from("bulletin_models").select(columns).eq("model_key", key).contains("years", [year]).limit(1000);
-  let rows = (exact.data ?? []) as unknown as Row[];
-  if (!rows.length) {
-    const close = await supabase.from("bulletin_models").select(columns).like("model_key", `${key}%`).contains("years", [year]).limit(1000);
-    rows = (close.data ?? []) as unknown as Row[];
+  const rows: Row[] = [];
+  for (;;) {
+    const { data, error } = await supabase.rpc("stored_bulletins", args).range(rows.length, rows.length + PAGE - 1);
+    if (error) throw error;
+    rows.push(...(data ?? []) as Row[]);
+    if ((data ?? []).length < PAGE) break;
   }
-  return rows.flatMap(({ bulletins: item }) => (item ? [{ id: item.id, number: item.number, date: item.issued_on ?? "", summary: item.summary, component: item.components }] : []));
+  return rows.map((item) => ({ id: item.id, number: item.number, date: item.issued_on ?? "", summary: item.summary, component: item.components }));
 }

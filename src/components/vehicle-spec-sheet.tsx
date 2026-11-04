@@ -6,7 +6,7 @@ import { BookOpen, ExternalLink, Pencil, Save, Search, ShieldAlert } from "lucid
 import { lookupSpec, type SpecAnswer } from "@/lib/integrations";
 import { partNumberLinks } from "@/lib/parts";
 import { engineLabel, vehicleConfigLabel, type VehicleConfig } from "@/lib/vehicle-data";
-import { fetchRecalls, type Recall } from "@/lib/nhtsa-issues";
+import { fetchRecalls, modelChoiceFromTrim, nhtsaModelChoices, type Recall } from "@/lib/nhtsa-issues";
 import { VehicleKnownIssues } from "@/components/vehicle-known-issues";
 import { loadSpecSheet, researchLinks, saveSpecValue, specFields, specQuery, type SpecSheet } from "@/lib/vehicle-specs";
 
@@ -17,6 +17,8 @@ const groups = [...new Set(specFields.map((field) => field.group))];
 export function VehicleSpecSheet({ config }: { config: VehicleConfig }) {
   const [sheet, setSheet] = useState<SpecSheet>({});
   const [recalls, setRecalls] = useState<Recall[]>([]);
+  const [modelChoices, setModelChoices] = useState<string[]>([]);
+  const [modelChoice, setModelChoice] = useState("");
   const [editing, setEditing] = useState("");
   const [draft, setDraft] = useState({ value: "", source: "", sourceUrl: "" });
   const [status, setStatus] = useState("");
@@ -25,15 +27,38 @@ export function VehicleSpecSheet({ config }: { config: VehicleConfig }) {
   const [lookupStatus, setLookupStatus] = useState("");
   const [saveTo, setSaveTo] = useState(specFields[0].id);
   const ready = Boolean(config.year && config.make && config.model);
+  const issuesConfig = modelChoice ? { ...config, model: modelChoice } : config;
 
   useEffect(() => {
     if (!ready) return;
     let cancelled = false;
     loadSpecSheet(config).then((loaded) => { if (!cancelled) setSheet(loaded); }).catch((error) => setStatus(error.message));
-    fetchRecalls(config).then((list) => { if (!cancelled) setRecalls(list); }).catch(() => setRecalls([]));
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.year, config.make, config.model, config.displacement, config.cylinders, config.engine]);
+
+  useEffect(() => {
+    setModelChoices([]);
+    setModelChoice("");
+    if (!ready) return;
+    let cancelled = false;
+    nhtsaModelChoices(config).then((choices) => {
+      if (cancelled) return;
+      setModelChoices(choices);
+      setModelChoice(modelChoiceFromTrim(choices, config.model, config.trim));
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.year, config.make, config.model, config.trim]);
+
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+    setRecalls([]);
+    fetchRecalls(issuesConfig).then((list) => { if (!cancelled) setRecalls(list); }).catch(() => { if (!cancelled) setRecalls([]); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.year, config.make, issuesConfig.model]);
 
   if (!ready) {
     return <div className="panel"><p className="legal-note">Pick the vehicle (or decode the VIN) to load its spec sheet.</p></div>;
@@ -116,18 +141,28 @@ export function VehicleSpecSheet({ config }: { config: VehicleConfig }) {
         ) : null}
       </div>
 
+      {modelChoices.length ? (
+        <label className="wide-field"><span>Which {config.model} is it?</span>
+          <select onChange={(event) => setModelChoice(event.target.value)} value={modelChoice}>
+            <option value="">Not sure, show all of them</option>
+            {modelChoices.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+          <small>This narrows the recalls, bulletins and complaints below.</small>
+        </label>
+      ) : null}
+
       {recalls.length ? (
         <details className="recall-box" open>
           <summary><ShieldAlert size={15} /> {recalls.length} NHTSA recall{recalls.length === 1 ? "" : "s"} for this year/make/model - check whether this VIN is affected</summary>
           {recalls.map((recall) => (
             <div className="part-request-row" key={recall.campaign}>
-              <span><strong>{recall.campaign}</strong> {recall.component} ({recall.date}){recall.model.toLowerCase() !== config.model.toLowerCase() ? ` - ${recall.model}` : ""}<br /><small>{recall.summary}</small><br /><small><em>Remedy:</em> {recall.remedy}</small></span>
+              <span><strong>{recall.campaign}</strong> {recall.component} ({recall.date}){recall.model.toLowerCase() !== issuesConfig.model.toLowerCase() ? ` - ${recall.model}` : ""}<br /><small>{recall.summary}</small><br /><small><em>Remedy:</em> {recall.remedy}</small></span>
             </div>
           ))}
         </details>
       ) : null}
 
-      <VehicleKnownIssues config={config} />
+      <VehicleKnownIssues config={issuesConfig} key={[config.year, config.make, issuesConfig.model].join("|")} />
 
       {groups.map((group) => (
         <div className="spec-group" key={group}>

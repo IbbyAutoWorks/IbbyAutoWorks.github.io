@@ -13,7 +13,7 @@ const squash = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, "");
 const modelLists = new Map<string, Promise<string[]>>();
 
 // NHTSA's names don't always match the picker's: the picker's Silverado is NHTSA's SILVERADO 1500, 2500 and so on.
-// An exact name wins. Otherwise every model starting with that name is checked.
+// An exact name wins, plus its numbered and HD versions. Otherwise every model starting with that name is checked.
 export async function nhtsaModels(config: Pick<VehicleConfig, "year" | "make" | "model">): Promise<string[]> {
   if (!config.year || !config.make || !config.model) return [];
   const listKey = `${config.year}|${squash(config.make)}`;
@@ -26,9 +26,29 @@ export async function nhtsaModels(config: Pick<VehicleConfig, "year" | "make" | 
   const names = await modelLists.get(listKey)!.catch(() => [] as string[]);
   const target = squash(config.model);
   const exact = names.filter((name) => squash(name) === target);
-  if (exact.length) return exact;
-  const close = names.filter((name) => squash(name).startsWith(target)).slice(0, 6);
-  return close.length ? close : [config.model];
+  const longer = names.filter((name) => squash(name).startsWith(target) && squash(name) !== target);
+  if (exact.length) return [...exact, ...longer.filter((name) => isVersionOf(name, target))];
+  return longer.length ? longer : [config.model];
+}
+
+const isVersionOf = (name: string, target: string) => /^([0-9]|hd)/.test(squash(name).slice(target.length));
+const withoutCab = (name: string) => name.replace(/\s+(regular|extended|crew|super|double|quad|access)(\s+(cab|crew))?$/i, "");
+
+// The versions a tech can pick between when the picker's name covers several, like Silverado 1500 and 2500.
+// NHTSA lists some by cab, so SILVERADO 1500 CREW CAB and REGULAR CAB are both offered as SILVERADO 1500.
+export async function nhtsaModelChoices(config: Pick<VehicleConfig, "year" | "make" | "model">): Promise<string[]> {
+  const target = squash(config.model);
+  const unique = [...new Set((await nhtsaModels(config)).map(withoutCab))];
+  const choices = unique.some((name) => squash(name) === target) ? unique.filter((name) => squash(name) !== target && isVersionOf(name, target)) : unique;
+  return choices.length > 1 ? choices.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })) : [];
+}
+
+// A VIN decode can already say which version it is, such as a series of "1500 LT".
+export function modelChoiceFromTrim(choices: string[], model: string, trim: string) {
+  const target = squash(model);
+  const words = trim.toLowerCase().split(/[^a-z0-9]+/);
+  const found = choices.filter((name) => words.includes(squash(name).slice(target.length)));
+  return found.length === 1 ? found[0] : "";
 }
 
 async function perModel<T>(config: VehicleConfig, load: (model: string) => Promise<T[]>) {
@@ -38,8 +58,12 @@ async function perModel<T>(config: VehicleConfig, load: (model: string) => Promi
 
 const query = (config: VehicleConfig, model: string) => `make=${encodeURIComponent(config.make)}&model=${encodeURIComponent(model)}&modelYear=${encodeURIComponent(config.year)}`;
 
+// Recalls are filed under the plain name: F-150 has them and F-150 REGULAR CAB comes back empty, though NHTSA's
+// model list only offers the second. So the plain names are checked too, and a recall is listed once.
 export async function fetchRecalls(config: VehicleConfig): Promise<Recall[]> {
-  const rows = await perModel(config, async (model) => {
+  const listed = await nhtsaModels(config);
+  const models = [...new Map([config.model, ...listed.map(withoutCab), ...listed].map((name) => [squash(name), name])).values()];
+  const lists = await Promise.all(models.map(async (model) => {
     const response = await fetch(`${NHTSA}/recalls/recallsByVehicle?${query(config, model)}`);
     if (!response.ok) return [];
     const data = await response.json() as { results?: Array<Record<string, string>> };
@@ -51,8 +75,8 @@ export async function fetchRecalls(config: VehicleConfig): Promise<Recall[]> {
       date: row.ReportReceivedDate,
       model
     }));
-  });
-  return [...new Map(rows.map((row) => [row.campaign, row])).values()];
+  }));
+  return [...new Map(lists.flat().map((row) => [row.campaign, row])).values()];
 }
 
 export async function fetchComplaintGroups(config: VehicleConfig): Promise<{ total: number; groups: ComplaintGroup[] }> {
