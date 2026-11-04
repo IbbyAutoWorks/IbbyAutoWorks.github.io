@@ -21,6 +21,9 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2021 Hyundai Elantra — Smartstream G2.0 Atkinson, IVT, FWD, no stop-start](data/2021/hyundai/elantra/2.0l-i4.md) — researched / needs shop review
 - [2021 Nissan Rogue — 2.5L PR25DD, CVT, FWD](data/2021/nissan/rogue/2.5l-i4.md) — researched / needs shop review
 - [2021 Nissan Rogue — 2.5L PR25DD, CVT, AWD](data/2021/nissan/rogue/2.5l-i4-awd.md) — researched / needs shop review
+- [2021 Ford Escape — 1.5L EcoBoost, 8-speed automatic, FWD](data/2021/ford/escape/1.5l-ecoboost-fwd.md) — researched / needs shop review
+- [2021 Ford Escape — 1.5L EcoBoost, 8-speed automatic, AWD](data/2021/ford/escape/1.5l-ecoboost-awd.md) — researched / needs shop review
+- [2021 Ford Escape — 2.0L EcoBoost, 8-speed automatic, AWD](data/2021/ford/escape/2.0l-ecoboost-awd.md) — researched / needs shop review
 
 ## Coverage queue
 
