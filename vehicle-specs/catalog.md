@@ -26,6 +26,11 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2021 Ford Escape — 1.5L EcoBoost, 8-speed automatic, FWD](data/2021/ford/escape/1.5l-ecoboost-fwd.md) — researched / needs shop review
 - [2021 Ford Escape — 1.5L EcoBoost, 8-speed automatic, AWD](data/2021/ford/escape/1.5l-ecoboost-awd.md) — researched / needs shop review
 - [2021 Ford Escape — 2.0L EcoBoost, 8-speed automatic, AWD](data/2021/ford/escape/2.0l-ecoboost-awd.md) — researched / needs shop review
+- [2021 Ford F-150 — 2.7L EcoBoost V6, 10-speed automatic, 4x4](data/2021/ford/f-150/2.7l-v6-4x4.md) — researched / needs shop review
+- [2021 Ford F-150 — 3.5L EcoBoost V6, 10-speed automatic, 4x4](data/2021/ford/f-150/3.5l-ecoboost-v6-4x4.md) — researched / needs shop review
+- [2021 Ford F-150 — 5.0L V8 flex fuel, 10-speed automatic, 4x4](data/2021/ford/f-150/5.0l-v8-4x4.md) — researched / needs shop review
+- [2021 Toyota Camry AWD LE/SE — 2.5L inline-4, 8-speed automatic](data/2021/toyota/camry/2.5l-i4-awd.md) — researched / needs shop review
+- [2021 Nissan Altima — 2.5L PR25DD, CVT, AWD](data/2021/nissan/altima/2.5l-i4-awd.md) — researched / needs shop review
 
 ## Coverage queue
 
