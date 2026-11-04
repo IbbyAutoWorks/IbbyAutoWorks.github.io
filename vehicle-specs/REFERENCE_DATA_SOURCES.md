@@ -83,7 +83,7 @@ Always reject:
 - Search thumbnails and images whose original source cannot be verified
 - Images that depict the wrong generation or an uncertain vehicle
 
-Prefer linking to the original hosted image when its terms allow hotlinking. If the app stores a copy, preserve the attribution and license metadata beside that copy. An image candidate remains pending until a human reviews it; the automated job must never set a shop-default image by itself.
+Prefer linking to the original hosted image when its terms allow hotlinking. After all license and identity checks pass, the library may embed a remote Markdown preview and must place the original source-page link, creator, license and attribution directly beneath it. If the app later stores a copy, it must preserve the same attribution and license metadata beside that copy. Automated inclusion in a Markdown sheet does not by itself approve the image as the live app default; live selection remains a separate reviewed application-data change.
 
 ## Per-vehicle sheet additions
 

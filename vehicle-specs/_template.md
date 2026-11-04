@@ -64,6 +64,18 @@ last_verified: "YYYY-MM-DD"
 - **NHTSA owner-complaint patterns:** Needs research; label as unverified owner reports
 - **Wikimedia Commons image candidate:** Needs license and attribution review
 
+## Commercial-use image
+
+![Vehicle image pending](https://example.invalid/replace-with-license-reviewed-image)
+
+- **Original source page:** Needs research
+- **Creator/photographer:** Needs research
+- **License and version:** Needs research
+- **License URL:** Needs research
+- **Required attribution:** Needs research
+- **Vehicle-generation confidence:** Needs research
+- **Review status:** Pending; not approved as the live app default
+
 ## Sources
 
 1. Needs an exact OEM or government source URL and page/section locator.
