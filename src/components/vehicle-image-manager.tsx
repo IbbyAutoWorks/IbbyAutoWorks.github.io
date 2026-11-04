@@ -23,7 +23,7 @@ export function VehicleImageManager() {
     if (!draft.make.trim() || !draft.model.trim()) return setStatus("Enter the make and model first.");
     try {
       setStatus("Uploading...");
-      const url = await uploadVehiclePhoto(file);
+      const url = await uploadVehiclePhoto(file, "public");
       if (url.startsWith("data:")) return setStatus("Sign in as the owner to upload default pictures.");
       await setShopDefaultImage({ year: draft.year.trim(), make: draft.make.trim(), model: draft.model.trim() }, url, draft.year.trim() ? "year" : "model");
       setStatus(`Default picture saved for ${[draft.year, draft.make, draft.model].filter(Boolean).join(" ")}.`);
@@ -50,7 +50,7 @@ export function VehicleImageManager() {
       <p className="legal-note">
         Shown when a job has no photo of the customer&apos;s own car. Set them here, or from any job photo with
         &quot;Default for ...&quot; in the Service portal. Leave the year blank to cover every year of that model.
-        Without a default, a reference photo from Wikipedia is used.
+        Without a default, a credited stock photo from Wikimedia Commons is used. Default pictures are public.
       </p>
       <div className="supply-custom-row">
         <label><span>Year (optional)</span><input value={draft.year} onChange={(event) => setDraft({ ...draft, year: event.target.value.replace(/\D/g, "").slice(0, 4) })} placeholder="All years" /></label>

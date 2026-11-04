@@ -5,13 +5,13 @@ import { Camera, ImagePlus, Star } from "lucide-react";
 
 import { resolveVehicleImage, setShopDefaultImage, uploadVehiclePhoto, type VehicleImage } from "@/lib/vehicle-images";
 
-const sourceLabel: Record<VehicleImage["source"], string> = {
-  customer: "Photo of this vehicle",
-  "shop-year": "Shop default picture (this year)",
-  "shop-model": "Shop default picture (this model)",
-  wikipedia: "Reference photo",
-  none: "No picture yet"
-};
+function sourceLabel(image: VehicleImage) {
+  if (image.source === "customer") return "Photo of this vehicle";
+  if (image.source === "shop-year") return "Shop default picture (this year)";
+  if (image.source === "shop-model") return "Shop default picture (this model)";
+  if (image.source === "stock") return "Stock photo, may not match this exact vehicle";
+  return "No picture yet";
+}
 
 // Shows the best picture for a vehicle; photographing the car saves it to the job,
 // and the owner can promote that photo to the default for the year or model.
@@ -66,7 +66,7 @@ export function VehiclePhotoCard({
     <div className="vehicle-photo-card">
       {image.url ? <img src={image.url} alt={`${year} ${make} ${model}`} /> : <div className="profile-image-empty"><Camera size={22} /><span>No picture yet</span></div>}
       <small>
-        {sourceLabel[image.source]}
+        {sourceLabel(image)}
         {image.credit ? <> - <a href={image.credit.url} target="_blank" rel="noopener noreferrer">{image.credit.label}</a></> : null}
       </small>
       {onPhoto ? (
@@ -77,6 +77,7 @@ export function VehiclePhotoCard({
       ) : null}
       {isOwner && photo && make && model && !photo.startsWith("data:") ? (
         <div className="service-decision-grid">
+          <small>Default pictures are public. Pick one with no license plate, house or person showing.</small>
           {year ? <button className="secondary-button" onClick={() => makeDefault("year")}><Star size={14} /> Default for {year} {make} {model}</button> : null}
           <button className="secondary-button" onClick={() => makeDefault("model")}><Star size={14} /> Default for all {make} {model}</button>
         </div>

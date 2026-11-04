@@ -29,6 +29,7 @@ import { DtcLookupPanel } from "@/components/dtc-lookup";
 import { VehiclePicker } from "@/components/vehicle-picker";
 import { VehicleSpecSheet } from "@/components/vehicle-spec-sheet";
 import { VehiclePhotoCard } from "@/components/vehicle-photo";
+import { ownPhotoOf } from "@/lib/vehicle-images";
 import { LocalDirectoryPanel } from "@/components/local-directory";
 import { useAuthRole } from "@/components/auth-gate";
 import { BurnoutNavLink } from "@/components/route-burnout-loader";
@@ -421,8 +422,7 @@ export function ServicePortal() {
 
   function renderVehiclePhoto(order: PrototypeWorkOrder) {
     const config = orderVehicleConfig(order);
-    // Old orders may carry a stock catalog URL; only a real photo of this car counts.
-    const photo = order.vehicleImage && order.vehicleImage !== order.vehicleSpec?.image ? order.vehicleImage : "";
+    const photo = ownPhotoOf(order);
     return (
       <VehiclePhotoCard
         year={config.year}

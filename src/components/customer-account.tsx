@@ -7,6 +7,7 @@ import { CalendarClock, Car, Download, FileText, Plus, ShieldCheck } from "lucid
 import { agreementSummaries, partsReturnOptions } from "@/lib/agreements";
 import { timeline } from "@/lib/data";
 import { AuthPanel } from "@/components/auth-panel";
+import { VehiclePicture } from "@/components/vehicle-picture";
 import { CustomerPromoOffers } from "@/components/customer-promo-offers";
 import { CUSTOMER_RECORDS_EVENT, customerRecordIdFromContact, getServiceReminders, PrototypeCustomerRecord, PrototypeWorkOrder, readPrototypeCustomerRecords, readPrototypeWorkOrders, WORK_ORDERS_EVENT } from "@/lib/local-store";
 
@@ -173,7 +174,7 @@ export function CustomerAccount() {
               <ShieldCheck />
             </div>
             {selectedCustomer?.profileImage ? <img className="profile-image-preview" src={selectedCustomer.profileImage} alt={`${selectedCustomer.name} profile`} /> : null}
-            {selectedOrder.vehicleImage ? <img className="vehicle-account-image" src={selectedOrder.vehicleImage} alt={`${selectedOrder.vehicle} vehicle`} /> : null}
+            <VehiclePicture className="vehicle-account-image" order={selectedOrder} />
             <div className="profile-grid">
               <div><span>VIN</span><strong>{selectedOrder.vin}</strong></div>
               <div><span>Plate</span><strong>{selectedOrder.plate}</strong></div>

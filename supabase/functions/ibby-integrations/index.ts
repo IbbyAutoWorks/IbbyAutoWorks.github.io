@@ -26,6 +26,8 @@ const GMAIL_LIMIT = 500;
 const GMAIL_STOP = 400;
 const DATABASE_LIMIT_MB = 500;
 const DATABASE_STOP_MB = 450;
+const STORAGE_LIMIT_MB = 1000;
+const STORAGE_STOP_MB = 900;
 
 // Sites searched for specs. Carmaker sites only: iFixit, CarCareKiosk and StartMyCar bar this kind of reuse,
 // and WhoCanFixMyCar is a UK site. Techs can still open those from the research links.
@@ -136,6 +138,7 @@ serve(async (req) => {
     const today = new Date().toISOString().slice(0, 10);
     const { count: emailsToday } = await supabase.from("email_events").select("id", { count: "exact", head: true }).eq("status", "sent").gte("sent_at", `${today}T00:00:00Z`);
     const { data: databaseBytes } = await supabase.rpc("app_db_bytes");
+    const { data: storageBytes } = await supabase.rpc("app_storage_bytes");
     return reply(200, {
       ok: true,
       saved: rows.filter((row) => ownerKeys.includes(row.name)).map((row) => ({ name: row.name, updatedAt: row.updated_at })),
@@ -150,7 +153,8 @@ serve(async (req) => {
         { id: "tavily", name: "Spec searches (Tavily)", used: await usageSince("tavily", `${today.slice(0, 7)}-01`), limit: TAVILY_LIMIT, stopsAt: TAVILY_STOP, unit: "searches", period: "this month", note: "Includes the nightly fill and searches done by hand. Resets monthly." },
         { id: "gemini", name: "AI page reading (Gemini)", used: await usageSince("gemini", today), limit: null, stopsAt: null, unit: "reads", period: "today", note: "Google sets this limit and can change it. If Google says stop, the app stops until the next run." },
         { id: "gmail", name: "Customer emails (Gmail)", used: emailsToday ?? 0, limit: GMAIL_LIMIT, stopsAt: GMAIL_STOP, unit: "emails", period: "today", note: "Anything over the stop point waits for tomorrow." },
-        { id: "database", name: "App database (Supabase)", used: Math.round(Number(databaseBytes ?? 0) / 1e6), limit: DATABASE_LIMIT_MB, stopsAt: DATABASE_STOP_MB, unit: "MB", period: "in use", note: "Based on Supabase's free plan. The nightly fill stops at this point. Customer records keep saving." }
+        { id: "database", name: "App database (Supabase)", used: Math.round(Number(databaseBytes ?? 0) / 1e6), limit: DATABASE_LIMIT_MB, stopsAt: DATABASE_STOP_MB, unit: "MB", period: "in use", note: "Based on Supabase's free plan. The nightly fill stops at this point. Customer records keep saving." },
+        { id: "storage", name: "Photos and receipts (Supabase)", used: Math.round(Number(storageBytes ?? 0) / 1e6), limit: STORAGE_LIMIT_MB, stopsAt: STORAGE_STOP_MB, unit: "MB", period: "in use", note: "Based on Supabase's free plan. New photos stop saving at this point. Stock pictures don't count, since they aren't stored." }
       ]
     });
   }
