@@ -31,6 +31,7 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2021 Ford F-150 — 5.0L V8 flex fuel, 10-speed automatic, 4x4](data/2021/ford/f-150/5.0l-v8-4x4.md) — researched / needs shop review
 - [2021 Toyota Camry AWD LE/SE — 2.5L inline-4, 8-speed automatic](data/2021/toyota/camry/2.5l-i4-awd.md) — researched / needs shop review
 - [2021 Nissan Altima — 2.5L PR25DD, CVT, AWD](data/2021/nissan/altima/2.5l-i4-awd.md) — researched / needs shop review
+- [2024 Ford Transit — 3.5L Duratec Ti-VCT V6, 10-speed automatic, RWD](data/2024/ford/transit/3.5l-duratec-v6-rwd.md) — researched / needs shop review
 
 ## Coverage queue
 
@@ -42,4 +43,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - Keep Ram eTorque/Stop-Start, 2WD/4WD, transfer-case and axle options explicit rather than inferring one configuration.
 - 2026-11-04 recall-enrichment pass completed for ten exact sheets spanning Toyota, Hyundai, Nissan, Ford, Chevrolet and Ram; model-level campaigns remain VIN/equipment-specific and separate from mechanical authority.
 - 2026-11-04 second recall-enrichment pass materially improved ten additional Nissan, Ford, Toyota, Chevrolet and Jeep sheets; engine/body exclusions were preserved, including Rogue VC-Turbo, F-150 Nano EcoBoost, Silverado diesel/6.2L and Grand Cherokee WK/WL distinctions.
+- 2026-11-05 added exact 2024 Ford Transit 3.5L Duratec RWD fleet/van coverage from the OEM manual, with axle/heater/lamp-package cautions and current NHTSA enrichment kept separate.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
