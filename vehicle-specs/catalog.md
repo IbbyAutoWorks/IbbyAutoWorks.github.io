@@ -49,4 +49,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-05 added exact 2024 Ford Transit 3.5L Duratec RWD fleet/van coverage from the OEM manual, with axle/heater/lamp-package cautions and current NHTSA enrichment kept separate.
 - 2026-11-05 added exact 2026 Honda CR-V 1.5L turbo/CVT FWD and AWD sheets; drivetrain-specific CVT quantities and AWD rear-differential service remain split, while hybrid trims are explicitly excluded.
 - 2026-11-05 added exact 2024 Ford Transit 3.5L EcoBoost RWD coverage; EcoBoost-specific oil capacity, coolant quantities, spark plugs/gap and oil-life limits remain separate from the naturally aspirated Duratec sheet.
+- 2026-11-05 materially improved both exact 2026 Honda CR-V 1.5L turbo/CVT sheets with Honda Service Bulletin 25-085 applicability, date, condition, corrective action and VIN-eligibility cautions; the product update remains separate from recalls and mechanical specifications.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
