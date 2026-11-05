@@ -32,8 +32,8 @@
 ## Verification and publication
 
 - **Completed sheet count:** 2 materially improved; 0 created.
-- **Verifier:** Pending at report creation; final result recorded by the run after `python scripts/verify-vehicle-spec-markdown.py`.
-- **Publication:** Pending guarded publisher execution; no deployment is authorized.
+- **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with **27 vehicle sheets**.
+- **Publication:** Guarded publisher successfully published branch `vehicle-specs-library` at content commit `bd1b363`; no deployment was triggered.
 
 ## Sources
 
