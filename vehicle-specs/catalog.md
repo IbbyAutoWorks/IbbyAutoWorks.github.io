@@ -8,6 +8,8 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 
 ## Researched sheets
 
+- [2026 Honda CR-V — 1.5L turbocharged inline-4, CVT, FWD](data/2026/honda/cr-v/1.5l-turbo-cvt-fwd.md) — researched / needs shop review
+- [2026 Honda CR-V — 1.5L turbocharged inline-4, CVT, AWD](data/2026/honda/cr-v/1.5l-turbo-cvt-awd.md) — researched / needs shop review
 - [2021 Chevrolet Silverado 1500 — 5.3L V8 gasoline (L82/L84; RPO confirmation required)](data/2021/chevrolet/silverado-1500/5.3l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ram 1500 (DT) — 5.7L HEMI V8 (eTorque/drivetrain/axle confirmation required)](data/2021/ram/1500/5.7l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ford F-150 — 2.7L EcoBoost V6, 10-speed automatic, 4x2](data/2021/ford/f-150/2.7l-v6.md) — researched / needs shop review
@@ -44,4 +46,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-04 recall-enrichment pass completed for ten exact sheets spanning Toyota, Hyundai, Nissan, Ford, Chevrolet and Ram; model-level campaigns remain VIN/equipment-specific and separate from mechanical authority.
 - 2026-11-04 second recall-enrichment pass materially improved ten additional Nissan, Ford, Toyota, Chevrolet and Jeep sheets; engine/body exclusions were preserved, including Rogue VC-Turbo, F-150 Nano EcoBoost, Silverado diesel/6.2L and Grand Cherokee WK/WL distinctions.
 - 2026-11-05 added exact 2024 Ford Transit 3.5L Duratec RWD fleet/van coverage from the OEM manual, with axle/heater/lamp-package cautions and current NHTSA enrichment kept separate.
+- 2026-11-05 added exact 2026 Honda CR-V 1.5L turbo/CVT FWD and AWD sheets; drivetrain-specific CVT quantities and AWD rear-differential service remain split, while hybrid trims are explicitly excluded.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
