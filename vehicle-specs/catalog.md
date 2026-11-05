@@ -34,6 +34,7 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2021 Toyota Camry AWD LE/SE — 2.5L inline-4, 8-speed automatic](data/2021/toyota/camry/2.5l-i4-awd.md) — researched / needs shop review
 - [2021 Nissan Altima — 2.5L PR25DD, CVT, AWD](data/2021/nissan/altima/2.5l-i4-awd.md) — researched / needs shop review
 - [2024 Ford Transit — 3.5L Duratec Ti-VCT V6, 10-speed automatic, RWD](data/2024/ford/transit/3.5l-duratec-v6-rwd.md) — researched / needs shop review
+- [2024 Ford Transit — 3.5L EcoBoost V6, 10-speed automatic, RWD](data/2024/ford/transit/3.5l-ecoboost-v6-rwd.md) — researched / needs shop review
 
 ## Coverage queue
 
@@ -47,4 +48,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-04 second recall-enrichment pass materially improved ten additional Nissan, Ford, Toyota, Chevrolet and Jeep sheets; engine/body exclusions were preserved, including Rogue VC-Turbo, F-150 Nano EcoBoost, Silverado diesel/6.2L and Grand Cherokee WK/WL distinctions.
 - 2026-11-05 added exact 2024 Ford Transit 3.5L Duratec RWD fleet/van coverage from the OEM manual, with axle/heater/lamp-package cautions and current NHTSA enrichment kept separate.
 - 2026-11-05 added exact 2026 Honda CR-V 1.5L turbo/CVT FWD and AWD sheets; drivetrain-specific CVT quantities and AWD rear-differential service remain split, while hybrid trims are explicitly excluded.
+- 2026-11-05 added exact 2024 Ford Transit 3.5L EcoBoost RWD coverage; EcoBoost-specific oil capacity, coolant quantities, spark plugs/gap and oil-life limits remain separate from the naturally aspirated Duratec sheet.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
