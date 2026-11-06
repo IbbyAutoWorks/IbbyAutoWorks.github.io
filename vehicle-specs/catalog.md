@@ -35,6 +35,8 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2021 Nissan Altima — 2.5L PR25DD, CVT, AWD](data/2021/nissan/altima/2.5l-i4-awd.md) — researched / needs shop review
 - [2024 Ford Transit — 3.5L Duratec Ti-VCT V6, 10-speed automatic, RWD](data/2024/ford/transit/3.5l-duratec-v6-rwd.md) — researched / needs shop review
 - [2024 Ford Transit — 3.5L EcoBoost V6, 10-speed automatic, RWD](data/2024/ford/transit/3.5l-ecoboost-v6-rwd.md) — researched / needs shop review
+- [2024 Ford Transit — 3.5L Duratec Ti-VCT V6, 10-speed automatic, AWD](data/2024/ford/transit/3.5l-duratec-v6-awd.md) — researched / needs shop review
+- [2024 Ford Transit — 3.5L EcoBoost V6, 10-speed automatic, AWD](data/2024/ford/transit/3.5l-ecoboost-v6-awd.md) — researched / needs shop review
 
 ## Coverage queue
 
@@ -51,4 +53,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-05 added exact 2024 Ford Transit 3.5L EcoBoost RWD coverage; EcoBoost-specific oil capacity, coolant quantities, spark plugs/gap and oil-life limits remain separate from the naturally aspirated Duratec sheet.
 - 2026-11-05 materially improved both exact 2026 Honda CR-V 1.5L turbo/CVT sheets with Honda Service Bulletin 25-085 applicability, date, condition, corrective action and VIN-eligibility cautions; the product update remains separate from recalls and mechanical specifications.
 - 2026-11-06 rechecked the official NHTSA year/make/model recall endpoint for both exact 2026 Honda CR-V 1.5L turbo/CVT drivetrain sheets; it returned zero records, with a dated-result and VIN-specific-lookup warning preserved.
+- 2026-11-06 added exact 2024 Ford Transit 3.5L Duratec AWD and 3.5L EcoBoost AWD sheets; drivetrain-specific front-axle/transfer-case maintenance applicability is recorded while unsupported AWD fluid specifications and capacities remain `Needs research`.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
