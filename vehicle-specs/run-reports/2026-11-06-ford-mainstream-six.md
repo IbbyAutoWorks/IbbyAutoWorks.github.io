@@ -52,7 +52,7 @@
 - **Completed sheet count:** 6 created; 0 materially improved.
 - **Verifier before publication:** `python scripts/verify-vehicle-spec-markdown.py` passed with **37 vehicle sheets**.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication commit:** Pending assignment by the required guarded publisher; this report will be finalized with the first guarded content commit if publication succeeds. No deployment is permitted or triggered.
+- **Publication commit:** Guarded content publication succeeded at commit `681e07c`; a follow-up guarded commit will contain this report-only commit annotation. No deployment was permitted or triggered.
 
 ## Sources
 
