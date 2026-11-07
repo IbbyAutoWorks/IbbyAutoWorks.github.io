@@ -45,6 +45,9 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2024 Ford Bronco Sport — 1.5L EcoBoost inline-3, 8-speed automatic, 4WD](data/2024/ford/bronco-sport/1.5l-ecoboost-4wd.md) — researched / needs shop review
 - [2024 Ford Bronco Sport — 2.0L EcoBoost inline-4, 8-speed automatic, 4WD](data/2024/ford/bronco-sport/2.0l-ecoboost-4wd.md) — researched / needs shop review
 - [2024 Ford Mustang — 2.3L EcoBoost inline-4, 10-speed automatic, RWD, base](data/2024/ford/mustang/2.3l-ecoboost-auto-rwd-base.md) — researched / needs shop review
+- [2024 Ford Mustang — 5.0L V8, 10-speed automatic, RWD, base cooling configuration](data/2024/ford/mustang/5.0l-v8-auto-rwd-base.md) — researched / needs shop review
+- [2024 Ford Mustang — 5.0L V8, 10-speed automatic, RWD, performance cooling configuration](data/2024/ford/mustang/5.0l-v8-auto-rwd-performance.md) — researched / needs shop review
+- [2024 Ford Mustang — 5.0L V8, 6-speed manual, RWD](data/2024/ford/mustang/5.0l-v8-manual-rwd.md) — researched / manual-transmission interval conflict and shop review required
 
 ## Coverage queue
 
@@ -64,4 +67,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-06 added exact 2024 Ford Transit 3.5L Duratec AWD and 3.5L EcoBoost AWD sheets; drivetrain-specific front-axle/transfer-case maintenance applicability is recorded while unsupported AWD fluid specifications and capacities remain `Needs research`.
 - 2026-11-06 added exact 2024 Ford Explorer 2.3L EcoBoost RWD and AWD sheets; EPA identity, drivetrain-specific axle/transfer-case capacities, OEM dry-fill cautions and the 2.3L/10R60-specific recall distinction are preserved.
 - 2026-11-06 added six exact 2024 Ford sheets spanning Maverick pickup (2.0L FWD/AWD and 2.5L hybrid), Bronco Sport crossover (1.5L/2.0L 4WD) and base Mustang coupe/convertible (2.3L automatic RWD); unsupported transmission/AWD service quantities and VIN-specific schedule items remain `Needs research` rather than inferred.
+- 2026-11-07 added three exact 2024 Ford Mustang 5.0L V8 sheets: automatic base-cooling, automatic performance-cooling and 6-speed manual. EPA stop-start choices remain VIN/equipment checks, and the owner manual's conflicting manual-transmission “filled-for-life” versus scheduled replacement language is preserved rather than silently resolved.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
