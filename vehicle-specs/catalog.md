@@ -18,6 +18,11 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2026 Honda HR-V — 2.0L inline-4, CVT, FWD](data/2026/honda/hr-v/2.0l-i4-cvt-fwd.md) — researched / needs shop review
 - [2026 Honda HR-V — 2.0L inline-4, CVT, AWD](data/2026/honda/hr-v/2.0l-i4-cvt-awd.md) — researched / needs shop review
 - [2026 Honda Civic Sedan — 2.0L inline-4, CVT, FWD](data/2026/honda/civic-sedan/2.0l-i4-cvt-fwd.md) — researched / needs shop review
+- [2026 Honda Civic Sedan Hybrid — 2.0L inline-4 hybrid, eCVT, FWD](data/2026/honda/civic-sedan/2.0l-hybrid-ecvt-fwd.md) — researched / needs shop review
+- [2026 Honda CR-V Hybrid — 2.0L inline-4 hybrid, eCVT, FWD](data/2026/honda/cr-v/2.0l-hybrid-ecvt-fwd.md) — researched / needs shop review
+- [2026 Honda CR-V Hybrid — 2.0L inline-4 hybrid, eCVT, AWD](data/2026/honda/cr-v/2.0l-hybrid-ecvt-awd.md) — researched / needs shop review
+- [2026 Honda Odyssey — 3.5L V6, 10-speed automatic, FWD](data/2026/honda/odyssey/3.5l-v6-10at-fwd.md) — researched / needs shop review
+- [2026 Honda Ridgeline — 3.5L V6, 9-speed automatic, AWD](data/2026/honda/ridgeline/3.5l-v6-9at-awd.md) — researched / needs shop review
 - [2021 Chevrolet Silverado 1500 — 5.3L V8 gasoline (L82/L84; RPO confirmation required)](data/2021/chevrolet/silverado-1500/5.3l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ram 1500 (DT) — 5.7L HEMI V8 (eTorque/drivetrain/axle confirmation required)](data/2021/ram/1500/5.7l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ford F-150 — 2.7L EcoBoost V6, 10-speed automatic, 4x2](data/2021/ford/f-150/2.7l-v6.md) — researched / needs shop review
@@ -79,4 +84,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-07 added exact 2026 Honda Pilot 3.5L V6/10-speed FWD and AWD sheets; AWD rear-differential fluid/service remains separate, while unavailable EPA option records and unsupported transfer-case, parts and bulb details remain explicit research gaps.
 - 2026-11-07 added exact 2026 Honda Accord 1.5L turbo/CVT and 2.0L hybrid/eCVT FWD sheets; powertrain-specific oil and coolant data remain separate, and unsupported service quantities, parts and bulb details remain explicit research gaps.
 - 2026-11-07 added four exact 2026 Honda sheets spanning the redesigned Passport AWD SUV, HR-V FWD/AWD crossovers and Civic Sedan 2.0L/CVT passenger car; drivetrain-specific rear-differential service remains separated, while unsupported wheel torque, parts and selected lamp details remain explicit research gaps.
+- 2026-11-07 added five exact 2026 Honda sheets spanning Odyssey minivan, Ridgeline AWD pickup, CR-V Hybrid FWD/AWD crossovers and Civic Sedan Hybrid; hybrid cooling/drive-unit quantities and AWD rear-differential service remain variant-specific, while unsupported parts, bulbs and image licensing remain explicit research gaps.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
