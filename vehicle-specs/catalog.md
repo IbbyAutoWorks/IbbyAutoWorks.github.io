@@ -10,6 +10,8 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 
 - [2026 Honda CR-V — 1.5L turbocharged inline-4, CVT, FWD](data/2026/honda/cr-v/1.5l-turbo-cvt-fwd.md) — researched / needs shop review
 - [2026 Honda CR-V — 1.5L turbocharged inline-4, CVT, AWD](data/2026/honda/cr-v/1.5l-turbo-cvt-awd.md) — researched / needs shop review
+- [2026 Honda Pilot — 3.5L V6, 10-speed automatic, FWD](data/2026/honda/pilot/3.5l-v6-10at-fwd.md) — researched / needs shop review
+- [2026 Honda Pilot — 3.5L V6, 10-speed automatic, AWD](data/2026/honda/pilot/3.5l-v6-10at-awd.md) — researched / needs shop review
 - [2021 Chevrolet Silverado 1500 — 5.3L V8 gasoline (L82/L84; RPO confirmation required)](data/2021/chevrolet/silverado-1500/5.3l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ram 1500 (DT) — 5.7L HEMI V8 (eTorque/drivetrain/axle confirmation required)](data/2021/ram/1500/5.7l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ford F-150 — 2.7L EcoBoost V6, 10-speed automatic, 4x2](data/2021/ford/f-150/2.7l-v6.md) — researched / needs shop review
@@ -68,4 +70,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-06 added exact 2024 Ford Explorer 2.3L EcoBoost RWD and AWD sheets; EPA identity, drivetrain-specific axle/transfer-case capacities, OEM dry-fill cautions and the 2.3L/10R60-specific recall distinction are preserved.
 - 2026-11-06 added six exact 2024 Ford sheets spanning Maverick pickup (2.0L FWD/AWD and 2.5L hybrid), Bronco Sport crossover (1.5L/2.0L 4WD) and base Mustang coupe/convertible (2.3L automatic RWD); unsupported transmission/AWD service quantities and VIN-specific schedule items remain `Needs research` rather than inferred.
 - 2026-11-07 added three exact 2024 Ford Mustang 5.0L V8 sheets: automatic base-cooling, automatic performance-cooling and 6-speed manual. EPA stop-start choices remain VIN/equipment checks, and the owner manual's conflicting manual-transmission “filled-for-life” versus scheduled replacement language is preserved rather than silently resolved.
+- 2026-11-07 added exact 2026 Honda Pilot 3.5L V6/10-speed FWD and AWD sheets; AWD rear-differential fluid/service remains separate, while unavailable EPA option records and unsupported transfer-case, parts and bulb details remain explicit research gaps.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
