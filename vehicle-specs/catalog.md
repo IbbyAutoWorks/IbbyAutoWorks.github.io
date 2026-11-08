@@ -64,6 +64,8 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Nissan Sentra — 2.0L inline-4, CVT, FWD](data/2025/nissan/sentra/2.0l-i4-cvt-fwd.md) — researched / needs shop review
 - [2025 Nissan Kicks — 2.0L inline-4, CVT, FWD](data/2025/nissan/kicks/2.0l-i4-cvt-fwd.md) — researched / needs shop review
 - [2025 Nissan Kicks — 2.0L inline-4, CVT, AWD](data/2025/nissan/kicks/2.0l-i4-cvt-awd.md) — researched / needs shop review
+- [2025 Nissan Rogue — 1.5L VC-Turbo inline-3, CVT, FWD](data/2025/nissan/rogue/1.5l-vc-turbo-cvt-fwd.md) — researched / needs shop review
+- [2025 Nissan Rogue — 1.5L VC-Turbo inline-3, CVT, AWD](data/2025/nissan/rogue/1.5l-vc-turbo-cvt-awd.md) — researched / needs shop review
 
 ## Coverage queue
 
@@ -89,4 +91,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-07 added four exact 2026 Honda sheets spanning the redesigned Passport AWD SUV, HR-V FWD/AWD crossovers and Civic Sedan 2.0L/CVT passenger car; drivetrain-specific rear-differential service remains separated, while unsupported wheel torque, parts and selected lamp details remain explicit research gaps.
 - 2026-11-07 added five exact 2026 Honda sheets spanning Odyssey minivan, Ridgeline AWD pickup, CR-V Hybrid FWD/AWD crossovers and Civic Sedan Hybrid; hybrid cooling/drive-unit quantities and AWD rear-differential service remain variant-specific, while unsupported parts, bulbs and image licensing remain explicit research gaps.
 - 2026-11-08 added exact 2025 Nissan Sentra FWD and Kicks FWD/AWD sheets; exact owner-manual values corrected unsupported draft capacities and rotation intervals, while unpublished CVT/AWD service quantities remain `Needs research`.
+- 2026-11-08 added exact 2025 Nissan Rogue FWD/AWD sheets; the OEM manual supports KR15DDT oil/coolant/ignition, trim-specific tire pressures and AWD fluid types, while unpublished CVT/AWD service quantities and ambiguous brake-fluid timing remain `Needs research`.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
