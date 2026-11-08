@@ -49,7 +49,7 @@
 - **Grounded-citation verification:** all three sheets passed with 69–71% declared sentence provenance and no unknown citation IDs.
 - **Repository verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with **56 vehicle sheets**.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication status:** guarded publisher pending; this line will be annotated with the resulting commit or blocker after execution.
+- **Publication status:** guarded publisher succeeded at commit `4bc708a`; a follow-up guarded commit records this publication annotation. No deployment was triggered.
 
 ## Sources
 
