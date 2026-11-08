@@ -47,7 +47,7 @@
 - **Grounded-citation verification:** citation IDs and generated source mappings passed ledger verification; the coverage diagnostic was reviewed, and source-bearing mechanical bullets carry inline provenance.
 - **Repository verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with **58 vehicle sheets**.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication status:** Guarded publication pending; this annotation will be updated after the publisher returns a commit. No deployment is authorized.
+- **Publication status:** Guarded publisher succeeded at initial library commit `1784427`; this report annotation is included in the follow-up guarded publication commit. No deployment was triggered.
 
 ## Sources
 
