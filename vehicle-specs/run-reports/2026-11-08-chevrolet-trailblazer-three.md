@@ -47,7 +47,7 @@
 - **Grounded-citation verification:** Citation IDs and generated source mappings passed ledger verification for all three sheets and this report; coverage diagnostics were reviewed.
 - **Repository verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with **61 vehicle sheets**.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication status:** Pending guarded publisher.
+- **Publication status:** Guarded publisher succeeded at initial library commit `088a9cc`; local and remote branch hashes matched at `088a9ccec62578b4e1f800d1a5278c1025b339c8`. This report annotation is included in the follow-up guarded publication commit. No deployment was triggered.
 
 ## Sources
 
