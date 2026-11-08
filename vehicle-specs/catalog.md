@@ -61,6 +61,9 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2024 Ford Mustang — 5.0L V8, 10-speed automatic, RWD, base cooling configuration](data/2024/ford/mustang/5.0l-v8-auto-rwd-base.md) — researched / needs shop review
 - [2024 Ford Mustang — 5.0L V8, 10-speed automatic, RWD, performance cooling configuration](data/2024/ford/mustang/5.0l-v8-auto-rwd-performance.md) — researched / needs shop review
 - [2024 Ford Mustang — 5.0L V8, 6-speed manual, RWD](data/2024/ford/mustang/5.0l-v8-manual-rwd.md) — researched / manual-transmission interval conflict and shop review required
+- [2025 Nissan Sentra — 2.0L inline-4, CVT, FWD](data/2025/nissan/sentra/2.0l-i4-cvt-fwd.md) — researched / needs shop review
+- [2025 Nissan Kicks — 2.0L inline-4, CVT, FWD](data/2025/nissan/kicks/2.0l-i4-cvt-fwd.md) — researched / needs shop review
+- [2025 Nissan Kicks — 2.0L inline-4, CVT, AWD](data/2025/nissan/kicks/2.0l-i4-cvt-awd.md) — researched / needs shop review
 
 ## Coverage queue
 
@@ -85,4 +88,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-07 added exact 2026 Honda Accord 1.5L turbo/CVT and 2.0L hybrid/eCVT FWD sheets; powertrain-specific oil and coolant data remain separate, and unsupported service quantities, parts and bulb details remain explicit research gaps.
 - 2026-11-07 added four exact 2026 Honda sheets spanning the redesigned Passport AWD SUV, HR-V FWD/AWD crossovers and Civic Sedan 2.0L/CVT passenger car; drivetrain-specific rear-differential service remains separated, while unsupported wheel torque, parts and selected lamp details remain explicit research gaps.
 - 2026-11-07 added five exact 2026 Honda sheets spanning Odyssey minivan, Ridgeline AWD pickup, CR-V Hybrid FWD/AWD crossovers and Civic Sedan Hybrid; hybrid cooling/drive-unit quantities and AWD rear-differential service remain variant-specific, while unsupported parts, bulbs and image licensing remain explicit research gaps.
+- 2026-11-08 added exact 2025 Nissan Sentra FWD and Kicks FWD/AWD sheets; exact owner-manual values corrected unsupported draft capacities and rotation intervals, while unpublished CVT/AWD service quantities remain `Needs research`.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
