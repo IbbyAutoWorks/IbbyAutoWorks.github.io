@@ -73,6 +73,8 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Nissan Pathfinder — 3.5L V6, 9-speed automatic, 4WD](data/2025/nissan/pathfinder/3.5l-v6-9at-4wd.md) — researched / needs shop review
 - [2025 Nissan Frontier — 3.8L V6, 9-speed automatic, 2WD](data/2025/nissan/frontier/3.8l-v6-9at-2wd.md) — researched / needs shop review
 - [2025 Nissan Frontier — 3.8L V6, 9-speed automatic, 4WD](data/2025/nissan/frontier/3.8l-v6-9at-4wd.md) — researched / front-final-drive capacity conflict and shop review required
+- [2025 Toyota Camry — 2.5L A25A-FXS hybrid, eCVT, FWD](data/2025/toyota/camry/2.5l-hybrid-ecvt-fwd.md) — researched / needs shop review
+- [2025 Toyota Camry — 2.5L A25A-FXS hybrid, eCVT, AWD](data/2025/toyota/camry/2.5l-hybrid-ecvt-awd.md) — researched / needs shop review
 
 ## Coverage queue
 
@@ -101,4 +103,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-08 added exact 2025 Nissan Rogue FWD/AWD sheets; the OEM manual supports KR15DDT oil/coolant/ignition, trim-specific tire pressures and AWD fluid types, while unpublished CVT/AWD service quantities and ambiguous brake-fluid timing remain `Needs research`.
 - 2026-11-08 added three exact 2025 Chevrolet Trailblazer sheets spanning 1.2L/CVT/FWD, 1.3L/CVT/FWD and 1.3L/9-speed/AWD; engine/drivetrain capacities and severe-service paths remain separate, and the OEM coolant five-year versus six-year interval conflict is preserved.
 - 2026-11-09 added four exact 2025 Nissan sheets spanning Pathfinder FWD/4WD SUVs and Frontier 2WD/4WD pickups; drivetrain-specific axle/transfer/coupling data and service paths remain separate, while the Frontier manual extraction's conflicting front-final-drive metric/US capacity is explicitly preserved for clean-source confirmation.
+- 2026-11-11 added exact 2025 Toyota Camry Hybrid FWD and AWD sheets; AXVH80L/AXVH85L identities, AWD rear-differential fluid/service and placard-dependent tire pressures remain separate, while unsupported part numbers, battery ratings, image licensing and diagram-only rotation details remain explicit research gaps.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
