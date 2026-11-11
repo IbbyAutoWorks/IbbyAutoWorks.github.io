@@ -52,7 +52,7 @@
 - **Grounded-citation verification:** Citation IDs and mechanically rendered source mappings passed ledger verification; the strict run-report coverage gate passed at 58%.
 - **Repository verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with **65 vehicle sheets**.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication status:** Pending guarded publisher after successful local verification; no deployment will be triggered.
+- **Publication status:** Guarded publisher succeeded at commit `33f2357`; no deployment was triggered. The report-only publication-finalization commit is recorded in the repository history after this content commit.
 
 ## Sources
 
