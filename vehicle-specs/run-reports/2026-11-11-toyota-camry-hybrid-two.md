@@ -60,4 +60,4 @@
 
 - **Completed sheets:** 2 new; 0 materially improved.
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 67 vehicle sheets.
-- **Publication:** Pending guarded publisher execution after successful verification.
+- **Publication:** Guarded publisher succeeded on branch `vehicle-specs-library`; the verified library batch was published in commit `0dc34ac`. No deployment was triggered.
