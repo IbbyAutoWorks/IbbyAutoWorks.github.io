@@ -23,6 +23,10 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2026 Honda CR-V Hybrid — 2.0L inline-4 hybrid, eCVT, AWD](data/2026/honda/cr-v/2.0l-hybrid-ecvt-awd.md) — researched / needs shop review
 - [2026 Honda Odyssey — 3.5L V6, 10-speed automatic, FWD](data/2026/honda/odyssey/3.5l-v6-10at-fwd.md) — researched / needs shop review
 - [2026 Honda Ridgeline — 3.5L V6, 9-speed automatic, AWD](data/2026/honda/ridgeline/3.5l-v6-9at-awd.md) — researched / needs shop review
+- [2025 Honda CR-V — 1.5L turbocharged inline-4, CVT, FWD](data/2025/honda/cr-v/1.5l-turbo-cvt-fwd.md) — researched / needs shop review
+- [2025 Honda CR-V — 1.5L turbocharged inline-4, CVT, AWD](data/2025/honda/cr-v/1.5l-turbo-cvt-awd.md) — researched / needs shop review
+- [2025 Honda CR-V Hybrid — 2.0L inline-4 hybrid, eCVT, FWD](data/2025/honda/cr-v/2.0l-hybrid-ecvt-fwd.md) — researched / needs shop review
+- [2025 Honda CR-V Hybrid — 2.0L inline-4 hybrid, eCVT, AWD](data/2025/honda/cr-v/2.0l-hybrid-ecvt-awd.md) — researched / needs shop review
 - [2021 Chevrolet Silverado 1500 — 5.3L V8 gasoline (L82/L84; RPO confirmation required)](data/2021/chevrolet/silverado-1500/5.3l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ram 1500 (DT) — 5.7L HEMI V8 (eTorque/drivetrain/axle confirmation required)](data/2021/ram/1500/5.7l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ford F-150 — 2.7L EcoBoost V6, 10-speed automatic, 4x2](data/2021/ford/f-150/2.7l-v6.md) — researched / needs shop review
@@ -132,4 +136,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-12 added five exact 2025 Toyota sheets spanning Corolla gasoline FWD, Corolla Hybrid FWD/AWD passenger cars and Sienna Hybrid FWD/AWD minivans; hybrid rear-electric-drive service remains drivetrain-specific, while unsupported parts, battery replacement ratings, exact EPA IDs, NHTSA enrichment and image licensing remain explicit research gaps.
 - 2026-11-12 added four exact 2025 Toyota Highlander sheets spanning 2.4L turbo FWD with and without Stop & Start, 2.4L turbo AWD with Stop & Start, and 2.5L Hybrid AWD; gasoline coolant and battery specifications plus AWD transfer/rear-differential service remain variant-specific. The hybrid sheet preserves an unresolved Toyota-manual 288-V NiMH versus EPA 259-V Li-ion descriptor conflict rather than collapsing the records.
 - 2026-11-12 added ten exact 2025 Toyota Tacoma EPA-identity sheets spanning RWD automatic, part-time 4WD automatic, 4WD manual and hybrid 4WD groups; Stop & Start and EPA engine descriptors remain explicit. OEM model-code coolant mapping, trim-dependent rear-axle quantities, wheel material/placard selection and EPA 48903 transfer type remain VIN-level research gaps rather than inferred values.
+- 2026-11-12 added four exact 2025 Honda CR-V sheets spanning 1.5L turbo/CVT FWD and AWD plus 2.0L hybrid/eCVT FWD and AWD; drivetrain-specific CVT/drive-unit, coolant and rear-differential quantities remain separate, while unsupported parts, hybrid wheel torque, battery ratings and fixed normal-use intervals remain explicit research gaps.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
