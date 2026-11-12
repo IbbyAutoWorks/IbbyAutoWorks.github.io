@@ -85,6 +85,10 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Toyota Corolla Hybrid — 1.8L 2ZR-FXE, eCVT, AWD](data/2025/toyota/corolla/1.8l-hybrid-ecvt-awd.md) — researched / needs shop review
 - [2025 Toyota Sienna — 2.5L A25A-FXS hybrid, eCVT, FWD](data/2025/toyota/sienna/2.5l-hybrid-ecvt-fwd.md) — researched / needs shop review
 - [2025 Toyota Sienna — 2.5L A25A-FXS hybrid, eCVT, AWD](data/2025/toyota/sienna/2.5l-hybrid-ecvt-awd.md) — researched / needs shop review
+- [2025 Toyota Highlander — 2.4L T24A-FTS turbo, 8-speed automatic, FWD, Stop & Start](data/2025/toyota/highlander/2.4l-turbo-8at-fwd-stop-start.md) — researched / needs shop review
+- [2025 Toyota Highlander — 2.4L T24A-FTS turbo, 8-speed automatic, FWD, no Stop & Start](data/2025/toyota/highlander/2.4l-turbo-8at-fwd-no-stop-start.md) — researched / needs shop review
+- [2025 Toyota Highlander — 2.4L T24A-FTS turbo, 8-speed automatic, AWD, Stop & Start](data/2025/toyota/highlander/2.4l-turbo-8at-awd-stop-start.md) — researched / needs shop review
+- [2025 Toyota Highlander Hybrid — 2.5L A25A-FXS hybrid, eCVT, AWD](data/2025/toyota/highlander/2.5l-hybrid-ecvt-awd.md) — conflict / Toyota-versus-EPA traction-battery identity and shop review required
 
 ## Coverage queue
 
@@ -116,4 +120,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-11 added exact 2025 Toyota Camry Hybrid FWD and AWD sheets; AXVH80L/AXVH85L identities, AWD rear-differential fluid/service and placard-dependent tire pressures remain separate, while unsupported part numbers, battery ratings, image licensing and diagram-only rotation details remain explicit research gaps.
 - 2026-11-11 added five exact 2025 Toyota RAV4 sheets spanning gasoline FWD, Dynamic Torque Control AWD, Dynamic Torque Vectoring AWD, and AXAH54L NiMH/AXAL54L lithium-ion Hybrid AWD variants; drivetrain fluids, traction-battery identities and severe-service paths remain separate, while unsupported part numbers, equipment mappings and image licensing remain explicit research gaps.
 - 2026-11-12 added five exact 2025 Toyota sheets spanning Corolla gasoline FWD, Corolla Hybrid FWD/AWD passenger cars and Sienna Hybrid FWD/AWD minivans; hybrid rear-electric-drive service remains drivetrain-specific, while unsupported parts, battery replacement ratings, exact EPA IDs, NHTSA enrichment and image licensing remain explicit research gaps.
+- 2026-11-12 added four exact 2025 Toyota Highlander sheets spanning 2.4L turbo FWD with and without Stop & Start, 2.4L turbo AWD with Stop & Start, and 2.5L Hybrid AWD; gasoline coolant and battery specifications plus AWD transfer/rear-differential service remain variant-specific. The hybrid sheet preserves an unresolved Toyota-manual 288-V NiMH versus EPA 259-V Li-ion descriptor conflict rather than collapsing the records.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
