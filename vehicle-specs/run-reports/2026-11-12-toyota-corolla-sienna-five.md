@@ -52,7 +52,7 @@
 
 - **Completed sheets:** 5 new; 0 materially improved.
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 77 vehicle sheets.
-- **Publication branch:** `vehicle-specs-library`; guarded publisher commit pending at this checkpoint.
+- **Publication:** Guarded publisher pushed branch `vehicle-specs-library` at content commit `0fb1a75`; no deployment was triggered. This report records that completed content publication checkpoint.
 
 ## Sources
 
