@@ -80,6 +80,11 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Toyota RAV4 — 2.5L A25A-FKS, 8-speed automatic, Dynamic Torque Vectoring AWD](data/2025/toyota/rav4/2.5l-i4-8at-dynamic-torque-vectoring-awd.md) — researched / needs shop review
 - [2025 Toyota RAV4 Hybrid — 2.5L A25A-FXS, AWD, AXAH54L NiMH](data/2025/toyota/rav4/2.5l-hybrid-awd-axah54l-nimh.md) — researched / needs shop review
 - [2025 Toyota RAV4 Hybrid — 2.5L A25A-FXS, AWD, AXAL54L lithium-ion](data/2025/toyota/rav4/2.5l-hybrid-awd-axal54l-lithium-ion.md) — researched / needs shop review
+- [2025 Toyota Corolla — 2.0L M20A-FKS, CVT, FWD](data/2025/toyota/corolla/2.0l-i4-cvt-fwd.md) — researched / needs shop review
+- [2025 Toyota Corolla Hybrid — 1.8L 2ZR-FXE, eCVT, FWD](data/2025/toyota/corolla/1.8l-hybrid-ecvt-fwd.md) — researched / needs shop review
+- [2025 Toyota Corolla Hybrid — 1.8L 2ZR-FXE, eCVT, AWD](data/2025/toyota/corolla/1.8l-hybrid-ecvt-awd.md) — researched / needs shop review
+- [2025 Toyota Sienna — 2.5L A25A-FXS hybrid, eCVT, FWD](data/2025/toyota/sienna/2.5l-hybrid-ecvt-fwd.md) — researched / needs shop review
+- [2025 Toyota Sienna — 2.5L A25A-FXS hybrid, eCVT, AWD](data/2025/toyota/sienna/2.5l-hybrid-ecvt-awd.md) — researched / needs shop review
 
 ## Coverage queue
 
@@ -110,4 +115,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-09 added four exact 2025 Nissan sheets spanning Pathfinder FWD/4WD SUVs and Frontier 2WD/4WD pickups; drivetrain-specific axle/transfer/coupling data and service paths remain separate, while the Frontier manual extraction's conflicting front-final-drive metric/US capacity is explicitly preserved for clean-source confirmation.
 - 2026-11-11 added exact 2025 Toyota Camry Hybrid FWD and AWD sheets; AXVH80L/AXVH85L identities, AWD rear-differential fluid/service and placard-dependent tire pressures remain separate, while unsupported part numbers, battery ratings, image licensing and diagram-only rotation details remain explicit research gaps.
 - 2026-11-11 added five exact 2025 Toyota RAV4 sheets spanning gasoline FWD, Dynamic Torque Control AWD, Dynamic Torque Vectoring AWD, and AXAH54L NiMH/AXAL54L lithium-ion Hybrid AWD variants; drivetrain fluids, traction-battery identities and severe-service paths remain separate, while unsupported part numbers, equipment mappings and image licensing remain explicit research gaps.
+- 2026-11-12 added five exact 2025 Toyota sheets spanning Corolla gasoline FWD, Corolla Hybrid FWD/AWD passenger cars and Sienna Hybrid FWD/AWD minivans; hybrid rear-electric-drive service remains drivetrain-specific, while unsupported parts, battery replacement ratings, exact EPA IDs, NHTSA enrichment and image licensing remain explicit research gaps.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
