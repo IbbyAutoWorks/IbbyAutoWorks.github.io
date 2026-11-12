@@ -89,6 +89,16 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Toyota Highlander — 2.4L T24A-FTS turbo, 8-speed automatic, FWD, no Stop & Start](data/2025/toyota/highlander/2.4l-turbo-8at-fwd-no-stop-start.md) — researched / needs shop review
 - [2025 Toyota Highlander — 2.4L T24A-FTS turbo, 8-speed automatic, AWD, Stop & Start](data/2025/toyota/highlander/2.4l-turbo-8at-awd-stop-start.md) — researched / needs shop review
 - [2025 Toyota Highlander Hybrid — 2.5L A25A-FXS hybrid, eCVT, AWD](data/2025/toyota/highlander/2.5l-hybrid-ecvt-awd.md) — conflict / Toyota-versus-EPA traction-battery identity and shop review required
+- [2025 Toyota Tacoma SR5/Sport/PreRunner — 2.4L turbo, 8-speed automatic, RWD, Stop & Start, EPA 48870](data/2025/toyota/tacoma/2.4l-turbo-8at-rwd-stop-start-epa-48870.md) — researched / needs shop review
+- [2025 Toyota Tacoma SR5/Sport/PreRunner — 2.4L turbo, 8-speed automatic, RWD, Stop & Start, EPA 48871](data/2025/toyota/tacoma/2.4l-turbo-8at-rwd-stop-start-epa-48871.md) — researched / needs shop review
+- [2025 Toyota Tacoma — 2.4L turbo, 8-speed automatic, RWD, no Stop & Start, EPA 48872](data/2025/toyota/tacoma/2.4l-turbo-8at-rwd-no-stop-start-epa-48872.md) — researched / needs shop review
+- [2025 Toyota Tacoma — 2.4L turbo, 6-speed manual, part-time 4WD, EPA 48877](data/2025/toyota/tacoma/2.4l-turbo-6mt-part-time-4wd-epa-48877.md) — researched / needs shop review
+- [2025 Toyota Tacoma SR5/Sport/Off-Road/Limited — 2.4L turbo, 8-speed automatic, part-time 4WD, EPA 48878](data/2025/toyota/tacoma/2.4l-turbo-8at-part-time-4wd-epa-48878.md) — researched / needs shop review
+- [2025 Toyota Tacoma SR5/Sport/Off-Road/Limited — 2.4L turbo, 8-speed automatic, part-time 4WD, Stop & Start, EPA 48879](data/2025/toyota/tacoma/2.4l-turbo-8at-part-time-4wd-stop-start-epa-48879.md) — researched / needs shop review
+- [2025 Toyota Tacoma SR5/Sport/Off-Road/Limited — 2.4L turbo, 8-speed automatic, part-time 4WD, EPA 48880](data/2025/toyota/tacoma/2.4l-turbo-8at-part-time-4wd-epa-48880.md) — researched / needs shop review
+- [2025 Toyota Tacoma — 2.4L turbo, 8-speed automatic, part-time 4WD, EPA 48881](data/2025/toyota/tacoma/2.4l-turbo-8at-part-time-4wd-epa-48881.md) — researched / needs shop review
+- [2025 Toyota Tacoma Hybrid — 2.4L turbo hybrid, 8-speed automatic, part-time 4WD, EPA 48902](data/2025/toyota/tacoma/2.4l-turbo-hybrid-8at-part-time-4wd-epa-48902.md) — researched / needs shop review
+- [2025 Toyota Tacoma Hybrid — 2.4L turbo hybrid, 8-speed automatic, 4WD transfer type pending VIN confirmation, EPA 48903](data/2025/toyota/tacoma/2.4l-turbo-hybrid-8at-4wd-epa-48903.md) — researched / transfer-type confirmation and shop review required
 
 ## Coverage queue
 
@@ -121,4 +131,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-11 added five exact 2025 Toyota RAV4 sheets spanning gasoline FWD, Dynamic Torque Control AWD, Dynamic Torque Vectoring AWD, and AXAH54L NiMH/AXAL54L lithium-ion Hybrid AWD variants; drivetrain fluids, traction-battery identities and severe-service paths remain separate, while unsupported part numbers, equipment mappings and image licensing remain explicit research gaps.
 - 2026-11-12 added five exact 2025 Toyota sheets spanning Corolla gasoline FWD, Corolla Hybrid FWD/AWD passenger cars and Sienna Hybrid FWD/AWD minivans; hybrid rear-electric-drive service remains drivetrain-specific, while unsupported parts, battery replacement ratings, exact EPA IDs, NHTSA enrichment and image licensing remain explicit research gaps.
 - 2026-11-12 added four exact 2025 Toyota Highlander sheets spanning 2.4L turbo FWD with and without Stop & Start, 2.4L turbo AWD with Stop & Start, and 2.5L Hybrid AWD; gasoline coolant and battery specifications plus AWD transfer/rear-differential service remain variant-specific. The hybrid sheet preserves an unresolved Toyota-manual 288-V NiMH versus EPA 259-V Li-ion descriptor conflict rather than collapsing the records.
+- 2026-11-12 added ten exact 2025 Toyota Tacoma EPA-identity sheets spanning RWD automatic, part-time 4WD automatic, 4WD manual and hybrid 4WD groups; Stop & Start and EPA engine descriptors remain explicit. OEM model-code coolant mapping, trim-dependent rear-axle quantities, wheel material/placard selection and EPA 48903 transfer type remain VIN-level research gaps rather than inferred values.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
