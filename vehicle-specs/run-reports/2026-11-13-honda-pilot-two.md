@@ -52,7 +52,7 @@
 - **Verified library total:** 98 sheets.
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 98 vehicle sheets.
 - **Citation check:** Both new sheets passed ledger verification with at least 62% sentence coverage; warnings identify only task-ledger sources intentionally unused by each drivetrain-specific sheet.
-- **Publication:** Pending guarded publisher execution on branch `vehicle-specs-library`; no deployment will be triggered.
+- **Publication:** Guarded publisher committed and pushed the completed library batch to branch `vehicle-specs-library` at content commit `57a1d41`; no deployment was triggered. A final report-only publication commit follows so this exact result is preserved in branch history.
 
 ## Sources
 
