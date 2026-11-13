@@ -28,6 +28,8 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Honda CR-V Hybrid — 2.0L inline-4 hybrid, eCVT, FWD](data/2025/honda/cr-v/2.0l-hybrid-ecvt-fwd.md) — researched / needs shop review
 - [2025 Honda CR-V Hybrid — 2.0L inline-4 hybrid, eCVT, AWD](data/2025/honda/cr-v/2.0l-hybrid-ecvt-awd.md) — researched / needs shop review
 - [2025 Honda Accord Hybrid — 2.0L inline-4 hybrid, eCVT, FWD](data/2025/honda/accord/2.0l-hybrid-ecvt-fwd.md) — researched / needs shop review
+- [2025 Honda Pilot — 3.5L V6, 10-speed automatic, FWD](data/2025/honda/pilot/3.5l-v6-10at-fwd.md) — researched / needs shop review
+- [2025 Honda Pilot — 3.5L V6, 10-speed automatic, AWD](data/2025/honda/pilot/3.5l-v6-10at-awd.md) — researched / needs shop review
 - [2021 Chevrolet Silverado 1500 — 5.3L V8 gasoline (L82/L84; RPO confirmation required)](data/2021/chevrolet/silverado-1500/5.3l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ram 1500 (DT) — 5.7L HEMI V8 (eTorque/drivetrain/axle confirmation required)](data/2021/ram/1500/5.7l-v8.md) — researched / variant confirmation and shop review required
 - [2021 Ford F-150 — 2.7L EcoBoost V6, 10-speed automatic, 4x2](data/2021/ford/f-150/2.7l-v6.md) — researched / needs shop review
@@ -141,4 +143,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-13 added the exact 2025 Honda Accord Hybrid 2.0L/eCVT/FWD sheet; gasoline-engine and high-voltage cooling circuits, hybrid drive-unit service, trim-specific tire packages and both EPA hybrid identity groups remain explicit, while unsupported parts, 12-volt battery rating, wheel torque, bulb inventory and image licensing remain research gaps.
 - 2026-11-13 recall-enrichment pass materially improved ten exact 2025 sheets spanning Honda Accord Hybrid, Honda CR-V gasoline/hybrid FWD/AWD, Toyota Corolla gasoline/hybrid FWD/AWD and Toyota Sienna FWD/AWD. NHTSA campaign 24V744000 is recorded for the CR-V family; dated zero-result checks for Accord, Corolla and Sienna remain VIN-specific snapshots and are kept separate from mechanical authority.
 - 2026-11-13 recall-enrichment pass materially improved all ten exact 2025 Toyota Tacoma EPA-identity sheets. Five model-level NHTSA campaigns are recorded with drivetrain/equipment/VIN cautions, including a rear-brake-hose campaign explicitly limited by NHTSA to certain 4WD vehicles; recall data remains separate from TSBs and mechanical authority.
+- 2026-11-13 added exact 2025 Honda Pilot 3.5L/10-speed FWD and AWD sheets; drivetrain-specific coolant, transmission, transfer-assembly and rear-differential quantities remain separate. EPA confirms the AWD identity while its 2WD options query returned no record, and five current model-level NHTSA campaigns remain VIN/equipment-specific enrichment rather than mechanical authority.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
