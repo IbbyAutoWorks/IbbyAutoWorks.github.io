@@ -60,7 +60,7 @@
 - **Verified library total:** 96 vehicle sheets.
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 96 vehicle sheets.
 - **Citation check:** Grounded-citation ledger verification passed in strict mode at 25% declared-provenance coverage; all four cited source IDs and the mechanically rendered Sources block match the task ledger.
-- **Publication:** Pending guarded publisher execution on branch `vehicle-specs-library`; no deployment is permitted.
+- **Publication:** Guarded publisher committed and pushed the verified batch to branch `vehicle-specs-library` at content commit `aae4d63`; no deployment was triggered.
 
 ## Sources
 
