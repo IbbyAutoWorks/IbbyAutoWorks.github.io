@@ -18,7 +18,8 @@
 
 - Exact-year Honda Owner's Manual specification, Maintenance Minder and tire-rotation pages were used as mechanical authority for the Civic.[1][2][3]
 - Exact-year Honda Owner's Manual specification, Maintenance Minder and tire-rotation pages were used as mechanical authority for the HR-V.[4][5][6]
-- EPA vehicle records confirm the selected engine, transmission classification and FWD/AWD identities.[7][8][9][10]
+- EPA vehicle records confirm the selected Civic engine, transmission classification and FWD identities.[7][8]
+- EPA vehicle records separately confirm the selected HR-V engine, transmission classification and FWD/AWD identities.[9][10]
 - NHTSA's official year/make/model recall endpoints provide dated model-level enrichment only.[11][12]
 
 ## Mechanical fields
@@ -27,7 +28,8 @@
 - The Civic hybrid preserves separate engine and high-voltage cooling circuits and Honda ATF DW-1 hybrid drive-unit service instead of combining it with the gasoline CVT data.[1][2]
 - Both HR-V sheets record SAE 0W-20, Honda Type 2 coolant, Honda HCF-2 CVT fluid, Honda DOT 3 brake fluid and 80-lbf-ft wheel-fastener torque; FWD and AWD retain different coolant and CVT service quantities.[4]
 - The AWD HR-V separately records Honda DPSF-II rear-differential fluid and its change quantity, while the transfer-unit specification/capacity remains `Needs research`.[4][5]
-- All four sheets retain tire-placard authority, exact rotation patterns, Maintenance Minder items, annual oil fallback, three-year brake-fluid timing and applicable severe-service intervals.[2][3][5][6]
+- The Civic sheets retain tire-placard authority, exact rotation patterns, Maintenance Minder items, annual oil fallback, three-year brake-fluid timing and applicable severe-service intervals.[2][3]
+- The HR-V sheets retain the same categories of exact-year placard, rotation and Maintenance Minder guidance from their model-specific manual.[5][6]
 
 ## Reference enrichment
 
