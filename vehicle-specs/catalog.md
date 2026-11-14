@@ -110,6 +110,9 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Toyota Tacoma — 2.4L turbo, 8-speed automatic, part-time 4WD, EPA 48881](data/2025/toyota/tacoma/2.4l-turbo-8at-part-time-4wd-epa-48881.md) — researched / needs shop review
 - [2025 Toyota Tacoma Hybrid — 2.4L turbo hybrid, 8-speed automatic, part-time 4WD, EPA 48902](data/2025/toyota/tacoma/2.4l-turbo-hybrid-8at-part-time-4wd-epa-48902.md) — researched / needs shop review
 - [2025 Toyota Tacoma Hybrid — 2.4L turbo hybrid, 8-speed automatic, 4WD transfer type pending VIN confirmation, EPA 48903](data/2025/toyota/tacoma/2.4l-turbo-hybrid-8at-4wd-epa-48903.md) — researched / transfer-type confirmation and shop review required
+- [2025 Ford Escape — 1.5L EcoBoost turbo inline-3, 8-speed automatic, FWD](data/2025/ford/escape/1.5l-ecoboost-8at-fwd.md) — researched / needs shop review
+- [2025 Ford Escape — 1.5L EcoBoost turbo inline-3, 8-speed automatic, AWD](data/2025/ford/escape/1.5l-ecoboost-8at-awd.md) — researched / needs shop review
+- [2025 Ford Escape — 2.0L EcoBoost turbo inline-4, 8-speed automatic, AWD](data/2025/ford/escape/2.0l-ecoboost-8at-awd.md) — researched / needs shop review
 
 ## Coverage queue
 
@@ -149,4 +152,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-13 recall-enrichment pass materially improved all ten exact 2025 Toyota Tacoma EPA-identity sheets. Five model-level NHTSA campaigns are recorded with drivetrain/equipment/VIN cautions, including a rear-brake-hose campaign explicitly limited by NHTSA to certain 4WD vehicles; recall data remains separate from TSBs and mechanical authority.
 - 2026-11-13 added exact 2025 Honda Pilot 3.5L/10-speed FWD and AWD sheets; drivetrain-specific coolant, transmission, transfer-assembly and rear-differential quantities remain separate. EPA confirms the AWD identity while its 2WD options query returned no record, and five current model-level NHTSA campaigns remain VIN/equipment-specific enrichment rather than mechanical authority.
 - 2026-11-14 added exact 2025 Honda Civic Sedan gasoline and hybrid FWD sheets plus HR-V FWD/AWD sheets; hybrid cooling/drive-unit data and AWD CVT/rear-differential service remain variant-specific. EPA identities and dated NHTSA results are enrichment only, while unsupported parts, battery ratings, bulb details, transfer-unit capacity and image licensing remain explicit research gaps.
+- 2026-11-14 added three exact 2025 Ford Escape gasoline sheets spanning 1.5L EcoBoost FWD/AWD and 2.0L EcoBoost AWD; engine-specific oil/coolant/parts remain separate, AWD rear-drive-unit data is excluded from FWD, and unsupported drain-and-fill, PTU, spark-gap, bulb and image details remain explicit research gaps.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
