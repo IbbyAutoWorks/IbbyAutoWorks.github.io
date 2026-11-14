@@ -59,7 +59,7 @@
 - **Completed sheets:** 3 new; 0 materially improved existing sheets.
 - **Verified library total:** 105 sheets.
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 105 vehicle sheets.
-- **Citation check:** All three new sheets passed ledger verification at 55–59% sentence coverage. The run report passed ledger/source-block verification; its lower 38% metric reflects uncited repository-state and workflow reporting rather than unsupported outside-source claims.
+- **Citation check:** All three new sheets passed ledger verification at 55–59% sentence coverage. The run report passed ledger/source-block verification; its lower 36% metric reflects uncited repository-state and workflow reporting rather than unsupported outside-source claims.
 - **Publication branch:** `vehicle-specs-library`.
 - **Content commit:** `2d416419c4d1283782f841c374d77f9765fccc34` was pushed through the guarded publisher and matched `origin/vehicle-specs-library`; no deployment was triggered.
 - **Report publication:** This finalized report is being added through the same guarded publisher in a follow-up report-only commit.
