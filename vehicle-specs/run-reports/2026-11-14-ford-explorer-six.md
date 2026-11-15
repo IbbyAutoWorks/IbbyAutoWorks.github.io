@@ -65,7 +65,9 @@
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 111 vehicle sheets.
 - **Citation check:** All six new sheets passed the evidence-backed citation/source-block verifier; the shared ledger produced expected unused-source warnings on each per-variant sheet.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication continuation:** Direct execution of `/home/ubuntu/.hermes/profiles/ibby/scripts/publish_vehicle_specs_branch.py` initially returned exit 126 because the guarded Python publisher is not marked executable. This continuation invokes that same publisher through the Python interpreter; the resulting content commit will be recorded in a follow-up report-only publication. No alternate publication path or deployment is used.
+- **Content commit:** `45fbca025e57141de6736b92c70e2c7a5daf2b41` was pushed through the guarded publisher and matched `origin/vehicle-specs-library`; no deployment was triggered.
+- **Report publication:** This finalized publication record is being added through the same guarded publisher in a follow-up report-only commit.
+- **Resolved execution issue:** Direct execution initially returned exit 126 because the guarded Python publisher is not marked executable; invoking the same publisher through the Python interpreter succeeded. No alternate publication path was used.
 
 ## Sources
 
