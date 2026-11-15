@@ -119,6 +119,12 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Ford Explorer — 3.0L EcoBoost V6, 10-speed automatic, RWD, EPA 48282](data/2025/ford/explorer/3.0l-ecoboost-10at-rwd-epa-48282.md) — researched / EPA transmission identity and shop review required
 - [2025 Ford Explorer — 3.0L EcoBoost V6, Automatic (S10), part-time 4WD, EPA 48118](data/2025/ford/explorer/3.0l-ecoboost-s10-awd-epa-48118.md) — researched / EPA transmission identity and shop review required
 - [2025 Ford Explorer — 3.0L EcoBoost V6, 10-speed automatic, part-time 4WD, EPA 48119](data/2025/ford/explorer/3.0l-ecoboost-10at-awd-epa-48119.md) — researched / EPA transmission identity and shop review required
+- [2025 Ford Bronco Sport — 1.5L EcoBoost inline-3, 8-speed automatic, part-time 4WD, EPA 48916](data/2025/ford/bronco-sport/1.5l-ecoboost-8at-4wd.md) — researched / needs shop review
+- [2025 Ford Bronco Sport Sasquatch — 1.5L EcoBoost inline-3, 8-speed automatic, 4WD, EPA 49057](data/2025/ford/bronco-sport/1.5l-ecoboost-8at-sasquatch-4wd.md) — researched / exact drivetrain-fluid mapping and shop review required
+- [2025 Ford Bronco Sport — 2.0L EcoBoost inline-4, Automatic (S8), 4WD, EPA 48917](data/2025/ford/bronco-sport/2.0l-ecoboost-s8-4wd.md) — researched / EPA transmission identity and shop review required
+- [2025 Ford Maverick — 2.0L EcoBoost inline-4, 8-speed automatic, part-time 4WD, EPA 48874](data/2025/ford/maverick/2.0l-ecoboost-8at-awd.md) — researched / needs shop review
+- [2025 Ford Maverick Hybrid — 2.5L inline-4 hybrid, eCVT, FWD, EPA 48869](data/2025/ford/maverick/2.5l-hybrid-ecvt-fwd.md) — researched / needs shop review
+- [2025 Ford Maverick Hybrid — 2.5L inline-4 hybrid, eCVT, part-time 4WD, EPA 48873](data/2025/ford/maverick/2.5l-hybrid-ecvt-awd.md) — researched / hybrid AWD service-fill research and shop review required
 
 ## Coverage queue
 
@@ -160,4 +166,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-14 added exact 2025 Honda Civic Sedan gasoline and hybrid FWD sheets plus HR-V FWD/AWD sheets; hybrid cooling/drive-unit data and AWD CVT/rear-differential service remain variant-specific. EPA identities and dated NHTSA results are enrichment only, while unsupported parts, battery ratings, bulb details, transfer-unit capacity and image licensing remain explicit research gaps.
 - 2026-11-14 added three exact 2025 Ford Escape gasoline sheets spanning 1.5L EcoBoost FWD/AWD and 2.0L EcoBoost AWD; engine-specific oil/coolant/parts remain separate, AWD rear-drive-unit data is excluded from FWD, and unsupported drain-and-fill, PTU, spark-gap, bulb and image details remain explicit research gaps.
 - 2026-11-14 added six exact 2025 Ford Explorer EPA identities spanning 2.3L and 3.0L EcoBoost engines, RWD/part-time 4WD and separate EPA Automatic (S10)/Automatic 10-speed records. Engine-specific oil, coolant, parts and spark gaps plus drivetrain-specific transfer/front/rear axle data remain separated; unsupported transmission service quantities, VIN-aware fixed intervals, trim tire pressures, selected battery/axle mappings and image licensing remain explicit research gaps.
+- 2026-11-15 added six exact 2025 Ford sheets spanning Bronco Sport 1.5L base/Sasquatch and 2.0L 4WD crossovers plus Maverick 2.0L AWD and 2.5L Hybrid FWD/AWD pickups. EPA identities, engine-specific oil/coolant/parts, hybrid dual cooling circuits and normal/severe service intervals remain separate; unsupported transmission/AWD service fills, battery ratings and image licensing remain explicit research gaps.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
