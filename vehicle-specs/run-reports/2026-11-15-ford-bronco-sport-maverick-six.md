@@ -63,7 +63,8 @@
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 117 vehicle sheets before publication.
 - **Citation check:** The evidence-backed report passed ledger verification at 36% sentence coverage; uncited sentences are repository-state and workflow reporting rather than outside factual claims.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication status:** The guarded publisher is the only authorized publication path; content publication is pending below.
+- **Content commit:** `66f39a6eec41f5bd8caec50a65a876648e2568e3` was pushed through the guarded publisher and matched `origin/vehicle-specs-library`; no deployment was triggered.
+- **Report publication:** This finalized publication record is being added through the same guarded publisher in a follow-up report-only commit.
 
 ## Sources
 
