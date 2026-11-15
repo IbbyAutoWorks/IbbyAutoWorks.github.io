@@ -113,6 +113,12 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Ford Escape — 1.5L EcoBoost turbo inline-3, 8-speed automatic, FWD](data/2025/ford/escape/1.5l-ecoboost-8at-fwd.md) — researched / needs shop review
 - [2025 Ford Escape — 1.5L EcoBoost turbo inline-3, 8-speed automatic, AWD](data/2025/ford/escape/1.5l-ecoboost-8at-awd.md) — researched / needs shop review
 - [2025 Ford Escape — 2.0L EcoBoost turbo inline-4, 8-speed automatic, AWD](data/2025/ford/escape/2.0l-ecoboost-8at-awd.md) — researched / needs shop review
+- [2025 Ford Explorer — 2.3L EcoBoost inline-4, 10-speed automatic, RWD](data/2025/ford/explorer/2.3l-ecoboost-10at-rwd.md) — researched / needs shop review
+- [2025 Ford Explorer — 2.3L EcoBoost inline-4, 10-speed automatic, part-time 4WD](data/2025/ford/explorer/2.3l-ecoboost-10at-awd.md) — researched / trim/axle confirmation and shop review required
+- [2025 Ford Explorer — 3.0L EcoBoost V6, Automatic (S10), RWD, EPA 48281](data/2025/ford/explorer/3.0l-ecoboost-s10-rwd-epa-48281.md) — researched / EPA transmission identity and shop review required
+- [2025 Ford Explorer — 3.0L EcoBoost V6, 10-speed automatic, RWD, EPA 48282](data/2025/ford/explorer/3.0l-ecoboost-10at-rwd-epa-48282.md) — researched / EPA transmission identity and shop review required
+- [2025 Ford Explorer — 3.0L EcoBoost V6, Automatic (S10), part-time 4WD, EPA 48118](data/2025/ford/explorer/3.0l-ecoboost-s10-awd-epa-48118.md) — researched / EPA transmission identity and shop review required
+- [2025 Ford Explorer — 3.0L EcoBoost V6, 10-speed automatic, part-time 4WD, EPA 48119](data/2025/ford/explorer/3.0l-ecoboost-10at-awd-epa-48119.md) — researched / EPA transmission identity and shop review required
 
 ## Coverage queue
 
@@ -153,4 +159,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-13 added exact 2025 Honda Pilot 3.5L/10-speed FWD and AWD sheets; drivetrain-specific coolant, transmission, transfer-assembly and rear-differential quantities remain separate. EPA confirms the AWD identity while its 2WD options query returned no record, and five current model-level NHTSA campaigns remain VIN/equipment-specific enrichment rather than mechanical authority.
 - 2026-11-14 added exact 2025 Honda Civic Sedan gasoline and hybrid FWD sheets plus HR-V FWD/AWD sheets; hybrid cooling/drive-unit data and AWD CVT/rear-differential service remain variant-specific. EPA identities and dated NHTSA results are enrichment only, while unsupported parts, battery ratings, bulb details, transfer-unit capacity and image licensing remain explicit research gaps.
 - 2026-11-14 added three exact 2025 Ford Escape gasoline sheets spanning 1.5L EcoBoost FWD/AWD and 2.0L EcoBoost AWD; engine-specific oil/coolant/parts remain separate, AWD rear-drive-unit data is excluded from FWD, and unsupported drain-and-fill, PTU, spark-gap, bulb and image details remain explicit research gaps.
+- 2026-11-14 added six exact 2025 Ford Explorer EPA identities spanning 2.3L and 3.0L EcoBoost engines, RWD/part-time 4WD and separate EPA Automatic (S10)/Automatic 10-speed records. Engine-specific oil, coolant, parts and spark gaps plus drivetrain-specific transfer/front/rear axle data remain separated; unsupported transmission service quantities, VIN-aware fixed intervals, trim tire pressures, selected battery/axle mappings and image licensing remain explicit research gaps.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
