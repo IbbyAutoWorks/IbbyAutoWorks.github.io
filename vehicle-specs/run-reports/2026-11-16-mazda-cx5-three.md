@@ -64,7 +64,7 @@ EPA vehicle records preserve three separate exact identities: 48537 without cyli
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 132 vehicle sheets before publication.
 - **Citation check:** Passed strict grounded-citation ledger verification; 16 prose sentences carry inline citations, and all five cited source IDs and URLs are ledger-backed. No minimum-coverage threshold was asserted.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication result:** Pending guarded publisher execution.
+- **Publication result:** The guarded publisher committed and pushed the verified content batch at `923eab4`; this finalized report-status update is published through the same guarded path, and no deployment was triggered.
 - **Deployment/live data:** None; this run did not deploy or touch application code, Supabase, customer data, accounts, payments or live data.
 
 ## Sources
