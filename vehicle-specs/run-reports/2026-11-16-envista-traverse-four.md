@@ -67,7 +67,8 @@ NHTSA's official year/make/model endpoints supply model-level recall enrichment 
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 129 vehicle sheets.
 - **Citation check:** The run report passed grounded-citation ledger verification; all cited source IDs and URLs are ledger-backed.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication:** Guarded content publication is the next step; no deployment is authorized. The exact content commit will be added in a follow-up report-only commit.
+- **Content commit:** `7e3997ba6592a4d36a809a8a2b97eb2e66692b48` was committed and pushed through the guarded publisher, and the remote branch matched the local commit; no deployment was triggered.
+- **Report publication:** This finalized report is being added through the same guarded publisher in a follow-up report-only commit.
 
 ## Sources
 
