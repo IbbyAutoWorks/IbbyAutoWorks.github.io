@@ -137,6 +137,9 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - [2025 Buick Envista — 1.2L LBP turbo inline-3, 6-speed automatic, FWD, flex fuel](data/2025/buick/envista/1.2l-lbp-flex-fuel-6at-fwd.md) — researched / VIN, fuel-label and shop review required
 - [2025 Chevrolet Traverse — 2.5L LK0 turbo inline-4, 8-speed automatic, FWD](data/2025/chevrolet/traverse/2.5l-lk0-8at-fwd.md) — researched / needs shop review
 - [2025 Chevrolet Traverse — 2.5L LK0 turbo inline-4, 8-speed automatic, AWD](data/2025/chevrolet/traverse/2.5l-lk0-8at-awd.md) — researched / drivetrain-fluid research and shop review required
+- [2025 Mazda CX-5 — 2.5L SKYACTIV-G inline-4, 6-speed automatic, AWD, no cylinder deactivation or stop-start](data/2025/mazda/cx-5/2.5l-na-6at-awd-no-cylinder-deactivation.md) — researched / exact service-fill and shop review required
+- [2025 Mazda CX-5 — 2.5L SKYACTIV-G inline-4 with cylinder deactivation and i-stop, 6-speed automatic, AWD](data/2025/mazda/cx-5/2.5l-na-cylinder-deactivation-6at-awd.md) — researched / exact service-fill and shop review required
+- [2025 Mazda CX-5 — 2.5L SKYACTIV-G turbo inline-4, 6-speed automatic, AWD](data/2025/mazda/cx-5/2.5l-turbo-6at-awd.md) — researched / exact service-fill and shop review required
 
 ## Coverage queue
 
@@ -182,4 +185,5 @@ Generated starter catalog. Files remain shop-reference material until `review_st
 - 2026-11-15 added five exact 2025 GM sheets spanning Chevrolet Equinox FWD/AWD crossovers, Chevrolet Malibu FWD sedan and GMC Terrain FWD/AWD crossovers. CVT versus 8-speed fluid paths, drivetrain-specific oil quantities and AWD transfer/rear-axle service remain separate; unsupported service fills, parts, selected lamp details, NHTSA Equinox/Terrain enrichment and image licensing remain explicit research gaps.
 - 2026-11-16 added three exact 2025 Buick Encore GX sheets spanning 1.2L flex-fuel CVT/FWD, 1.3L gasoline CVT/FWD and 1.3L gasoline 9-speed/AWD crossovers. Engine-specific oil, coolant and ignition data plus CVT/9-speed and FWD/AWD service paths remain separate; unsupported service fills, parts, battery ratings, lamp trade numbers and image licensing remain explicit research gaps.
 - 2026-11-16 added four exact 2025 GM crossover/SUV sheets spanning Buick Envista LIH regular-gasoline and LBP flex-fuel 6-speed/FWD identities plus Chevrolet Traverse 2.5L turbo 8-speed FWD/AWD. Fuel/VIN and drivetrain distinctions remain explicit; unsupported service fills, axle products/capacities, parts, selected battery ratings, TSBs, complaints and image licensing remain research gaps.
+- 2026-11-16 added three exact 2025 Mazda CX-5 AWD sheets spanning naturally aspirated no-cylinder-deactivation/no-stop-start, naturally aspirated cylinder-deactivation/i-stop and turbo identities. ATF type, published approximate capacities, battery and spark-plug specifications, engine oil/coolant quantities and spark-plug intervals remain variant-specific; exact drain-and-fill quantities, selected part numbers, NHTSA enrichment and image licensing remain research gaps.
 - Exclude exotic/supercar-only coverage unless the shop later requests it.
