@@ -60,7 +60,7 @@ NHTSA's official year/make/model endpoint supplies model-level recall enrichment
 - **Completed sheets:** 3 new; 0 materially improved existing sheets.
 - **Verified library total:** 125 sheets.
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 125 vehicle sheets before publication.
-- **Citation check:** The run report passed ledger verification at 40% sentence coverage; the only warning is one unused failed Trax-manual discovery URL retained in the task ledger but not cited here.
+- **Citation check:** The run report passed ledger verification at 39% sentence coverage; the only warning is one unused failed Trax-manual discovery URL retained in the task ledger but not cited here.
 - **Publication branch:** `vehicle-specs-library`.
 - **Publication:** The guarded publisher committed and pushed the three sheets, catalog update and initial report at `81bd2c8`; no deployment was triggered.
 
