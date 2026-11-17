@@ -69,9 +69,9 @@ The NHTSA model-level endpoint returned campaign 26V047000; it is kept as VIN-sp
 - **Completed sheets:** 3 new; 0 materially improved existing sheets.
 - **Verified library total before publication:** 139 vehicle sheets.
 - **Verifier:** Passed `python scripts/verify-vehicle-spec-markdown.py`.
-- **Citation check:** Passed grounded-citation verification at 52% sentence coverage (24 of 46 prose sentences); three retrieved but unused ledger sources remain intentionally uncited.
+- **Citation check:** Passed grounded-citation verification at 51% sentence coverage (24 of 47 prose sentences); three retrieved but unused ledger sources remain intentionally uncited.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication result:** Pending guarded publisher.
+- **Publication result:** Guarded publisher committed and pushed the batch to `vehicle-specs-library` at `d936b0b0021359c56f7e4078e6f423dc901dfd74`; the remote branch hash matched after push. This report-finalization edit is published separately by the same guarded path.
 - **Deployment/live data:** None; this run did not deploy or touch application code, Supabase, customer data, accounts, payments or live data.
 
 ## Sources
