@@ -62,9 +62,9 @@ The NHTSA model-level endpoint returned campaigns 25V745000 and 26V046000; they 
 - **Completed sheets:** 4 new; 0 materially improved existing sheets.
 - **Verified library total before publication:** 136 vehicle sheets.
 - **Verifier:** `python scripts/verify-vehicle-spec-markdown.py` passed with 136 vehicle sheets.
-- **Citation check:** Passed grounded-citation ledger verification: 45 prose sentences, 14 with declared provenance, five distinct cited sources, and an automatically rendered ledger-backed Sources block. Strict mode was not asserted because five exploratory sources remained registered but uncited.
+- **Citation check:** Passed grounded-citation ledger verification: 47 prose sentences, 14 with declared provenance, five distinct cited sources, and an automatically rendered ledger-backed Sources block. Strict mode was not asserted because five exploratory sources remained registered but uncited.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication result:** Pending guarded publisher.
+- **Publication result:** Guarded publisher committed and pushed the verified batch at `36314f5`. The publisher file was not executable by mode, so the same guarded script was invoked with Python; its branch, path, credential-scan, verification and no-deployment safeguards remained in force. This finalized report-status update is published through the same guarded path.
 - **Deployment/live data:** None; this run did not deploy or touch application code, Supabase, customer data, accounts, payments or live data.
 
 ## Sources
