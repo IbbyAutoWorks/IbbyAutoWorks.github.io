@@ -57,7 +57,7 @@ The NHTSA model-level recall endpoint returned campaign 26V539000 on 2026-11-20;
 - **Citation verification:** The report and all three sheets passed ledger/source-block verification; unsupported fields remain explicit research gaps. The optional 50% prose-coverage threshold was not used because the structured field lines are not counted reliably by that sentence parser.
 - **Verification result:** Passed `git diff --check` and `python scripts/verify-vehicle-spec-markdown.py` with 153 vehicle sheets.
 - **Publication branch:** `vehicle-specs-library`.
-- **Publication status:** Repository verification passed; the required guarded publisher is the only next publication action, and no deployment is permitted.
+- **Publication status:** Guarded publisher succeeded with content commit `61917257d5acf74168a19bc0621d3f6885b84154`; local and remote `vehicle-specs-library` hashes matched, and no deployment was triggered.
 - **Deployment/live data:** None. No application code, customer/work-order data, secrets, Supabase, Vercel, DNS, accounts, payments or live data were touched.
 
 ## Sources
